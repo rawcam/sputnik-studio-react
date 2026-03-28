@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useState } from 'react'
+import { useSelector } from 'react-redux'
 import { RootState } from '../store'
 import { ProjectList } from '../features/projects/ProjectList'
 import { ProjectDetail } from '../features/projects/ProjectDetail'
