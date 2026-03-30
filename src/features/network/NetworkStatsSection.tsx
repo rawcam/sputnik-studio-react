@@ -1,14 +1,13 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { getCableSpeed, calcLoadPercent } from '../../store/networkSlice'
+import { calcLoadPercent } from '../../store/networkSlice'
 
 export const NetworkStatsSection: React.FC = () => {
   const network = useSelector((state: RootState) => state.network)
   const totalBitrate = useSelector((state: RootState) => 
     state.tracts.tracts.reduce((sum, t) => sum + t.totalBitrate, 0)
   )
-  const cableSpeed = getCableSpeed(network.cable)
   const loadPercent = calcLoadPercent(totalBitrate, network.cable)
 
   return (
