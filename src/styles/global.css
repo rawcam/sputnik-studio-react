@@ -15,3 +15,328 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
+
+/* ========== ОБЩИЕ ЭЛЕМЕНТЫ ========== */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5em;
+}
+
+h2 {
+  font-size: 1.8rem;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+/* ========== КАРТОЧКИ ========== */
+.project-card {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: var(--border-radius-card);
+  padding: 24px;
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+  animation: fadeInUp 0.4s ease-out;
+  margin-bottom: 16px;
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.project-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.project-status {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 40px;
+  background: var(--card-bg);
+}
+
+.project-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 0.75rem;
+  margin: 8px 0;
+}
+
+.project-progress-bar {
+  background: var(--card-bg);
+  border-radius: 20px;
+  height: 8px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 0.3s ease;
+  background: var(--accent);
+}
+
+/* ========== КНОПКИ ========== */
+button,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-inactive,
+.btn-small {
+  font-family: inherit;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 8px 20px;
+  border-radius: 40px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: white;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--accent-glow);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.btn-small {
+  padding: 4px 12px;
+  font-size: 0.75rem;
+}
+
+/* ========== ПОЛЯ ВВОДА ========== */
+input, select, textarea {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: var(--border-radius-element);
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.setting label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* ========== МОДАЛЬНЫЕ ОКНА ========== */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: var(--bg-panel);
+  border-radius: 24px;
+  padding: 24px;
+  min-width: 500px;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  font-family: inherit;
+}
+
+.modal-content h2,
+.modal-content h3 {
+  margin-bottom: 24px;
+}
+
+.modal-content select,
+.modal-content input {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.modal-content select:focus,
+.modal-content input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal-content button {
+  margin-right: 8px;
+}
+
+.modal-buttons {
+  margin-top: 24px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modal-close {
+  float: right;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+/* ========== ДЕТАЛЬНАЯ СТРАНИЦА ПРОЕКТА ========== */
+.project-detail-card {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 32px;
+  padding: 28px;
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+  margin-bottom: 24px;
+}
+
+.detail-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.detail-tabs button {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.detail-tabs button.active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+
+.detail-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* ========== ПУСТЫЕ СОСТОЯНИЯ ========== */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* ========== АНИМАЦИИ ========== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+@media (max-width: 768px) {
+  .modal-content {
+    min-width: 90%;
+    margin: 20px;
+  }
+}
