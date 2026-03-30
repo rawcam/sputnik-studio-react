@@ -7,6 +7,7 @@ import tractsReducer from './tractsSlice'
 import projectsReducer from './projectsSlice'
 import authReducer from './authSlice'
 import companyExpensesReducer from './companyExpensesSlice'
+import serviceVisitsReducer from '../features/service/serviceVisitsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     projects: projectsReducer,
     auth: authReducer,
     companyExpenses: companyExpensesReducer,
+    serviceVisits: serviceVisitsReducer,
   },
 })
 
