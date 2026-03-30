@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { useLocation } from 'react-router-dom'
 import { RootState } from '../../store'
 import { VideoSection } from '../../features/video/VideoSection'
+import { NetworkSection } from '../../features/network/NetworkSection'
 import './Sidebar.css'
 
 export const Sidebar: React.FC = () => {
@@ -10,7 +11,6 @@ export const Sidebar: React.FC = () => {
   const location = useLocation()
   const isCalculations = location.pathname.includes('/calculations')
 
-  // Показываем сайдбар только на странице расчётов
   if (!isCalculations) return null
 
   return (
@@ -26,6 +26,7 @@ export const Sidebar: React.FC = () => {
       </div>
       <div id="sidebarSectionsContainer">
         <VideoSection />
+        <NetworkSection />
         {/* Остальные аккордеоны будут добавлены позже */}
         <div className="sidebar-section">
           <div className="section-header">
