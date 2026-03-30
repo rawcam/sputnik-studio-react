@@ -4,120 +4,89 @@ import { CompanyExpense } from '../store/companyExpensesSlice'
 export interface CashFlowPoint {
   date: string
   balance: number
+  cumulative: number
 }
 
-/**
- * Расчёт плановой маржи проекта
- * = contractAmount - сумма всех плановых расходов (без учёта paid)
- */
-export function calculatePlannedMargin(project: Project): number {
-  const totalExpenses = project.expenseSchedule.reduce((sum, e) => sum + e.amount, 0)
-  return project.contractAmount - totalExpenses
+export interface ProjectMargins {
+  plannedMargin: number
+  plannedProfitability: number
+  actualMargin: number
+  actualProfitability: number
 }
 
-/**
- * Расчёт плановой рентабельности (%)
- */
-export function calculatePlannedProfitability(project: Project): number {
-  if (project.contractAmount === 0) return 0
-  const margin = calculatePlannedMargin(project)
-  return (margin / project.contractAmount) * 100
+export const getProjectMargins = (project: Project): ProjectMargins => {
+  const plannedExpenses = project.expenseSchedule.reduce((sum, e) => sum + e.amount, 0)
+  const plannedMargin = project.contractAmount - plannedExpenses
+  const plannedProfitability = project.contractAmount === 0 ? 0 : plannedMargin / project.contractAmount
+
+  const actualExpenses = project.expenseSchedule.filter(e => e.paid).reduce((sum, e) => sum + e.amount, 0)
+  const actualIncome = project.incomeSchedule.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0)
+  const actualMargin = actualIncome - actualExpenses
+  const actualProfitability = actualIncome === 0 ? 0 : actualMargin / actualIncome
+
+  return { plannedMargin, plannedProfitability, actualMargin, actualProfitability }
 }
 
-/**
- * Расчёт фактической маржи (на основе фактически оплаченных доходов и расходов)
- */
-export function calculateActualMargin(project: Project): number {
-  return project.actualIncome - project.actualExpenses
+export const getProjectCashFlow = (project: Project): CashFlowPoint[] => {
+  const items: { date: string; amount: number }[] = [
+    ...project.incomeSchedule.map(i => ({ date: i.date, amount: i.amount })),
+    ...project.expenseSchedule.map(e => ({ date: e.date, amount: -e.amount })),
+  ]
+  items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  let cumulative = 0
+  return items.map(item => {
+    cumulative += item.amount
+    return { date: item.date, balance: item.amount, cumulative }
+  })
 }
 
-/**
- * Расчёт фактической рентабельности (%)
- * если actualIncome = 0, возвращаем 0
- */
-export function calculateActualProfitability(project: Project): number {
-  if (project.actualIncome === 0) return 0
-  const margin = calculateActualMargin(project)
-  return (margin / project.actualIncome) * 100
-}
-
-/**
- * Расчёт накопленного денежного потока по проекту
- * возвращает массив точек { date, balance }
- */
-export function calculateCashFlow(project: Project): CashFlowPoint[] {
-  const allEvents: { date: string; amount: number }[] = []
-  // доходы (положительные)
-  project.incomeSchedule.forEach(i => allEvents.push({ date: i.date, amount: i.amount }))
-  // расходы (отрицательные)
-  project.expenseSchedule.forEach(e => allEvents.push({ date: e.date, amount: -e.amount }))
-
-  // сортируем по дате
-  allEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-  let balance = 0
-  const result: CashFlowPoint[] = []
-  for (const event of allEvents) {
-    balance += event.amount
-    result.push({ date: event.date, balance })
-  }
-  return result
-}
-
-/**
- * Находит ближайший кассовый разрыв (первая дата, где баланс становится отрицательным)
- * Возвращает { date, deficit } или null, если разрыва нет
- */
-export function findNearestCashGap(project: Project): { date: string; deficit: number } | null {
-  const flow = calculateCashFlow(project)
+export const getNextCashGap = (project: Project): { date: string; deficit: number } | null => {
+  const flow = getProjectCashFlow(project)
+  let cumulative = 0
   for (const point of flow) {
-    if (point.balance < 0) {
-      return { date: point.date, deficit: Math.abs(point.balance) }
+    cumulative += point.balance
+    if (cumulative < 0) {
+      return { date: point.date, deficit: -cumulative }
     }
   }
   return null
 }
 
-/**
- * Расчёт кассового разрыва по компании (проекты + общехозяйственные расходы)
- * projects: массив проектов
- * companyExpenses: массив общехозяйственных расходов
- * возвращает массив точек { date, balance }
- */
-export function calculateCompanyCashFlow(projects: Project[], companyExpenses: CompanyExpense[]): CashFlowPoint[] {
-  const allEvents: { date: string; amount: number }[] = []
-
-  // доходы и расходы по проектам
-  projects.forEach(project => {
-    project.incomeSchedule.forEach(i => allEvents.push({ date: i.date, amount: i.amount }))
-    project.expenseSchedule.forEach(e => allEvents.push({ date: e.date, amount: -e.amount }))
-  })
-
-  // общехозяйственные расходы
-  companyExpenses.forEach(ce => {
-    allEvents.push({ date: ce.date, amount: -ce.amount })
-  })
-
-  // сортируем по дате
-  allEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-  let balance = 0
-  const result: CashFlowPoint[] = []
-  for (const event of allEvents) {
-    balance += event.amount
-    result.push({ date: event.date, balance })
-  }
-  return result
+export const getTotalActualIncome = (projects: Project[]): number => {
+  return projects.reduce((sum, p) => sum + p.actualIncome, 0)
 }
 
-/**
- * Находит ближайший кассовый разрыв по компании
- */
-export function findNearestCompanyCashGap(projects: Project[], companyExpenses: CompanyExpense[]): { date: string; deficit: number } | null {
-  const flow = calculateCompanyCashFlow(projects, companyExpenses)
+export const getTotalActualMargin = (projects: Project[]): number => {
+  return projects.reduce((sum, p) => {
+    const margin = p.actualIncome - p.actualExpenses
+    return sum + margin
+  }, 0)
+}
+
+export const getCompanyCashFlow = (projects: Project[], companyExpenses: CompanyExpense[]): CashFlowPoint[] => {
+  const allItems: { date: string; amount: number }[] = []
+
+  projects.forEach(p => {
+    p.incomeSchedule.forEach(i => allItems.push({ date: i.date, amount: i.amount }))
+    p.expenseSchedule.forEach(e => allItems.push({ date: e.date, amount: -e.amount }))
+  })
+  companyExpenses.forEach(e => allItems.push({ date: e.date, amount: -e.amount }))
+
+  allItems.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  let cumulative = 0
+  return allItems.map(item => {
+    cumulative += item.amount
+    return { date: item.date, balance: item.amount, cumulative }
+  })
+}
+
+export const getCompanyNextCashGap = (projects: Project[], companyExpenses: CompanyExpense[]): { date: string; deficit: number } | null => {
+  const flow = getCompanyCashFlow(projects, companyExpenses)
+  let cumulative = 0
   for (const point of flow) {
-    if (point.balance < 0) {
-      return { date: point.date, deficit: Math.abs(point.balance) }
+    cumulative += point.balance
+    if (cumulative < 0) {
+      return { date: point.date, deficit: -cumulative }
     }
   }
   return null
