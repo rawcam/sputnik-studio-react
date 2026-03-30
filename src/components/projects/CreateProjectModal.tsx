@@ -34,6 +34,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
       incomeSchedule: [],
       expenseSchedule: [],
       serviceVisits: [],
+      actualIncome: 0,
+      actualExpenses: 0,
       nextStatus: status === 'presale' ? 'design' : undefined,
       nextStatusDate: status === 'presale' ? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) : undefined,
     })
