@@ -1,77 +1,44 @@
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { setNetworkSettings, getCableSpeed, calcLoadPercent } from '../../store/networkSlice'
+import { getCableSpeed, calcLoadPercent } from '../../store/networkSlice'
 
-export const NetworkSection: React.FC = () => {
-  const dispatch = useDispatch()
-  const settings = useSelector((state: RootState) => state.network)
-  // Временная заглушка для битрейта (позже будет браться из трактов)
+export const NetworkStatsSection: React.FC = () => {
+  const network = useSelector((state: RootState) => state.network)
   const totalBitrate = useSelector((state: RootState) => 
     state.tracts.tracts.reduce((sum, t) => sum + t.totalBitrate, 0)
   )
-  const cableSpeed = getCableSpeed(settings.cable)
-  const loadPercent = calcLoadPercent(totalBitrate, settings.cable)
-
-  const handleChange = (field: keyof typeof settings, value: any) => {
-    dispatch(setNetworkSettings({ [field]: value }))
-  }
+  const cableSpeed = getCableSpeed(network.cable)
+  const loadPercent = calcLoadPercent(totalBitrate, network.cable)
 
   return (
     <div className="sidebar-section">
-      <div className="section-header" data-section="network">
-        <i className="fas fa-network-wired"></i>
-        <span>NETWORK</span>
+      <div className="section-header" data-section="networkStats">
+        <i className="fas fa-chart-line"></i>
+        <span>СЕТЬ</span>
         <i className="fas fa-angle-down"></i>
       </div>
-      <div className="section-content" id="networkContent">
-        <div className="network-settings">
-          <div className="setting">
-            <label>Среда передачи:</label>
-            <select value={settings.cable} onChange={e => handleChange('cable', e.target.value)}>
-              <option value="Cat5e">Cat5e</option>
-              <option value="Cat6">Cat6</option>
-              <option value="Cat6a">Cat6a</option>
-              <option value="Cat7">Cat7</option>
-              <option value="Cat8">Cat8</option>
-              <option value="OM3">Оптика OM3</option>
-              <option value="wireless">Беспровод</option>
-            </select>
+      <div className="section-content" id="networkStatsContent">
+        <div className="widget">
+          <div className="widget-item">
+            <span className="widget-label"><i className="fas fa-chart-line"></i><span> Битрейт:</span></span>
+            <span className="widget-value">{totalBitrate}</span> Мбит/с
           </div>
-          <div className="setting">
-            <label>Multicast:</label>
-            <input type="checkbox" checked={settings.multicast} onChange={e => handleChange('multicast', e.target.checked)} />
+          <div className="widget-item">
+            <span className="widget-label"><i className="fas fa-tachometer-alt"></i><span> Загрузка:</span></span>
+            <span className="widget-value">{loadPercent}%</span>
           </div>
-          <div className="setting">
-            <label>QoS:</label>
-            <input type="checkbox" checked={settings.qos} onChange={e => handleChange('qos', e.target.checked)} />
+          <div className="widget-item">
+            <span className="widget-label"><i className="fas fa-plug"></i><span> Порты:</span></span>
+            <span className="widget-value">0</span>/<span>0</span>
           </div>
-          <div className="setting">
-            <label>Тип сети:</label>
-            <select value={settings.networkType} onChange={e => handleChange('networkType', e.target.value)}>
-              <option value="managed">Управляемая</option>
-              <option value="unmanaged">Неуправляемая</option>
-            </select>
+          <div className="widget-item">
+            <span className="widget-label"><i className="fas fa-broadcast-tower"></i><span> Multicast:</span></span>
+            <span className="widget-value">{network.multicast ? 'Вкл' : 'Выкл'}</span>
           </div>
-          <div className="setting">
-            <label>Синхронизация:</label>
-            <select value={settings.syncProtocol} onChange={e => handleChange('syncProtocol', e.target.value)}>
-              <option value="ptp">PTP</option>
-              <option value="ntp">NTP</option>
-              <option value="none">Нет</option>
-            </select>
-          </div>
-          <div className="setting">
-            <label>Резервирование:</label>
-            <input type="checkbox" checked={settings.redundancy} onChange={e => handleChange('redundancy', e.target.checked)} />
-          </div>
-          <div className="setting result">
-            <label>Пропускная способность:</label>
-            <span className="result-value">{cableSpeed} Мбит/с</span>
-          </div>
-          <div className="setting result">
-            <label>Загрузка:</label>
-            <span className="result-value">{loadPercent}%</span>
+          <div className="widget-item">
+            <span className="widget-label"><i className="fas fa-chart-pie"></i><span> QoS:</span></span>
+            <span className="widget-value">{network.qos ? 'Вкл' : 'Выкл'}</span>
           </div>
         </div>
       </div>
