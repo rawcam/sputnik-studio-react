@@ -7,7 +7,7 @@ import tractsReducer from './tractsSlice'
 import projectsReducer from './projectsSlice'
 import authReducer from './authSlice'
 import companyExpensesReducer from './companyExpensesSlice'
-import serviceVisitsReducer from '../features/service/serviceVisitsSlice'
+import serviceVisitsReducer from './serviceVisitsSlice'
 
 export const store = configureStore({
   reducer: {
