@@ -5,6 +5,8 @@ import videoReducer from './videoSlice'
 import networkReducer from './networkSlice'
 import tractsReducer from './tractsSlice'
 import projectsReducer from './projectsSlice'
+import authReducer from './authSlice'
+import companyExpensesReducer from './companyExpensesSlice'
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +16,8 @@ export const store = configureStore({
     network: networkReducer,
     tracts: tractsReducer,
     projects: projectsReducer,
+    auth: authReducer,
+    companyExpenses: companyExpensesReducer,
   },
 })
 
