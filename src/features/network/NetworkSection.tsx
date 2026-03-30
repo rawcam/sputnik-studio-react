@@ -1,13 +1,19 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { setNetworkSettings } from '../../store/networkSlice'
+import { setNetworkSettings, getCableSpeed, calcLoadPercent } from '../../store/networkSlice'
 
 export const NetworkSection: React.FC = () => {
   const dispatch = useDispatch()
   const settings = useSelector((state: RootState) => state.network)
+  // Временная заглушка для битрейта (позже будет браться из трактов)
+  const totalBitrate = useSelector((state: RootState) => 
+    state.tracts.tracts.reduce((sum, t) => sum + t.totalBitrate, 0)
+  )
+  const cableSpeed = getCableSpeed(settings.cable)
+  const loadPercent = calcLoadPercent(totalBitrate, settings.cable)
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: keyof typeof settings, value: any) => {
     dispatch(setNetworkSettings({ [field]: value }))
   }
 
@@ -58,6 +64,14 @@ export const NetworkSection: React.FC = () => {
           <div className="setting">
             <label>Резервирование:</label>
             <input type="checkbox" checked={settings.redundancy} onChange={e => handleChange('redundancy', e.target.checked)} />
+          </div>
+          <div className="setting result">
+            <label>Пропускная способность:</label>
+            <span className="result-value">{cableSpeed} Мбит/с</span>
+          </div>
+          <div className="setting result">
+            <label>Загрузка:</label>
+            <span className="result-value">{loadPercent}%</span>
           </div>
         </div>
       </div>
