@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { Project, ProjectStatus, ProjectCategory } from '../../store/projectsSlice'
+import { Project, ProjectStatus, ProjectCategory, IncomeItem, ExpenseItem } from '../../store/projectsSlice'
 import { updateProject } from '../../store/projectsSlice'
 import { useFinance } from '../../hooks/useFinance'
 import { useProjectsDb } from '../../hooks/useProjectsDb'
@@ -19,9 +19,18 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
   const [editedProject, setEditedProject] = useState<Project>(project)
   const [saving, setSaving] = useState(false)
 
-  // Временные поля для новых встреч и закупок
+  // Временные поля для новых элементов
   const [newMeeting, setNewMeeting] = useState({ date: new Date().toISOString().slice(0,10), subject: '' })
   const [newPurchase, setNewPurchase] = useState({ name: '', status: 'awaiting_payment', date: new Date().toISOString().slice(0,10) })
+  const [newIncome, setNewIncome] = useState({ date: new Date().toISOString().slice(0,10), amount: 0 })
+  const [newExpense, setNewExpense] = useState({ date: new Date().toISOString().slice(0,10), amount: 0, type: 'purchase' as const })
+  const [newService, setNewService] = useState({
+    date: new Date().toISOString().slice(0,10),
+    type: '',
+    status: 'planned' as const,
+    responsible: '',
+    cost: 0
+  })
 
   const handleChange = (field: keyof Project, value: any) => {
     setEditedProject(prev => ({ ...prev, [field]: value }))
@@ -74,6 +83,78 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
     }))
   }
 
+  // Доходы
+  const addIncome = () => {
+    if (newIncome.amount <= 0) return
+    setEditedProject(prev => ({
+      ...prev,
+      incomeSchedule: [...prev.incomeSchedule, { date: newIncome.date, amount: newIncome.amount, paid: false }]
+    }))
+    setNewIncome({ date: new Date().toISOString().slice(0,10), amount: 0 })
+  }
+
+  const updateIncome = (index: number, field: keyof IncomeItem, value: any) => {
+    const newIncomes = [...editedProject.incomeSchedule]
+    newIncomes[index] = { ...newIncomes[index], [field]: value }
+    // Если меняем статус оплаты, пересчитываем actualIncome
+    if (field === 'paid') {
+      const actualIncome = newIncomes.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0)
+      setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes, actualIncome }))
+    } else {
+      setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes }))
+    }
+  }
+
+  const removeIncome = (index: number) => {
+    const newIncomes = editedProject.incomeSchedule.filter((_, i) => i !== index)
+    const actualIncome = newIncomes.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0)
+    setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes, actualIncome }))
+  }
+
+  // Расходы
+  const addExpense = () => {
+    if (newExpense.amount <= 0) return
+    setEditedProject(prev => ({
+      ...prev,
+      expenseSchedule: [...prev.expenseSchedule, { date: newExpense.date, amount: newExpense.amount, type: newExpense.type, paid: false }]
+    }))
+    setNewExpense({ date: new Date().toISOString().slice(0,10), amount: 0, type: 'purchase' })
+  }
+
+  const updateExpense = (index: number, field: keyof ExpenseItem, value: any) => {
+    const newExpenses = [...editedProject.expenseSchedule]
+    newExpenses[index] = { ...newExpenses[index], [field]: value }
+    if (field === 'paid') {
+      const actualExpenses = newExpenses.filter(e => e.paid).reduce((sum, e) => sum + e.amount, 0)
+      setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses, actualExpenses }))
+    } else {
+      setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses }))
+    }
+  }
+
+  const removeExpense = (index: number) => {
+    const newExpenses = editedProject.expenseSchedule.filter((_, i) => i !== index)
+    const actualExpenses = newExpenses.filter(e => e.paid).reduce((sum, e) => sum + e.amount, 0)
+    setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses, actualExpenses }))
+  }
+
+  // Сервисные работы
+  const addService = () => {
+    if (!newService.type.trim()) return
+    const newId = Date.now().toString()
+    setEditedProject(prev => ({
+      ...prev,
+      serviceVisits: [...prev.serviceVisits, { ...newService, id: newId }]
+    }))
+    setNewService({
+      date: new Date().toISOString().slice(0,10),
+      type: '',
+      status: 'planned',
+      responsible: '',
+      cost: 0
+    })
+  }
+
   const statusColors: Record<string, string> = {
     presale: '#f59e0b',
     design: '#3b82f6',
@@ -101,6 +182,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
     { value: 'out_of_stock', label: 'Нет в наличии' },
   ]
 
+  const expenseTypeOptions = [
+    { value: 'purchase', label: 'Закупка оборудования' },
+    { value: 'salary', label: 'Зарплата' },
+    { value: 'subcontractor', label: 'Подрядчики' },
+    { value: 'rent', label: 'Аренда' },
+  ]
+
   return (
     <div className="project-detail-card">
       <button className="btn-secondary" onClick={onBack}>
@@ -122,21 +210,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
       {activeTab === 'info' && (
         <>
           <div className="detail-form">
-            {/* ... все поля формы, как ранее ... */}
             <div className="detail-field">
               <label>Название:</label>
-              <input
-                type="text"
-                value={editedProject.name}
-                onChange={e => handleChange('name', e.target.value)}
-              />
+              <input type="text" value={editedProject.name} onChange={e => handleChange('name', e.target.value)} />
             </div>
             <div className="detail-field">
               <label>Категория:</label>
-              <select
-                value={editedProject.category}
-                onChange={e => handleChange('category', e.target.value as ProjectCategory)}
-              >
+              <select value={editedProject.category} onChange={e => handleChange('category', e.target.value as ProjectCategory)}>
                 <option value="new">Новый (0000–1999)</option>
                 <option value="modernization">Модернизация (2000–3999)</option>
                 <option value="service">Сервис (4000–5999)</option>
@@ -146,11 +226,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             </div>
             <div className="detail-field">
               <label>Статус:</label>
-              <select
-                value={editedProject.status}
-                onChange={e => handleChange('status', e.target.value as ProjectStatus)}
-                style={{ background: statusColors[editedProject.status] || '#ccc', color: 'white' }}
-              >
+              <select value={editedProject.status} onChange={e => handleChange('status', e.target.value as ProjectStatus)} style={{ background: statusColors[editedProject.status] || '#ccc', color: 'white' }}>
                 <option value="presale">Пресейл</option>
                 <option value="design">Стадия П</option>
                 <option value="ready">Стадия Р</option>
@@ -160,55 +236,26 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             </div>
             <div className="detail-field">
               <label>Сумма контракта (₽):</label>
-              <input
-                type="number"
-                value={editedProject.contractAmount}
-                onChange={e => handleChange('contractAmount', Number(e.target.value))}
-              />
+              <input type="number" value={editedProject.contractAmount} onChange={e => handleChange('contractAmount', Number(e.target.value))} />
             </div>
             <div className="detail-field">
               <label>Инженер:</label>
-              <input
-                type="text"
-                value={editedProject.engineer}
-                onChange={e => handleChange('engineer', e.target.value)}
-              />
+              <input type="text" value={editedProject.engineer} onChange={e => handleChange('engineer', e.target.value)} />
             </div>
             <div className="detail-field">
               <label>Руководитель проекта:</label>
-              <input
-                type="text"
-                value={editedProject.projectManager}
-                onChange={e => handleChange('projectManager', e.target.value)}
-              />
+              <input type="text" value={editedProject.projectManager} onChange={e => handleChange('projectManager', e.target.value)} />
             </div>
             <div className="detail-field">
               <label>Дата начала:</label>
-              <input
-                type="date"
-                value={editedProject.startDate}
-                onChange={e => handleChange('startDate', e.target.value)}
-              />
+              <input type="date" value={editedProject.startDate} onChange={e => handleChange('startDate', e.target.value)} />
             </div>
             <div className="detail-field">
               <label>Прогресс (%):</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={editedProject.progress}
-                onChange={e => handleChange('progress', Number(e.target.value))}
-              />
+              <input type="number" min="0" max="100" value={editedProject.progress} onChange={e => handleChange('progress', Number(e.target.value))} />
             </div>
             <div className="detail-field checkbox">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={editedProject.priority}
-                  onChange={e => handleChange('priority', e.target.checked)}
-                />
-                Срочный проект
-              </label>
+              <label><input type="checkbox" checked={editedProject.priority} onChange={e => handleChange('priority', e.target.checked)} /> Срочный проект</label>
             </div>
           </div>
 
@@ -218,42 +265,22 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             <div className="detail-list">
               {editedProject.meetings.map((meeting, idx) => (
                 <div key={idx} className="list-item">
-                  <input
-                    type="date"
-                    value={meeting.date}
-                    onChange={e => {
-                      const newMeetings = [...editedProject.meetings]
-                      newMeetings[idx].date = e.target.value
-                      setEditedProject(prev => ({ ...prev, meetings: newMeetings }))
-                    }}
-                  />
-                  <input
-                    type="text"
-                    value={meeting.subject}
-                    onChange={e => {
-                      const newMeetings = [...editedProject.meetings]
-                      newMeetings[idx].subject = e.target.value
-                      setEditedProject(prev => ({ ...prev, meetings: newMeetings }))
-                    }}
-                    placeholder="Тема встречи"
-                  />
-                  <button className="remove-item" onClick={() => removeMeeting(idx)}>
-                    <i className="fas fa-trash-alt"></i>
-                  </button>
+                  <input type="date" value={meeting.date} onChange={e => {
+                    const newMeetings = [...editedProject.meetings]
+                    newMeetings[idx].date = e.target.value
+                    setEditedProject(prev => ({ ...prev, meetings: newMeetings }))
+                  }} />
+                  <input type="text" value={meeting.subject} onChange={e => {
+                    const newMeetings = [...editedProject.meetings]
+                    newMeetings[idx].subject = e.target.value
+                    setEditedProject(prev => ({ ...prev, meetings: newMeetings }))
+                  }} placeholder="Тема встречи" />
+                  <button className="remove-item" onClick={() => removeMeeting(idx)}><i className="fas fa-trash-alt"></i></button>
                 </div>
               ))}
               <div className="add-item-form">
-                <input
-                  type="date"
-                  value={newMeeting.date}
-                  onChange={e => setNewMeeting(prev => ({ ...prev, date: e.target.value }))}
-                />
-                <input
-                  type="text"
-                  value={newMeeting.subject}
-                  onChange={e => setNewMeeting(prev => ({ ...prev, subject: e.target.value }))}
-                  placeholder="Тема новой встречи"
-                />
+                <input type="date" value={newMeeting.date} onChange={e => setNewMeeting(prev => ({ ...prev, date: e.target.value }))} />
+                <input type="text" value={newMeeting.subject} onChange={e => setNewMeeting(prev => ({ ...prev, subject: e.target.value }))} placeholder="Тема новой встречи" />
                 <button className="btn-small" onClick={addMeeting}>+ Добавить</button>
               </div>
             </div>
@@ -265,62 +292,32 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             <div className="detail-list">
               {editedProject.purchases.map((purchase, idx) => (
                 <div key={idx} className="list-item">
-                  <input
-                    type="text"
-                    value={purchase.name}
-                    onChange={e => {
-                      const newPurchases = [...editedProject.purchases]
-                      newPurchases[idx].name = e.target.value
-                      setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
-                    }}
-                    placeholder="Наименование"
-                  />
-                  <select
-                    value={purchase.status}
-                    onChange={e => {
-                      const newPurchases = [...editedProject.purchases]
-                      newPurchases[idx].status = e.target.value
-                      setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
-                    }}
-                  >
-                    {purchaseStatusOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
+                  <input type="text" value={purchase.name} onChange={e => {
+                    const newPurchases = [...editedProject.purchases]
+                    newPurchases[idx].name = e.target.value
+                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
+                  }} placeholder="Наименование" />
+                  <select value={purchase.status} onChange={e => {
+                    const newPurchases = [...editedProject.purchases]
+                    newPurchases[idx].status = e.target.value
+                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
+                  }}>
+                    {purchaseStatusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                   </select>
-                  <input
-                    type="date"
-                    value={purchase.date}
-                    onChange={e => {
-                      const newPurchases = [...editedProject.purchases]
-                      newPurchases[idx].date = e.target.value
-                      setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
-                    }}
-                  />
-                  <button className="remove-item" onClick={() => removePurchase(idx)}>
-                    <i className="fas fa-trash-alt"></i>
-                  </button>
+                  <input type="date" value={purchase.date} onChange={e => {
+                    const newPurchases = [...editedProject.purchases]
+                    newPurchases[idx].date = e.target.value
+                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
+                  }} />
+                  <button className="remove-item" onClick={() => removePurchase(idx)}><i className="fas fa-trash-alt"></i></button>
                 </div>
               ))}
               <div className="add-item-form">
-                <input
-                  type="text"
-                  value={newPurchase.name}
-                  onChange={e => setNewPurchase(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Наименование закупки"
-                />
-                <select
-                  value={newPurchase.status}
-                  onChange={e => setNewPurchase(prev => ({ ...prev, status: e.target.value }))}
-                >
-                  {purchaseStatusOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
+                <input type="text" value={newPurchase.name} onChange={e => setNewPurchase(prev => ({ ...prev, name: e.target.value }))} placeholder="Наименование закупки" />
+                <select value={newPurchase.status} onChange={e => setNewPurchase(prev => ({ ...prev, status: e.target.value }))}>
+                  {purchaseStatusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                 </select>
-                <input
-                  type="date"
-                  value={newPurchase.date}
-                  onChange={e => setNewPurchase(prev => ({ ...prev, date: e.target.value }))}
-                />
+                <input type="date" value={newPurchase.date} onChange={e => setNewPurchase(prev => ({ ...prev, date: e.target.value }))} />
                 <button className="btn-small" onClick={addPurchase}>+ Добавить</button>
               </div>
             </div>
@@ -328,30 +325,127 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
         </>
       )}
 
-      {activeTab === 'finances' && metrics && (
+      {activeTab === 'finances' && (
         <div>
-          <h3>Финансовые показатели</h3>
-          <p><strong>Плановая маржа:</strong> {metrics.margins.plannedMargin.toLocaleString()} ₽</p>
-          <p><strong>Плановая рентабельность:</strong> {(metrics.margins.plannedProfitability * 100).toFixed(1)}%</p>
-          <p><strong>Фактическая маржа:</strong> {metrics.margins.actualMargin.toLocaleString()} ₽</p>
-          <p><strong>Фактическая рентабельность:</strong> {(metrics.margins.actualProfitability * 100).toFixed(1)}%</p>
-          <details>
-            <summary>График денежных потоков</summary>
-            <pre>{JSON.stringify(metrics.cashFlow, null, 2)}</pre>
-          </details>
+          {/* Доходы */}
+          <div className="detail-section">
+            <h4>Доходы (поступления)</h4>
+            <div className="detail-list">
+              {editedProject.incomeSchedule.map((income, idx) => (
+                <div key={idx} className="list-item">
+                  <input type="date" value={income.date} onChange={e => updateIncome(idx, 'date', e.target.value)} />
+                  <input type="number" value={income.amount} onChange={e => updateIncome(idx, 'amount', Number(e.target.value))} placeholder="Сумма" />
+                  <label><input type="checkbox" checked={income.paid || false} onChange={e => updateIncome(idx, 'paid', e.target.checked)} /> Оплачено</label>
+                  <button className="remove-item" onClick={() => removeIncome(idx)}><i className="fas fa-trash-alt"></i></button>
+                </div>
+              ))}
+              <div className="add-item-form">
+                <input type="date" value={newIncome.date} onChange={e => setNewIncome(prev => ({ ...prev, date: e.target.value }))} />
+                <input type="number" value={newIncome.amount} onChange={e => setNewIncome(prev => ({ ...prev, amount: Number(e.target.value) }))} placeholder="Сумма" />
+                <button className="btn-small" onClick={addIncome}>+ Добавить доход</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Расходы */}
+          <div className="detail-section">
+            <h4>Расходы (затраты)</h4>
+            <div className="detail-list">
+              {editedProject.expenseSchedule.map((expense, idx) => (
+                <div key={idx} className="list-item">
+                  <input type="date" value={expense.date} onChange={e => updateExpense(idx, 'date', e.target.value)} />
+                  <input type="number" value={expense.amount} onChange={e => updateExpense(idx, 'amount', Number(e.target.value))} placeholder="Сумма" />
+                  <select value={expense.type} onChange={e => updateExpense(idx, 'type', e.target.value as any)}>
+                    {expenseTypeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                  <label><input type="checkbox" checked={expense.paid || false} onChange={e => updateExpense(idx, 'paid', e.target.checked)} /> Оплачено</label>
+                  <button className="remove-item" onClick={() => removeExpense(idx)}><i className="fas fa-trash-alt"></i></button>
+                </div>
+              ))}
+              <div className="add-item-form">
+                <input type="date" value={newExpense.date} onChange={e => setNewExpense(prev => ({ ...prev, date: e.target.value }))} />
+                <input type="number" value={newExpense.amount} onChange={e => setNewExpense(prev => ({ ...prev, amount: Number(e.target.value) }))} placeholder="Сумма" />
+                <select value={newExpense.type} onChange={e => setNewExpense(prev => ({ ...prev, type: e.target.value as any }))}>
+                  {expenseTypeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+                <button className="btn-small" onClick={addExpense}>+ Добавить расход</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Финансовая аналитика */}
+          {metrics && (
+            <div className="detail-section">
+              <h4>Аналитика</h4>
+              <p><strong>Плановая маржа:</strong> {metrics.margins.plannedMargin.toLocaleString()} ₽</p>
+              <p><strong>Плановая рентабельность:</strong> {(metrics.margins.plannedProfitability * 100).toFixed(1)}%</p>
+              <p><strong>Фактическая маржа:</strong> {metrics.margins.actualMargin.toLocaleString()} ₽</p>
+              <p><strong>Фактическая рентабельность:</strong> {(metrics.margins.actualProfitability * 100).toFixed(1)}%</p>
+              <details>
+                <summary>График денежных потоков</summary>
+                <pre>{JSON.stringify(metrics.cashFlow, null, 2)}</pre>
+              </details>
+            </div>
+          )}
         </div>
       )}
 
       {activeTab === 'service' && (
         <div>
           <h3>Сервисные работы</h3>
-          {editedProject.serviceVisits.length === 0 && <p>Нет запланированных выездов</p>}
-          <ul>
-            {editedProject.serviceVisits.map(v => (
-              <li key={v.id}>{v.date} — {v.type} ({v.status})</li>
+          <div className="detail-list">
+            {editedProject.serviceVisits.map((visit, idx) => (
+              <div key={visit.id} className="list-item">
+                <input type="date" value={visit.date} onChange={e => {
+                  const newVisits = [...editedProject.serviceVisits]
+                  newVisits[idx].date = e.target.value
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                }} />
+                <input type="text" value={visit.type} onChange={e => {
+                  const newVisits = [...editedProject.serviceVisits]
+                  newVisits[idx].type = e.target.value
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                }} placeholder="Тип работ" />
+                <select value={visit.status} onChange={e => {
+                  const newVisits = [...editedProject.serviceVisits]
+                  newVisits[idx].status = e.target.value as any
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                }}>
+                  <option value="planned">Запланировано</option>
+                  <option value="completed">Выполнено</option>
+                  <option value="cancelled">Отменено</option>
+                </select>
+                <input type="text" value={visit.responsible} onChange={e => {
+                  const newVisits = [...editedProject.serviceVisits]
+                  newVisits[idx].responsible = e.target.value
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                }} placeholder="Ответственный" />
+                <input type="number" value={visit.cost || ''} onChange={e => {
+                  const newVisits = [...editedProject.serviceVisits]
+                  newVisits[idx].cost = e.target.value ? Number(e.target.value) : undefined
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                }} placeholder="Стоимость" />
+                <button className="remove-item" onClick={() => {
+                  const newVisits = editedProject.serviceVisits.filter((_, i) => i !== idx)
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                }}>
+                  <i className="fas fa-trash-alt"></i>
+                </button>
+              </div>
             ))}
-          </ul>
-          {/* Здесь позже добавим форму добавления */}
+            <div className="add-item-form">
+              <input type="date" value={newService.date} onChange={e => setNewService(prev => ({ ...prev, date: e.target.value }))} />
+              <input type="text" value={newService.type} onChange={e => setNewService(prev => ({ ...prev, type: e.target.value }))} placeholder="Тип работ" />
+              <select value={newService.status} onChange={e => setNewService(prev => ({ ...prev, status: e.target.value as any }))}>
+                <option value="planned">Запланировано</option>
+                <option value="completed">Выполнено</option>
+                <option value="cancelled">Отменено</option>
+              </select>
+              <input type="text" value={newService.responsible} onChange={e => setNewService(prev => ({ ...prev, responsible: e.target.value }))} placeholder="Ответственный" />
+              <input type="number" value={newService.cost} onChange={e => setNewService(prev => ({ ...prev, cost: Number(e.target.value) }))} placeholder="Стоимость" />
+              <button className="btn-small" onClick={addService}>+ Добавить</button>
+            </div>
+          </div>
         </div>
       )}
 
