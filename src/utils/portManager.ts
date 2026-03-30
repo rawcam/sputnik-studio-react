@@ -10,7 +10,7 @@ export class PortManager {
     this.switches = switches
   }
 
-  findAvailableSwitch(device: any, requirePoE = false) {
+  findAvailableSwitch(requirePoE = false) {
     for (const sw of this.switches) {
       if (sw.type !== 'networkSwitch') continue
       const freePort = sw.ports.find((p: any) => p.deviceId === null)
@@ -25,7 +25,7 @@ export class PortManager {
     if (device.attachedSwitchId) this.release(device.id)
     if (!device.ethernet && !device.poeEnabled) return false
     const requirePoE = device.poeEnabled === true
-    const result = this.findAvailableSwitch(device, requirePoE)
+    const result = this.findAvailableSwitch(requirePoE)
     if (!result) {
       alert(`Нет свободных портов${requirePoE ? ' и/или недостаточно PoE-бюджета' : ''} для устройства ${device.name}.`)
       return false
