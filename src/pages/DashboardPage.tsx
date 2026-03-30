@@ -13,21 +13,21 @@ export const DashboardPage = () => {
     <div className="dashboard-wrapper">
       <h2>ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
       <div className="dashboard-grid">
-        {/* Колонка 1: Финансы компании */}
+        {/* Колонка 1: Финансы компании (только для директора) */}
         {hasRole('director') ? (
           <CompanyFinanceWidget />
         ) : (
-          <div className="project-card">Финансы компании (доступны только директору)</div>
+          <div className="widget-card placeholder">Финансы компании (доступны только директору)</div>
         )}
 
-        {/* Колонка 2: Финансы проектов */}
+        {/* Колонка 2: Финансы проектов (директор и ГИП) */}
         {(hasRole('director') || hasRole('pm')) ? (
           <ProjectsFinanceWidget />
         ) : (
-          <div className="project-card">Финансы проектов (доступны руководителям)</div>
+          <div className="widget-card placeholder">Финансы проектов (доступны руководителям)</div>
         )}
 
-        {/* Колонка 3: Сервис */}
+        {/* Колонка 3: Сервис (ближайшие выезды) */}
         <ServiceWidget />
 
         {/* Колонка 4: Загрузка сотрудников */}
