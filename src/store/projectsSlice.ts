@@ -51,14 +51,10 @@ export interface Project {
 
 interface ProjectsState {
   list: Project[]
-  loading: boolean
-  error: string | null
 }
 
 const initialState: ProjectsState = {
   list: [],
-  loading: false,
-  error: null,
 }
 
 function generateShortId(category: ProjectCategory, existingIds: string[]): string {
@@ -91,30 +87,11 @@ const projectsSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
-    loadProjectsStart: (state) => {
-      state.loading = true
-      state.error = null
-    },
-    loadProjectsSuccess: (state, action: PayloadAction<Project[]>) => {
+    setProjects: (state, action: PayloadAction<Project[]>) => {
       state.list = action.payload
-      state.loading = false
     },
-    loadProjectsFailure: (state, action: PayloadAction<string>) => {
-      state.loading = false
-      state.error = action.payload
-    },
-    addProject: (state, action: PayloadAction<Omit<Project, 'id' | 'shortId'>>) => {
-      const existingIds = state.list.map(p => p.shortId)
-      const shortId = generateShortId(action.payload.category, existingIds)
-      const newId = Date.now().toString()
-      const newProject: Project = {
-        ...action.payload,
-        id: newId,
-        shortId,
-        actualIncome: 0,
-        actualExpenses: 0,
-      }
-      state.list.push(newProject)
+    addProject: (state, action: PayloadAction<Project>) => {
+      state.list.push(action.payload)
     },
     updateProject: (state, action: PayloadAction<Project>) => {
       const index = state.list.findIndex(p => p.id === action.payload.id)
@@ -147,9 +124,7 @@ const projectsSlice = createSlice({
 })
 
 export const {
-  loadProjectsStart,
-  loadProjectsSuccess,
-  loadProjectsFailure,
+  setProjects,
   addProject,
   updateProject,
   deleteProject,
@@ -158,3 +133,68 @@ export const {
 } = projectsSlice.actions
 
 export default projectsSlice.reducer
+
+// Демо-данные
+export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
+  const today = new Date().toISOString().slice(0, 10)
+  const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+  return [
+    {
+      name: 'Конференц-зал 1',
+      category: 'new',
+      status: 'design',
+      statusStartDate: today,
+      nextStatus: 'ready',
+      nextStatusDate: nextWeek,
+      progress: 30,
+      startDate: today,
+      engineer: 'Иванов И.И.',
+      projectManager: 'Петров П.П.',
+      priority: false,
+      meetings: [{ date: today, subject: 'Согласование ТЗ' }],
+      purchases: [],
+      contractAmount: 1250000,
+      incomeSchedule: [{ date: today, amount: 500000, paid: true }],
+      expenseSchedule: [{ date: today, amount: 300000, type: 'purchase', paid: true }],
+      serviceVisits: [],
+    },
+    {
+      name: 'Ситуационный центр',
+      category: 'modernization',
+      status: 'presale',
+      statusStartDate: today,
+      nextStatus: 'design',
+      nextStatusDate: nextWeek,
+      progress: 10,
+      startDate: today,
+      engineer: 'Сидоров С.С.',
+      projectManager: 'Петров П.П.',
+      priority: true,
+      meetings: [],
+      purchases: [],
+      contractAmount: 3450000,
+      incomeSchedule: [{ date: today, amount: 1000000, paid: false }],
+      expenseSchedule: [],
+      serviceVisits: [],
+    },
+    {
+      name: 'Диспетчерская',
+      category: 'service',
+      status: 'construction',
+      statusStartDate: '2026-02-15',
+      nextStatus: 'done',
+      nextStatusDate: '2026-04-01',
+      progress: 80,
+      startDate: '2026-02-01',
+      engineer: 'Кузнецов К.К.',
+      projectManager: 'Иванов И.И.',
+      priority: false,
+      meetings: [],
+      purchases: [],
+      contractAmount: 890000,
+      incomeSchedule: [{ date: '2026-02-20', amount: 890000, paid: true }],
+      expenseSchedule: [{ date: '2026-02-10', amount: 500000, type: 'purchase', paid: true }],
+      serviceVisits: [{ id: '1', date: '2026-04-10', type: 'Плановое ТО', status: 'planned', responsible: 'Иванов И.И.' }],
+    },
+  ]
+}
