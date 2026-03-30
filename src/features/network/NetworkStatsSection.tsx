@@ -17,7 +17,7 @@ export const NetworkStatsSection: React.FC = () => {
         <span>СЕТЬ</span>
         <i className="fas fa-angle-down"></i>
       </div>
-      <div className="section-content" id="networkStatsContent">
+      <div className="section-content">
         <div className="widget">
           <div className="widget-item">
             <span className="widget-label"><i className="fas fa-chart-line"></i><span> Битрейт:</span></span>
