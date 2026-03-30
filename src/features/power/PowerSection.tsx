@@ -1,34 +1,29 @@
 import React from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
+import { setPowerConfig } from '../../store/powerSlice'
 
-export const PowerStatsSection: React.FC = () => {
-  const totalPower = useSelector((state: RootState) =>
-    state.tracts.tracts.reduce((sum, t) => sum + t.totalPower, 0)
-  )
-  const totalBTU = Math.round(totalPower * 3.412)
+export const PowerSection: React.FC = () => {
+  const dispatch = useDispatch()
+  const config = useSelector((state: RootState) => state.power)
+
+  const handleChange = (field: string, value: any) => {
+    dispatch(setPowerConfig({ [field]: value }))
+  }
 
   return (
     <div className="sidebar-section">
-      <div className="section-header" data-section="powerStats">
+      <div className="section-header" data-section="power">
         <i className="fas fa-bolt"></i>
-        <span>ПИТАНИЕ</span>
+        <span>ЭНЕРГИЯ</span>
         <i className="fas fa-angle-down"></i>
       </div>
-      <div className="section-content" id="powerStatsContent">
-        <div className="widget">
-          <div className="widget-item">
-            <span className="widget-label"><i className="fas fa-bolt"></i><span> PoE:</span></span>
-            <span className="widget-value">0</span>/<span>0</span> Вт
-          </div>
-          <div className="widget-item">
-            <span className="widget-label"><i className="fas fa-fire"></i><span> Мощность:</span></span>
-            <span className="widget-value">{totalPower}</span> Вт
-          </div>
-          <div className="widget-item">
-            <span className="widget-label"><i className="fas fa-thermometer-half"></i><span> Тепло:</span></span>
-            <span className="widget-value">{totalBTU}</span> BTU/ч
-          </div>
+      <div className="section-content">
+        <div className="setting"><label>Суммарная мощность оборудования (Вт):</label><input type="number" value={config.totalPower} onChange={e => handleChange('totalPower', parseFloat(e.target.value))} /></div>
+        <div className="setting"><label>Требуемая автономия ИБП (часов):</label><input type="number" step="0.5" value={config.upsAutonomy} onChange={e => handleChange('upsAutonomy', parseFloat(e.target.value))} /></div>
+        <div className="result-item">
+          <span className="result-label">Рекомендация</span>
+          <span className="result-value">{config.resultText}</span>
         </div>
       </div>
     </div>
