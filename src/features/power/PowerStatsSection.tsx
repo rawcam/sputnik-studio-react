@@ -15,7 +15,7 @@ export const PowerStatsSection: React.FC = () => {
         <span>ПИТАНИЕ</span>
         <i className="fas fa-angle-down"></i>
       </div>
-      <div className="section-content" id="powerStatsContent">
+      <div className="section-content">
         <div className="widget">
           <div className="widget-item">
             <span className="widget-label"><i className="fas fa-bolt"></i><span> PoE:</span></span>
