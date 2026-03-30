@@ -726,3 +726,90 @@ input:focus, select:focus, textarea:focus {
   text-align: center;
   color: var(--text-secondary);
 }
+/* ========== ТРАКТЫ ========== */
+.active-tract-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px;
+  background: var(--bg-panel);
+  border-radius: var(--border-radius-card);
+}
+
+.tract-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.tract-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.tract-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.tract-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tract-stats .stat-card {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-small);
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.tract-devices {
+  margin-top: 16px;
+}
+
+.tract-devices h3 {
+  margin-bottom: 12px;
+}
+
+.devices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.device-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg);
+  border-radius: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-light);
+}
+
+.device-item span {
+  font-size: 0.9rem;
+}
