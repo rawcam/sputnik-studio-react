@@ -34,8 +34,8 @@ export const useProjectsDb = () => {
         ...project,
         id: newId,
         shortId,
-        actualIncome: 0,
-        actualExpenses: 0,
+        actualIncome: project.actualIncome ?? 0,
+        actualExpenses: project.actualExpenses ?? 0,
       }
       await db.projects.add(newProject)
       dispatch(addProject(newProject))
