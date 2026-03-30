@@ -527,3 +527,50 @@ input:focus, select:focus, textarea:focus {
   border-radius: 20px;
   border: 1px solid var(--border-light);
 }
+/* Виджет сервис */
+.service-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+
+.service-item:hover {
+  background: var(--card-bg);
+  padding-left: 8px;
+  border-radius: 16px;
+}
+
+.service-date {
+  font-weight: 600;
+  min-width: 85px;
+  color: var(--accent);
+}
+
+.service-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.service-info strong {
+  font-size: 0.85rem;
+}
+
+.service-info span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.service-responsible {
+  font-style: italic;
+}
+
+.empty-state-widget {
+  text-align: center;
+  padding: 20px 10px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
