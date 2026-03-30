@@ -1,5 +1,7 @@
 import { useAuth } from '../hooks/useAuth'
 import { CompanyFinanceWidget } from '../components/widgets/CompanyFinanceWidget'
+import { ProjectsFinanceWidget } from '../components/widgets/ProjectsFinanceWidget'
+import { ServiceWidget } from '../components/widgets/ServiceWidget'
 import './DashboardPage.css'
 
 export const DashboardPage = () => {
@@ -16,11 +18,15 @@ export const DashboardPage = () => {
           <div className="project-card">Финансы (доступны только директору)</div>
         )}
 
-        {/* Колонка 2: Проекты (заглушка) */}
-        <div className="project-card">Проекты (скоро)</div>
+        {/* Колонка 2: Финансы проектов (для директора и ГИП) */}
+        {(hasRole('director') || hasRole('pm')) ? (
+          <ProjectsFinanceWidget />
+        ) : (
+          <div className="project-card">Финансы проектов (доступны руководителям)</div>
+        )}
 
-        {/* Колонка 3: Сервис (заглушка) */}
-        <div className="project-card">Сервис (скоро)</div>
+        {/* Колонка 3: Сервис (все роли видят, но может быть ограничено по правам) */}
+        <ServiceWidget />
 
         {/* Колонка 4: Загрузка (заглушка) */}
         <div className="project-card">Загрузка (скоро)</div>
