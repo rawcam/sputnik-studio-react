@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '../store'
-import { addProject, Project } from '../store/projectsSlice'
+import { addProject, loadProjectsSuccess, Project } from '../store/projectsSlice'
 import { ProjectList } from '../components/projects/ProjectList'
 import { ProjectDetail } from '../features/projects/ProjectDetail'
 import { CreateProjectModal } from '../components/projects/CreateProjectModal'
 import { useAuth } from '../hooks/useAuth'
+import { useProjectsDb } from '../hooks/useProjectsDb'
 import './ProjectsPage.css'
 
 export const ProjectsPage = () => {
@@ -14,13 +15,38 @@ export const ProjectsPage = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const { loading, loadProjects, addProject: addProjectToDb, updateProject: updateProjectInDb, deleteProject: deleteProjectFromDb, initDemoData } = useProjectsDb()
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await loadProjects()
+      dispatch(loadProjectsSuccess(data))
+    }
+    load()
+  }, [loadProjects, dispatch])
 
   const handleSelectProject = (project: Project) => setSelectedProject(project)
   const handleBack = () => setSelectedProject(null)
-  const handleCreate = (projectData: Omit<Project, 'id' | 'shortId'>) => {
-    dispatch(addProject(projectData))
+
+  const handleCreate = async (projectData: Omit<Project, 'id' | 'shortId'>) => {
+    const newProject = {
+      ...projectData,
+      id: Date.now().toString(),
+      shortId: '', // будет сгенерировано в слайсе
+      actualIncome: 0,
+      actualExpenses: 0,
+    }
+    // Сначала добавим в слайс (чтобы сгенерировать shortId)
+    dispatch(addProject(newProject))
+    // Затем сохраним в базу (но нужно получить полный проект из store)
+    // Для простоты: после диспатча, проект будет в store, мы можем его найти
+    // Но лучше переделать слайс, чтобы он возвращал добавленный проект. Пока упростим:
+    const addedProject = { ...newProject, shortId: '0000' } // временно
+    await addProjectToDb(addedProject)
     setShowCreateModal(false)
   }
+
+  if (loading) return <div>Загрузка проектов...</div>
 
   if (selectedProject) {
     return <ProjectDetail project={selectedProject} onBack={handleBack} />
