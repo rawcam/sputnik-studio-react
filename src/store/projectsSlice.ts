@@ -57,32 +57,6 @@ const initialState: ProjectsState = {
   list: [],
 }
 
-function generateShortId(category: ProjectCategory, existingIds: string[]): string {
-  let rangeStart: number
-  switch (category) {
-    case 'new': rangeStart = 0; break
-    case 'modernization': rangeStart = 2000; break
-    case 'service': rangeStart = 4000; break
-    case 'standard': rangeStart = 6000; break
-    case 'pilot': rangeStart = 8000; break
-  }
-  const rangeEnd = rangeStart + 1999
-  const taken = new Set(existingIds.map(id => parseInt(id, 10)))
-  let candidate = Math.floor(Math.random() * 2000) + rangeStart
-  let attempts = 0
-  while (taken.has(candidate) && attempts < 2000) {
-    candidate = Math.floor(Math.random() * 2000) + rangeStart
-    attempts++
-  }
-  for (let i = rangeStart; i <= rangeEnd; i++) {
-    if (!taken.has(i)) {
-      candidate = i
-      break
-    }
-  }
-  return candidate.toString().padStart(4, '0')
-}
-
 const projectsSlice = createSlice({
   name: 'projects',
   initialState,
@@ -156,6 +130,8 @@ export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
       contractAmount: 1250000,
       incomeSchedule: [{ date: today, amount: 500000, paid: true }],
       expenseSchedule: [{ date: today, amount: 300000, type: 'purchase', paid: true }],
+      actualIncome: 500000,
+      actualExpenses: 300000,
       serviceVisits: [],
     },
     {
@@ -175,6 +151,8 @@ export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
       contractAmount: 3450000,
       incomeSchedule: [{ date: today, amount: 1000000, paid: false }],
       expenseSchedule: [],
+      actualIncome: 0,
+      actualExpenses: 0,
       serviceVisits: [],
     },
     {
@@ -194,6 +172,8 @@ export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
       contractAmount: 890000,
       incomeSchedule: [{ date: '2026-02-20', amount: 890000, paid: true }],
       expenseSchedule: [{ date: '2026-02-10', amount: 500000, type: 'purchase', paid: true }],
+      actualIncome: 890000,
+      actualExpenses: 500000,
       serviceVisits: [{ id: '1', date: '2026-04-10', type: 'Плановое ТО', status: 'planned', responsible: 'Иванов И.И.' }],
     },
   ]
