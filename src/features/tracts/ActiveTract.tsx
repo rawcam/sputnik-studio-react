@@ -22,14 +22,13 @@ export const ActiveTract: React.FC = () => {
 
   const handleNewTract = () => {
     const newId = Date.now().toString()
-    const newTract = {
+    dispatch(addTract({
       id: newId,
       name: `Тракт ${tracts.length + 1}`,
       sourceDevices: [],
       sinkDevices: [],
       networkSwitches: [],
-    }
-    dispatch(addTract(newTract))
+    }))
     dispatch(setActiveTract(newId))
   }
 
