@@ -1,160 +1,96 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Project } from '../store/projectsSlice'
+import { useDispatch } from 'react-redux'
+import { setProjects, addProject, Project, seedDemoProjects } from '../store/projectsSlice'
 import { db } from '../db'
+import { useState } from 'react'
 
 export const useProjectsDb = () => {
-  const [loading, setLoading] = useState(true)
+  const dispatch = useDispatch()
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const loadProjects = useCallback(async (): Promise<Project[]> => {
+  const loadProjects = async () => {
+    setLoading(true)
     try {
       const projects = await db.projects.toArray()
-      return projects
+      dispatch(setProjects(projects))
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
-      return []
+      setError(err as Error)
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }
 
-  const saveProjects = useCallback(async (projects: Project[]) => {
+  const addProjectToDb = async (project: Omit<Project, 'id' | 'shortId'>) => {
+    setLoading(true)
     try {
-      await db.projects.bulkPut(projects)
+      // Генерируем shortId (можно улучшить)
+      const existing = await db.projects.toArray()
+      const existingShortIds = existing.map(p => p.shortId)
+      let shortId: string
+      do {
+        shortId = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+      } while (existingShortIds.includes(shortId))
+      const newId = Date.now().toString()
+      const newProject: Project = {
+        ...project,
+        id: newId,
+        shortId,
+        actualIncome: 0,
+        actualExpenses: 0,
+      }
+      await db.projects.add(newProject)
+      dispatch(addProject(newProject))
+      return newProject
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
-    }
-  }, [])
-
-  const addProject = useCallback(async (project: Project) => {
-    try {
-      await db.projects.add(project)
-      return project
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
+      setError(err as Error)
       throw err
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }
 
-  const updateProject = useCallback(async (project: Project) => {
+  const updateProjectInDb = async (project: Project) => {
+    setLoading(true)
     try {
-      await db.projects.put(project)
-      return project
+      await db.projects.update(project.id, project)
+      dispatch(updateProject(project))
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
-      throw err
+      setError(err as Error)
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }
 
-  const deleteProject = useCallback(async (id: string) => {
+  const deleteProjectFromDb = async (id: string) => {
+    setLoading(true)
     try {
       await db.projects.delete(id)
+      dispatch(deleteProject(id))
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'))
-      throw err
+      setError(err as Error)
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }
 
-  const initDemoData = useCallback(async () => {
+  const initDemoData = async () => {
     const count = await db.projects.count()
     if (count === 0) {
-      const today = new Date().toISOString().slice(0,10)
-      const nextWeek = new Date(Date.now() + 7*86400000).toISOString().slice(0,10)
-      const demoProjects: Project[] = [
-        {
-          id: '1',
-          shortId: '1001',
-          category: 'new',
-          name: 'Конференц-зал 1',
-          status: 'design',
-          statusStartDate: today,
-          nextStatus: 'ready',
-          nextStatusDate: nextWeek,
-          progress: 30,
-          startDate: '2026-03-01',
-          engineer: 'Иванов И.И.',
-          projectManager: 'Петров П.П.',
-          priority: false,
-          meetings: [{ date: '2026-03-10', subject: 'Согласование ТЗ' }],
-          purchases: [{ name: 'LED-экран', status: 'ordered', date: '2026-03-15' }],
-          contractAmount: 1250000,
-          incomeSchedule: [],
-          expenseSchedule: [],
-          actualIncome: 0,
-          actualExpenses: 0,
-          serviceVisits: [],
-        },
-        {
-          id: '2',
-          shortId: '2002',
-          category: 'modernization',
-          name: 'Ситуационный центр',
-          status: 'presale',
-          statusStartDate: today,
-          nextStatus: 'design',
-          nextStatusDate: nextWeek,
-          progress: 10,
-          startDate: '2026-03-25',
-          engineer: 'Сидоров С.С.',
-          projectManager: 'Петров П.П.',
-          priority: true,
-          meetings: [],
-          purchases: [],
-          contractAmount: 3450000,
-          incomeSchedule: [],
-          expenseSchedule: [],
-          actualIncome: 0,
-          actualExpenses: 0,
-          serviceVisits: [],
-        },
-        {
-          id: '3',
-          shortId: '4003',
-          category: 'service',
-          name: 'Диспетчерская',
-          status: 'construction',
-          statusStartDate: '2026-02-15',
-          nextStatus: 'done',
-          nextStatusDate: '2026-04-01',
-          progress: 80,
-          startDate: '2026-02-01',
-          engineer: 'Кузнецов К.К.',
-          projectManager: 'Иванов И.И.',
-          priority: false,
-          meetings: [],
-          purchases: [],
-          contractAmount: 890000,
-          incomeSchedule: [],
-          expenseSchedule: [],
-          actualIncome: 0,
-          actualExpenses: 0,
-          serviceVisits: [],
-        },
-      ]
-      await db.projects.bulkAdd(demoProjects)
-    }
-  }, [])
-
-  useEffect(() => {
-    const init = async () => {
-      setLoading(true)
-      try {
-        await initDemoData()
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'))
-      } finally {
-        setLoading(false)
+      const demos = seedDemoProjects()
+      for (const demo of demos) {
+        await addProjectToDb(demo)
       }
+      await loadProjects()
     }
-    init()
-  }, [initDemoData])
+  }
 
   return {
     loading,
     error,
     loadProjects,
-    saveProjects,
-    addProject,
-    updateProject,
-    deleteProject,
+    addProject: addProjectToDb,
+    updateProject: updateProjectInDb,
+    deleteProject: deleteProjectFromDb,
     initDemoData,
   }
 }
