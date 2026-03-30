@@ -51,10 +51,14 @@ export interface Project {
 
 interface ProjectsState {
   list: Project[]
+  loading: boolean
+  error: string | null
 }
 
 const initialState: ProjectsState = {
   list: [],
+  loading: false,
+  error: null,
 }
 
 function generateShortId(category: ProjectCategory, existingIds: string[]): string {
@@ -87,8 +91,17 @@ const projectsSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
-    setProjects: (state, action: PayloadAction<Project[]>) => {
+    loadProjectsStart: (state) => {
+      state.loading = true
+      state.error = null
+    },
+    loadProjectsSuccess: (state, action: PayloadAction<Project[]>) => {
       state.list = action.payload
+      state.loading = false
+    },
+    loadProjectsFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false
+      state.error = action.payload
     },
     addProject: (state, action: PayloadAction<Omit<Project, 'id' | 'shortId'>>) => {
       const existingIds = state.list.map(p => p.shortId)
@@ -134,7 +147,9 @@ const projectsSlice = createSlice({
 })
 
 export const {
-  setProjects,
+  loadProjectsStart,
+  loadProjectsSuccess,
+  loadProjectsFailure,
   addProject,
   updateProject,
   deleteProject,
