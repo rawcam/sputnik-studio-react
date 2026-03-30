@@ -1,52 +1,42 @@
 import { useState, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { RootState } from '../store'
-import { addProject, loadProjectsSuccess, Project } from '../store/projectsSlice'
 import { ProjectList } from '../components/projects/ProjectList'
 import { ProjectDetail } from '../features/projects/ProjectDetail'
 import { CreateProjectModal } from '../components/projects/CreateProjectModal'
 import { useAuth } from '../hooks/useAuth'
 import { useProjectsDb } from '../hooks/useProjectsDb'
+import { db } from '../db'
+import { seedDemoProjects } from '../store/projectsSlice'
 import './ProjectsPage.css'
 
 export const ProjectsPage = () => {
-  const dispatch = useDispatch()
   const { hasRole } = useAuth()
+  const { loadProjects, createProject } = useProjectsDb()
   const projects = useSelector((state: RootState) => state.projects.list)
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [selectedProject, setSelectedProject] = useState<any>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const { loading, loadProjects, addProject: addProjectToDb, updateProject: updateProjectInDb, deleteProject: deleteProjectFromDb, initDemoData } = useProjectsDb()
 
   useEffect(() => {
-    const load = async () => {
-      const data = await loadProjects()
-      dispatch(loadProjectsSuccess(data))
+    const init = async () => {
+      const count = await db.projects.count()
+      if (count === 0) {
+        const demos = seedDemoProjects()
+        for (const demo of demos) {
+          await createProject(demo)
+        }
+      }
+      await loadProjects()
     }
-    load()
-  }, [loadProjects, dispatch])
+    init()
+  }, [createProject, loadProjects])
 
-  const handleSelectProject = (project: Project) => setSelectedProject(project)
+  const handleSelectProject = (project: any) => setSelectedProject(project)
   const handleBack = () => setSelectedProject(null)
-
-  const handleCreate = async (projectData: Omit<Project, 'id' | 'shortId'>) => {
-    const newProject = {
-      ...projectData,
-      id: Date.now().toString(),
-      shortId: '', // будет сгенерировано в слайсе
-      actualIncome: 0,
-      actualExpenses: 0,
-    }
-    // Сначала добавим в слайс (чтобы сгенерировать shortId)
-    dispatch(addProject(newProject))
-    // Затем сохраним в базу (но нужно получить полный проект из store)
-    // Для простоты: после диспатча, проект будет в store, мы можем его найти
-    // Но лучше переделать слайс, чтобы он возвращал добавленный проект. Пока упростим:
-    const addedProject = { ...newProject, shortId: '0000' } // временно
-    await addProjectToDb(addedProject)
+  const handleCreate = async (projectData: any) => {
+    await createProject(projectData)
     setShowCreateModal(false)
   }
-
-  if (loading) return <div>Загрузка проектов...</div>
 
   if (selectedProject) {
     return <ProjectDetail project={selectedProject} onBack={handleBack} />
