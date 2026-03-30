@@ -462,3 +462,68 @@ input:focus, select:focus, textarea:focus {
   gap: 8px;
   cursor: pointer;
 }
+/* ========== ДЕТАЛЬНЫЕ СПИСКИ (встречи, закупки) ========== */
+.detail-section {
+  margin-top: 32px;
+  border-top: 1px solid var(--border-light);
+  padding-top: 24px;
+}
+
+.detail-section h4 {
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+}
+
+.detail-list {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.list-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.list-item input,
+.list-item select {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.remove-item {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 4px;
+}
+
+.add-item-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 8px 0;
+}
+
+.add-item-form input,
+.add-item-form select {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+}
