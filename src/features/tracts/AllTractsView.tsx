@@ -1,8 +1,9 @@
+import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '../../store'
 import { setActiveTract, setViewMode } from '../../store/tractsSlice'
 
-export const AllTractsView = () => {
+export const AllTractsView: React.FC = () => {
   const dispatch = useDispatch()
   const tracts = useSelector((state: RootState) => state.tracts.tracts)
 
@@ -17,8 +18,8 @@ export const AllTractsView = () => {
       {tracts.length === 0 && <div>Нет трактов. Создайте первый.</div>}
       <ul>
         {tracts.map(tract => (
-          <li key={tract.id} onClick={() => handleSelectTract(tract.id)} style={{ cursor: 'pointer' }}>
-            {tract.name} (задержка: {tract.totalLatency} мс)
+          <li key={tract.id} onClick={() => handleSelectTract(tract.id)}>
+            {tract.name} (задержка: {tract.totalLatency} мс, мощность: {tract.totalPower} Вт)
           </li>
         ))}
       </ul>
