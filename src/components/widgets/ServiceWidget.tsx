@@ -4,28 +4,24 @@ import { RootState } from '../../store'
 
 export const ServiceWidget: React.FC = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
-  const allVisits = projects.flatMap(p =>
-    p.serviceVisits.map(v => ({ ...v, projectName: p.name, projectId: p.id, projectShortId: p.shortId }))
-  )
-  const upcoming = [...allVisits]
-    .filter(v => v.status === 'planned')
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 5)
+  const allVisits = projects.flatMap(p => p.serviceVisits.map(v => ({ ...v, projectName: p.name })))
+  const upcoming = allVisits.filter(v => v.status === 'planned').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 3)
 
   return (
     <div className="widget-card service-widget">
       <div className="widget-header">
-        <i className="fas fa-wrench"></i>
-        <h3>Ближайшие сервисные выезды</h3>
+        <i className="fas fa-tools"></i>
+        <h3>Сервис и регламент</h3>
       </div>
       <div className="widget-content">
-        {upcoming.length === 0 && <div className="empty-message">Нет запланированных выездов</div>}
+        {upcoming.length === 0 && <div>Нет предстоящих выездов</div>}
         {upcoming.map(visit => (
-          <div key={visit.id} className="visit-item">
-            <div className="visit-date">{visit.date}</div>
-            <div className="visit-project">[{visit.projectShortId}] {visit.projectName}</div>
-            <div className="visit-type">{visit.type}</div>
-            <div className="visit-responsible">{visit.responsible}</div>
+          <div key={visit.id} className="service-item">
+            <div className="service-date">{visit.date}</div>
+            <div className="service-info">
+              <strong>{visit.projectName}</strong> – {visit.type}
+            </div>
+            <div className="service-responsible">{visit.responsible}</div>
           </div>
         ))}
       </div>
