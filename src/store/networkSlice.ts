@@ -18,7 +18,6 @@ const initialState: NetworkSettings = {
   redundancy: false,
 }
 
-// Вспомогательные функции для расчёта статистики
 export const getCableSpeed = (cable: string): number => {
   const speeds: Record<string, number> = {
     Cat5e: 1000,
