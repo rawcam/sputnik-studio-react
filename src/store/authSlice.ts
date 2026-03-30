@@ -17,7 +17,7 @@ const initialState: AuthState = {
   user: (() => {
     const saved = localStorage.getItem('user')
     if (saved) return JSON.parse(saved)
-    return { id: '1', name: 'ГИП', role: 'pm' }
+    return { id: '1', name: 'Директор', role: 'director' }
   })(),
   isAuthenticated: true,
 }
