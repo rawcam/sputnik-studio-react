@@ -6,35 +6,27 @@ import { ProjectDetail } from '../features/projects/ProjectDetail'
 import { CreateProjectModal } from '../components/projects/CreateProjectModal'
 import { useAuth } from '../hooks/useAuth'
 import { useProjectsDb } from '../hooks/useProjectsDb'
-import { db } from '../db'
-import { seedDemoProjects } from '../store/projectsSlice'
 import './ProjectsPage.css'
 
 export const ProjectsPage = () => {
   const { hasRole } = useAuth()
-  const { loadProjects, createProject } = useProjectsDb()
+  const { loadProjects, addProject, initDemoData } = useProjectsDb()
   const projects = useSelector((state: RootState) => state.projects.list)
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   useEffect(() => {
     const init = async () => {
-      const count = await db.projects.count()
-      if (count === 0) {
-        const demos = seedDemoProjects()
-        for (const demo of demos) {
-          await createProject(demo)
-        }
-      }
+      await initDemoData()
       await loadProjects()
     }
     init()
-  }, [createProject, loadProjects])
+  }, [])
 
   const handleSelectProject = (project: any) => setSelectedProject(project)
   const handleBack = () => setSelectedProject(null)
   const handleCreate = async (projectData: any) => {
-    await createProject(projectData)
+    await addProject(projectData)
     setShowCreateModal(false)
   }
 
