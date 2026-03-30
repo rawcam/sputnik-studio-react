@@ -813,3 +813,38 @@ input:focus, select:focus, textarea:focus {
 .device-item span {
   font-size: 0.9rem;
 }
+.all-tracts-view {
+  padding: 20px;
+}
+
+.tracts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.tract-summary {
+  background: var(--card-bg);
+  border-radius: var(--border-radius-card);
+  padding: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--border-light);
+}
+
+.tract-summary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.tract-summary h3 {
+  margin-bottom: 8px;
+}
+
+.tract-summary-stats {
+  display: flex;
+  gap: 24px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
