@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sputnik Studio v8 — Wiki проекта</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f5f7fb;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            color: #1e2a3a;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 2rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            color: #0f172a;
+        }
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #1e293b;
+        }
+        .badge {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #1e293b;
+            border-radius: 40px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 16px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        .note {
+            background: #fef9c3;
+            padding: 1rem;
+            border-radius: 16px;
+            margin: 1rem 0;
+            border-left: 4px solid #eab308;
+        }
+        .warning {
+            background: #fee2e2;
+            padding: 1rem;
+            border-radius: 16px;
+            margin: 1rem 0;
+            border-left: 4px solid #ef4444;
+        }
+        footer {
+            background: #f1f5f9;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .content { padding: 1.5rem; }
+            h2 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Sputnik Studio v8</h1>
+        <p>Документация проекта (React Edition)</p>
+    </header>
+    <div class="content">
+        <details>
+            <summary style="cursor: pointer; font-weight: 600; margin-bottom: 1rem;">📑 Содержание</summary>
+            <ul>
+                <li><a href="#about">О проекте</a></li>
+                <li><a href="#status">Текущий статус</a></li>
+                <li><a href="#architecture">Архитектура</a></li>
+                <li><a href="#tech-stack">Технологический стек</a></li>
+                <li><a href="#roles">Роли пользователей</a></li>
+                <li><a href="#projects">Управление проектами</a></li>
+                <li><a href="#finances">Финансовая модель</a></li>
+                <li><a href="#service">Сервисные работы</a></li>
+                <li><a href="#modules">Функциональные модули</a></li>
+                <li><a href="#dashboard">Виджеты дашборда</a></li>
+                <li><a href="#design">Дизайн и стили</a></li>
+                <li><a href="#setup">Инструкция по запуску</a></li>
+                <li><a href="#deploy">Развёртывание на GitHub Pages</a></li>
+                <li><a href="#future">Планы развития</a></li>
+            </ul>
+        </details>
+
+        <h2 id="about">📌 О проекте</h2>
+        <p><strong>Sputnik Studio</strong> — веб-приложение для проектирования AV-систем. Позволяет инженерам и проектировщикам:</p>
+        <ul>
+            <li>Создавать и управлять проектами (бюджет, статусы, дорожные карты).</li>
+            <li>Рассчитывать тракты передачи видео/аудио (задержки, битрейт, PoE).</li>
+            <li>Выполнять специализированные расчёты: LED-экраны, звуковое давление (SPL), ВКС, эргономика, питание.</li>
+            <li>Генерировать техническую документацию на основе шаблонов.</li>
+            <li>Отслеживать финансовые показатели (маржу, рентабельность, кассовые разрывы).</li>
+            <li>Планировать сервисные работы и регламентное обслуживание.</li>
+        </ul>
+        <p>Версия <strong>v8</strong> — полная перезапись на React с TypeScript, использующая современные подходы: компонентная архитектура, централизованное состояние (Redux Toolkit), роутинг (React Router) и хранилище IndexedDB для данных.</p>
+
+        <h2 id="status">✅ Текущий статус (30 марта 2026)</h2>
+        <p><strong>Что сделано:</strong></p>
+        <ul>
+            <li>Создана структура React-приложения (TypeScript, Vite, Redux Toolkit, React Router).</li>
+            <li>Реализованы страницы: Dashboard, Projects, Calculations, Templates.</li>
+            <li>Добавлен Topbar, Sidebar (показывается только на странице расчётов).</li>
+            <li>Настроен GitHub Actions для автоматической сборки и деплоя на GitHub Pages.</li>
+            <li>Базовые компоненты для трактов и проектов (заглушки).</li>
+            <li>Успешный деплой по адресу: <a href="https://rawcam.github.io/sputnik-studio-react/" target="_blank">https://rawcam.github.io/sputnik-studio-react/</a></li>
+        </ul>
+        <p><strong>🐞 Почему не разворачивалось на GitHub Pages (и как исправили):</strong></p>
+        <ul>
+            <li>Отсутствовал <code>package-lock.json</code>, из-за чего <code>npm ci</code> не мог установить зависимости → заменили <code>npm ci</code> на <code>npm install</code> в workflow.</li>
+            <li>Неиспользуемые импорты в нескольких файлах вызывали ошибки TypeScript при сборке → удалены.</li>
+            <li>Некорректные пути (base) в <code>vite.config.ts</code> были исправлены.</li>
+            <li>После этих правок сборка прошла успешно.</li>
+        </ul>
+        <p><strong>🧩 Что предстоит сделать (этапы с оценкой времени):</strong></p>
+        <ul>
+            <li><strong>Этап 1 (6 ч):</strong> Инфраструктура (роли, auth, финансовая модель, общехозяйственные расходы, сервисные работы).</li>
+            <li><strong>Этап 2 (8 ч):</strong> Модуль проектов (CRUD, финансы, дорожная карта план/факт, цифровой ID).</li>
+            <li><strong>Этап 3 (10 ч):</strong> Модуль трактов (список устройств, расчёты, переключение режимов).</li>
+            <li><strong>Этап 4 (16 ч):</strong> Калькуляторы (видео, сеть, LED, звук, ВКС, эргономика, питание).</li>
+            <li><strong>Этап 5 (8 ч):</strong> Виджеты дашборда с учётом ролей и финансовых метрик.</li>
+            <li><strong>Этап 6 (4 ч):</strong> Сервисные работы и регламент.</li>
+            <li><strong>Этап 7 (12 ч):</strong> Графический редактор блок-схем (React Flow, экспорт SVG).</li>
+            <li><strong>Этап 8 (6 ч):</strong> Шаблоны документов, экспорт/импорт JSON, самодиагностика.</li>
+            <li><strong>Этап 9 (4 ч):</strong> Финальное тестирование и полировка.</li>
+        </ul>
+
+        <h2 id="architecture">🏗 Архитектура</h2>
+        <p>Проект построен по модульному принципу. Основные блоки:</p>
+        <pre>
+src/
+├── assets/            # статика (шрифты, иконки)
+├── components/        # переиспользуемые UI-компоненты
+│   ├── common/        # кнопки, модалки, поля ввода
+│   ├── layout/        # Topbar, Sidebar
+│   └── widgets/       # виджеты дашборда
+├── features/          # фичи (калькуляторы, тракты, проекты)
+│   ├── tracts/
+│   ├── projects/
+│   ├── video/
+│   ├── network/
+│   ├── led/
+│   ├── sound/
+│   ├── vc/
+│   ├── ergo/
+│   ├── power/
+│   ├── auth/          # роли и авторизация
+│   ├── finances/      # финансовая аналитика
+│   └── service/       # сервисные работы
+├── hooks/             # кастомные хуки
+├── pages/             # страницы (роутинг)
+├── store/             # Redux store и слайсы
+├── styles/            # глобальные стили и CSS-переменные
+├── types/             # TypeScript типы
+├── utils/             # утилиты, modelDB, расчёты
+├── App.tsx
+└── main.tsx
+        </pre>
+        <p><strong>Роутинг</strong> — React Router v6. Четыре основных маршрута: <code>/dashboard</code>, <code>/projects</code>, <code>/calculations</code>, <code>/templates</code>. Каждый маршрут монтирует соответствующую страницу, полностью заменяя содержимое <code>&lt;main&gt;</code>.</p>
+        <p><strong>Состояние</strong> — Redux Toolkit. Слайсы разделены по функциональности. Все действия и редьюсеры типизированы.</p>
+        <p><strong>Хранилище данных</strong> — IndexedDB через библиотеку Dexie. Проекты, тракты, финансовые данные и сервисные работы сохраняются локально, поддерживается экспорт/импорт JSON.</p>
+
+        <h2 id="tech-stack">⚙ Технологический стек</h2>
+        <table>
+            <tr><th>Категория</th><th>Инструменты</th></tr>
+            <tr><td>Ядро</td><td>React 18, TypeScript 5</td></tr>
+            <tr><td>Сборка</td><td>Vite</td></tr>
+            <tr><td>Состояние</td><td>Redux Toolkit, React‑Redux</td></tr>
+            <tr><td>Роутинг</td><td>React Router v6</td></tr>
+            <tr><td>Хранилище</td><td>Dexie (IndexedDB)</td></tr>
+            <tr><td>Стили</td><td>CSS Modules + глобальные переменные</td></tr>
+            <tr><td>Авторизация (пока)</td><td>Локальная (роль в localStorage)</td></tr>
+            <tr><td>Графики (виджеты)</td><td>Recharts</td></tr>
+            <tr><td>Карусель</td><td>Embla Carousel</td></tr>
+            <tr><td>Иконки</td><td>Phosphor Icons</td></tr>
+        </table>
+
+        <h2 id="roles">👥 Роли пользователей</h2>
+        <ul>
+            <li><code>director</code> — генеральный директор: полный доступ, видит общехозяйственные расходы и финансовую отчётность компании.</li>
+            <li><code>pm</code> (руководитель проектов / ГИП) — видит все проекты, финансовые показатели по проектам, но не общехозяйственные расходы.</li>
+            <li><code>engineer</code> — технические детали, тракты, калькуляторы, загрузку по себе. Финансы скрыты.</li>
+            <li><code>designer</code> — аналогично инженеру, может редактировать тракты и схемы.</li>
+            <li><code>logist</code> — видит закупки, сроки поставок, может влиять на расходную часть, но не на бюджет продаж.</li>
+        </ul>
+        <p>На первом этапе реализована локальная авторизация: роль хранится в <code>localStorage</code>, есть переключатель ролей для тестирования. Компоненты проверяют роль и скрывают/показывают элементы.</p>
+
+        <h2 id="projects">📁 Управление проектами</h2>
+        <p><strong>Цифровой идентификатор (<code>shortId</code>)</strong> — четырёхзначное число, генерируется автоматически при создании проекта в зависимости от категории.</p>
+        <p><strong>Категории проектов и диапазоны:</strong></p>
+        <ul>
+            <li><code>new</code> (0000–1999) — новый проект с нуля</li>
+            <li><code>modernization</code> (2000–3999) — модернизация</li>
+            <li><code>service</code> (4000–5999) — сервисное обслуживание</li>
+            <li><code>standard</code> (6000–7999) — типовой проект</li>
+            <li><code>pilot</code> (8000–9999) — пилотный / НИОКР</li>
+        </ul>
+        <p>В списке проектов и карточках отображается <code>[shortId] Название</code>. Поиск возможен по shortId. Категория влияет на аналитику (разбивка в виджетах).</p>
+        <p><strong>Дорожная карта</strong> поддерживает плановые и фактические даты этапов, сравнение план/факт.</p>
+
+        <h2 id="finances">💰 Финансовая модель</h2>
+        <p><strong>Проект:</strong></p>
+        <ul>
+            <li>Доходная часть: <code>contractAmount</code>, <code>incomeSchedule</code> (массив дат и сумм).</li>
+            <li>Расходная часть: <code>expenseSchedule</code> (массив дат, сумм и типов).</li>
+            <li>Фактические доходы/расходы: <code>actualIncome</code>, <code>actualExpenses</code> (вычисляются из расписаний с учётом статуса оплаты).</li>
+        </ul>
+        <p><strong>Маржа и рентабельность:</strong> плановая и фактическая. <strong>Кассовый разрыв:</strong> накопленный денежный поток по проекту и по компании (с учётом общехозяйственных расходов).</p>
+        <p><strong>Общехозяйственные расходы</strong> — отдельный слайс для расходов, не привязанных к проекту (аренда, налоги и т.п.). Доступны только директору.</p>
+
+        <h2 id="service">🛠 Сервисные и регламентные работы</h2>
+        <p>В каждом проекте можно создать список сервисных выездов / регламентных работ с полями: дата, тип работ, статус, ответственный, стоимость. На дашборде виджет «Сервис и регламент» отображает ближайшие выезды (с учётом роли). Клик ведёт на страницу «Сервисное расписание».</p>
+
+        <h2 id="modules">🧩 Функциональные модули</h2>
+        <h3>🔧 Тракты (AV‑тракты)</h3>
+        <ul>
+            <li>Создание нескольких независимых трактов (путей прохождения сигнала).</li>
+            <li>Добавление устройств из базы моделей (источники, передатчики, матрицы, приёмники, дисплеи, коммутаторы, LED‑процессоры).</li>
+            <li>Автоматический расчёт: суммарная задержка, общая мощность, битрейт, использование портов коммутаторов, PoE‑бюджет.</li>
+            <li>Отображение активного тракта или всех трактов в виде списка.</li>
+        </ul>
+        <h3>📺 Видео</h3>
+        <ul>
+            <li>Настройки: разрешение (1080p/4K/8K), субдискретизация (4:4:4/4:2:2/4:2:0), частота кадров, цветовое пространство, битность.</li>
+            <li>Расчёт битрейта на основе выбранных параметров.</li>
+        </ul>
+        <h3>🌐 Сеть</h3>
+        <ul>
+            <li>Выбор среды передачи (Cat5e–Cat8, оптика, беспровод).</li>
+            <li>Настройки Multicast, QoS, типа сети (управляемая/неуправляемая), протокола синхронизации (PTP/NTP), резервирования.</li>
+            <li>Статистика: суммарный битрейт трактов, загрузка канала, количество использованных портов, статус Multicast/QoS.</li>
+        </ul>
+        <h3>💡 LED‑калькуляторы</h3>
+        <ul>
+            <li>По кабинетам: размеры кабинета, шаг пикселя, количество кабинетов → расчёт разрешения, площади, мощности.</li>
+            <li>По разрешению: целевое разрешение экрана, шаг пикселя → расчёт размеров и площади.</li>
+        </ul>
+        <h3>🔊 Звуковые калькуляторы</h3>
+        <ul>
+            <li>SPL на расстоянии, падение SPL от расстояния, изменение SPL от мощности.</li>
+            <li>RT60 (реверберация) по объёму помещения и коэффициенту поглощения.</li>
+            <li>Подбор громкоговорителей (мощность, чувствительность, требуемый SPL).</li>
+        </ul>
+        <h3>📡 ВКС (видеоконференцсвязь)</h3>
+        <ul>
+            <li>Расчёт битрейта кодеков (TrueConf, WebRTC, H.264, H.265) в зависимости от разрешения, FPS и количества участников.</li>
+            <li>Многоточечный вызов: расчёт нагрузки на MCU.</li>
+        </ul>
+        <h3>🪑 Эргономика ЭКП</h3>
+        <ul>
+            <li>Калькулятор углов обзора, высоты установки, расстояния до экрана для электронных классных панелей.</li>
+        </ul>
+        <h3>⚡ Питание</h3>
+        <ul>
+            <li>Расчёт ИБП (автономность, мощность).</li>
+            <li>Расчёт кондиционирования (тепловыделение оборудования, требуемая мощность охлаждения).</li>
+        </ul>
+        <h3>📄 Шаблоны документов</h3>
+        <ul>
+            <li>Генерация пояснительной записки, спецификации оборудования, акта выполненных работ.</li>
+            <li>Выбор подсистем проекта для включения в документ.</li>
+            <li>Привязка к конкретному проекту (данные подставляются автоматически).</li>
+        </ul>
+
+        <h2 id="dashboard">📊 Виджеты дашборда (по ролям)</h2>
+        <p>Сетка из 5 колонок. Содержимое зависит от роли пользователя.</p>
+        <ul>
+            <li><strong>Финансы компании</strong> (директор): выручка, маржа, рентабельность, кассовый разрыв, мини‑график.</li>
+            <li><strong>Финансы проектов</strong> (директор, ГИП): топ‑3 по марже, проекты с отрицательной маржой, разбивка по категориям.</li>
+            <li><strong>Сервис и регламент</strong>: ближайшие выезды (фильтрация по роли).</li>
+            <li><strong>Загрузка сотрудников</strong>: средняя загрузка инженеров и РП, топ‑3 загруженных.</li>
+            <li><strong>Риски и уведомления</strong>: финансовые, технические, логистические риски (по ролям).</li>
+        </ul>
+
+        <h2 id="design">🎨 Дизайн и стили</h2>
+        <p>Используется система CSS-переменных (кастомные свойства) для светлой и тёмной тем. Переменные определены в <code>src/styles/variables.css</code>.</p>
+        <h3>Цветовая палитра (светлая тема)</h3>
+        <ul>
+            <li><code>--accent: #2563eb</code> (основной акцентный синий)</li>
+            <li><code>--bg-page: linear-gradient(135deg, #f6f9fc 0%, #edf2f9 100%)</code></li>
+            <li><code>--bg-panel: rgba(255,255,255,0.85)</code> (стеклянная панель)</li>
+            <li><code>--text-primary: #1a2c3e</code></li>
+            <li><code>--text-secondary: #4b6a8a</code></li>
+            <li><code>--danger: #dc2626</code></li>
+        </ul>
+        <p>Тёмная тема переопределяет переменные через селектор <code>body.dark</code>.</p>
+        <h3>Шрифты</h3>
+        <ul>
+            <li>Основной: <strong>Inter</strong>, запасные – -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui.</li>
+            <li>Моноширинный (для кода): 'Fira Code', monospace.</li>
+        </ul>
+        <h3>Компоненты</h3>
+        <ul>
+            <li>Карточки (<code>.project-card</code>, <code>.stats-card</code>) со стеклянным фоном, скруглёнными углами (32px) и тенью.</li>
+            <li>Кнопки: <code>.btn-primary</code> (градиентный синий), <code>.btn-secondary</code> (обводка), <code>.btn-danger</code> (красный).</li>
+            <li>Поля ввода, селекты – скруглённые, с эффектом фокуса.</li>
+            <li>Аккордеоны в сайдбаре – сворачиваются, сохраняют состояние в localStorage.</li>
+        </ul>
+
+        <h2 id="setup">🚀 Инструкция по запуску</h2>
+        <div class="note"><strong>Требования:</strong> Node.js 18+ и npm (или yarn/pnpm).</div>
+        <ol>
+            <li><strong>Клонируйте репозиторий</strong>:<br>
+                <code>git clone https://github.com/rawcam/sputnik-studio-react.git</code>
+            </li>
+            <li><strong>Установите зависимости</strong>:<br>
+                <code>npm install</code>
+            </li>
+            <li><strong>Запустите сервер разработки</strong>:<br>
+                <code>npm run dev</code><br>
+                Приложение откроется по адресу <code>http://localhost:3000</code>.
+            </li>
+            <li><strong>Сборка для продакшена</strong>:<br>
+                <code>npm run build</code><br>
+                Готовая статика появится в папке <code>dist/</code>.
+            </li>
+        </ol>
+
+        <h2 id="deploy">🌐 Развёртывание на GitHub Pages</h2>
+        <p>Проект автоматически деплоится на GitHub Pages при каждом коммите в ветку <code>main</code> с помощью GitHub Actions. Workflow описан в <code>.github/workflows/deploy.yml</code>.</p>
+        <p><strong>Адрес:</strong> <a href="https://rawcam.github.io/sputnik-studio-react/" target="_blank">https://rawcam.github.io/sputnik-studio-react/</a></p>
+        <p><strong>Важно:</strong> Для корректной работы необходимо, чтобы в <code>vite.config.ts</code> был указан правильный <code>base</code> (название репозитория), а в <code>package.json</code> — поле <code>homepage</code>.</p>
+
+        <h2 id="future">🔮 Планы развития</h2>
+        <ul>
+            <li>Завершить перенос всех калькуляторов в отдельные компоненты.</li>
+            <li>Реализовать полноценное перетаскивание устройств в тракт (drag‑and‑drop).</li>
+            <li>Добавить систему уведомлений и логгирование действий.</li>
+            <li>Интегрировать возможность совместной работы (экспорт/импорт, синхронизация через облако).</li>
+            <li>Покрыть код тестами (Jest + React Testing Library).</li>
+        </ul>
+
+        <h2>📝 Заключение</h2>
+        <p>Sputnik Studio v8 — надёжная, расширяемая платформа для AV‑проектирования с встроенной финансовой аналитикой и управлением сервисом. Модульная архитектура на React и типизированный код упрощают поддержку и развитие.</p>
+    </div>
+    <footer>
+        Sputnik Studio v8 — React Edition | Документация актуальна на 30 марта 2026 г.
+    </footer>
+</div>
+</body>
+</html>
