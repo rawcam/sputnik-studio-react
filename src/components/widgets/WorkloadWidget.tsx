@@ -5,7 +5,6 @@ import { RootState } from '../../store'
 export const WorkloadWidget: React.FC = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
 
-  // Собираем загрузку инженеров и руководителей
   const engineerLoad: Record<string, number> = {}
   const managerLoad: Record<string, number> = {}
 
