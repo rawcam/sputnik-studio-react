@@ -1,38 +1,27 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { Project } from '../../store/projectsSlice'
 
 export const WorkloadWidget: React.FC = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
 
-  const workload = useMemo(() => {
-    // Только активные проекты (не завершённые)
-    const activeProjects = projects.filter(p => p.status !== 'done')
+  // Собираем загрузку инженеров и руководителей
+  const engineerLoad: Record<string, number> = {}
+  const managerLoad: Record<string, number> = {}
 
-    const engineerMap = new Map<string, number>()
-    const managerMap = new Map<string, number>()
+  projects.forEach(p => {
+    if (p.status !== 'done') {
+      engineerLoad[p.engineer] = (engineerLoad[p.engineer] || 0) + 1
+      managerLoad[p.projectManager] = (managerLoad[p.projectManager] || 0) + 1
+    }
+  })
 
-    activeProjects.forEach(project => {
-      if (project.engineer) {
-        engineerMap.set(project.engineer, (engineerMap.get(project.engineer) || 0) + 1)
-      }
-      if (project.projectManager) {
-        managerMap.set(project.projectManager, (managerMap.get(project.projectManager) || 0) + 1)
-      }
-    })
+  const maxEngineerLoad = Math.max(...Object.values(engineerLoad), 1)
+  const maxManagerLoad = Math.max(...Object.values(managerLoad), 1)
 
-    const engineers = Array.from(engineerMap.entries()).map(([name, count]) => ({ name, count, role: 'engineer' as const }))
-    const managers = Array.from(managerMap.entries()).map(([name, count]) => ({ name, count, role: 'manager' as const }))
-    const all = [...engineers, ...managers].sort((a, b) => b.count - a.count)
-
-    const totalActive = activeProjects.length
-    const avgEngineer = engineers.length ? engineers.reduce((sum, e) => sum + e.count, 0) / engineers.length : 0
-    const avgManager = managers.length ? managers.reduce((sum, m) => sum + m.count, 0) / managers.length : 0
-    const top3 = all.slice(0, 3)
-
-    return { totalActive, avgEngineer, avgManager, top3, engineers, managers }
-  }, [projects])
+  const formatLoad = (count: number, max: number) => {
+    return `${count} проект(ов) (${Math.round((count / max) * 100)}%)`
+  }
 
   return (
     <div className="widget-card workload-widget">
@@ -41,32 +30,36 @@ export const WorkloadWidget: React.FC = () => {
         <h3>Загрузка сотрудников</h3>
       </div>
       <div className="widget-content">
-        <div className="widget-stat">
-          <span className="widget-label">Активных проектов</span>
-          <span className="widget-value">{workload.totalActive}</span>
-        </div>
-        <div className="widget-stat">
-          <span className="widget-label">Средняя загрузка инженеров</span>
-          <span className="widget-value">{workload.avgEngineer.toFixed(1)}</span>
-        </div>
-        <div className="widget-stat">
-          <span className="widget-label">Средняя загрузка РП</span>
-          <span className="widget-value">{workload.avgManager.toFixed(1)}</span>
-        </div>
-        {workload.top3.length > 0 && (
-          <div className="workload-top">
-            <div className="widget-label">Топ загруженных:</div>
-            {workload.top3.map((p, idx) => (
-              <div key={p.name} className="workload-item">
-                <span className="workload-name">{p.name} ({p.role === 'engineer' ? 'инж' : 'РП'})</span>
-                <span className="workload-count">{p.count} проект(ов)</span>
+        <div className="workload-section">
+          <h4>Инженеры</h4>
+          {Object.entries(engineerLoad).length === 0 && <p>Нет данных</p>}
+          {Object.entries(engineerLoad)
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, count]) => (
+              <div key={name} className="workload-item">
+                <span className="workload-name">{name}</span>
+                <span className="workload-count">{formatLoad(count, maxEngineerLoad)}</span>
                 <div className="progress-bar-container small">
-                  <div className="progress-fill" style={{ width: `${(p.count / Math.max(...workload.top3.map(t => t.count))) * 100}%` }}></div>
+                  <div className="progress-fill" style={{ width: `${(count / maxEngineerLoad) * 100}%` }}></div>
                 </div>
               </div>
             ))}
-          </div>
-        )}
+        </div>
+        <div className="workload-section">
+          <h4>Руководители проектов</h4>
+          {Object.entries(managerLoad).length === 0 && <p>Нет данных</p>}
+          {Object.entries(managerLoad)
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, count]) => (
+              <div key={name} className="workload-item">
+                <span className="workload-name">{name}</span>
+                <span className="workload-count">{formatLoad(count, maxManagerLoad)}</span>
+                <div className="progress-bar-container small">
+                  <div className="progress-fill" style={{ width: `${(count / maxManagerLoad) * 100}%` }}></div>
+                </div>
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   )
