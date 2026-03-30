@@ -1,4 +1,4 @@
-import { Project, IncomeItem, ExpenseItem } from '../store/projectsSlice'
+import { Project } from '../store/projectsSlice'
 import { CompanyExpense } from '../store/companyExpensesSlice'
 
 export interface CashFlowPoint {
