@@ -1,19 +1,21 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { useFinance } from '../../hooks/useFinance'
+import { getProjectMargins } from '../../utils/financeUtils'
 
 export const ProjectsFinanceWidget: React.FC = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
-  const { getProjectMetrics } = useFinance()
 
-  const projectsWithMetrics = projects
-    .map(p => ({ ...p, metrics: getProjectMetrics(p.id) }))
-    .filter(p => p.metrics !== null)
+  const projectMargins = projects.map(p => ({
+    id: p.id,
+    name: p.name,
+    margin: getProjectMargins(p).actualMargin,
+    profitability: getProjectMargins(p).actualProfitability,
+  })).filter(p => p.margin !== 0 || p.profitability !== 0)
 
-  const sortedByMargin = [...projectsWithMetrics].sort((a, b) => b.metrics!.margins.actualMargin - a.metrics!.margins.actualMargin)
+  const sortedByMargin = [...projectMargins].sort((a, b) => b.margin - a.margin)
   const top3 = sortedByMargin.slice(0, 3)
-  const negativeMarginProjects = sortedByMargin.filter(p => p.metrics!.margins.actualMargin < 0)
+  const negativeMarginProjects = projectMargins.filter(p => p.margin < 0)
 
   return (
     <div className="widget-card projects-finance-widget">
@@ -22,26 +24,28 @@ export const ProjectsFinanceWidget: React.FC = () => {
         <h3>Финансы проектов</h3>
       </div>
       <div className="widget-content">
-        <div className="widget-subsection">
-          <h4>Топ-3 по марже</h4>
-          {top3.length === 0 && <div className="empty-message">Нет проектов</div>}
-          {top3.map(p => (
-            <div key={p.id} className="project-row">
-              <span className="project-name">{p.shortId} {p.name}</span>
-              <span className="project-margin">{p.metrics!.margins.actualMargin.toLocaleString()} ₽</span>
-            </div>
-          ))}
-        </div>
-
-        {negativeMarginProjects.length > 0 && (
-          <div className="widget-subsection warning">
-            <h4>Проекты с отрицательной маржой</h4>
-            {negativeMarginProjects.map(p => (
-              <div key={p.id} className="project-row">
-                <span className="project-name">{p.shortId} {p.name}</span>
-                <span className="project-margin">{p.metrics!.margins.actualMargin.toLocaleString()} ₽</span>
+        <div className="widget-stat">
+          <span className="widget-label">Топ‑3 по марже</span>
+          <div>
+            {top3.map(p => (
+              <div key={p.id} className="project-margin-item">
+                <span>{p.name}</span>
+                <span>{p.margin.toLocaleString()} ₽</span>
               </div>
             ))}
+          </div>
+        </div>
+        {negativeMarginProjects.length > 0 && (
+          <div className="widget-stat warning">
+            <span className="widget-label">Проекты с отрицательной маржой</span>
+            <div>
+              {negativeMarginProjects.map(p => (
+                <div key={p.id} className="project-margin-item">
+                  <span>{p.name}</span>
+                  <span>{p.margin.toLocaleString()} ₽</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
