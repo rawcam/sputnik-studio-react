@@ -42,28 +42,23 @@ const initialState: SoundState = {
   resultText: '',
 }
 
-// Расчёт SPL на расстоянии
 function calcSPL(sensitivity: number, power: number, distance: number, headroom: number, roomGain: number): number {
   const spl = sensitivity + 10 * Math.log10(power) - 20 * Math.log10(distance) + roomGain
   return Math.round(spl - headroom)
 }
 
-// Падение SPL
 function calcDrop(startSPL: number, startDist: number, endDist: number): number {
   return Math.round(startSPL - 20 * Math.log10(endDist / startDist))
 }
 
-// Изменение SPL от мощности
 function calcPowerChange(startSPL: number, startPower: number, endPower: number): number {
   return Math.round(startSPL + 10 * Math.log10(endPower / startPower))
 }
 
-// RT60
 function calcRT60(volume: number, area: number, absorption: number): number {
   return Math.round((0.161 * volume) / (area * absorption) * 100) / 100
 }
 
-// Подбор громкоговорителя
 function calcRequiredPower(requiredSPL: number, sensitivity: number, distance: number): number {
   return Math.pow(10, (requiredSPL - sensitivity + 20 * Math.log10(distance)) / 10)
 }
@@ -74,7 +69,6 @@ const soundSlice = createSlice({
   reducers: {
     setSoundConfig: (state, action: PayloadAction<Partial<SoundState>>) => {
       Object.assign(state, action.payload)
-      // Пересчёт при изменении
       if (state.activeMode === 'spl') {
         const spl = calcSPL(state.sensitivity, state.sourcePower, state.distance, state.headroom, state.roomGain)
         state.resultValue = spl
@@ -101,7 +95,6 @@ const soundSlice = createSlice({
     },
     setSoundMode: (state, action: PayloadAction<SoundState['activeMode']>) => {
       state.activeMode = action.payload
-      // триггерим пересчёт (можно вызвать setSoundConfig с теми же данными)
       soundSlice.caseReducers.setSoundConfig(state, { payload: {} } as any)
     },
   },
