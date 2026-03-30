@@ -5,6 +5,7 @@ export interface PowerState {
   upsPower: number
   upsAutonomy: number
   coolingPower: number
+  resultText: string
 }
 
 const initialState: PowerState = {
@@ -12,6 +13,15 @@ const initialState: PowerState = {
   upsPower: 0,
   upsAutonomy: 0,
   coolingPower: 0,
+  resultText: '',
+}
+
+function calcUPS(totalPower: number, autonomy: number): number {
+  return Math.round(totalPower * autonomy * 1.2) // запас 20%
+}
+
+function calcCooling(totalPower: number): number {
+  return Math.round(totalPower / 3.412) // примерная мощность охлаждения в BTU/ч
 }
 
 const powerSlice = createSlice({
@@ -20,6 +30,9 @@ const powerSlice = createSlice({
   reducers: {
     setPowerConfig: (state, action: PayloadAction<Partial<PowerState>>) => {
       Object.assign(state, action.payload)
+      const ups = calcUPS(state.totalPower, state.upsAutonomy)
+      const cooling = calcCooling(state.totalPower)
+      state.resultText = `Рекомендуемая мощность ИБП: ${ups} ВА, требуемое охлаждение: ${cooling} BTU/ч`
     },
   },
 })
