@@ -574,3 +574,76 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-muted);
   font-size: 0.8rem;
 }
+/* ========== ВИДЖЕТЫ (дополнительные) ========== */
+.widget-subsection {
+  margin-top: 12px;
+}
+
+.widget-subsection h4 {
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 4px;
+}
+
+.project-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.project-margin {
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.widget-subsection.warning .project-margin {
+  background: linear-gradient(135deg, #f97316, #ff8c42);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.visit-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.8rem;
+  align-items: baseline;
+}
+
+.visit-date {
+  font-weight: 600;
+  min-width: 90px;
+  color: var(--accent);
+}
+
+.visit-project {
+  flex: 2;
+  font-weight: 500;
+}
+
+.visit-type {
+  flex: 1;
+  color: var(--text-secondary);
+}
+
+.visit-responsible {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.empty-message {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
