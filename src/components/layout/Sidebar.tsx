@@ -1,15 +1,16 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { useLocation } from 'react-router-dom'
 import { RootState } from '../../store'
 import { VideoSection } from '../../features/video/VideoSection'
 import './Sidebar.css'
 
 export const Sidebar: React.FC = () => {
   const collapsed = useSelector((state: RootState) => state.ui.sidebarCollapsed)
-  const location = window.location.pathname
+  const location = useLocation()
+  const isCalculations = location.pathname.endsWith('/calculations')
 
-  // Показываем сайдбар только на странице расчётов
-  if (location !== '/calculations') return null
+  if (!isCalculations) return null
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
