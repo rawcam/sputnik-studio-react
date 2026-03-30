@@ -1,11 +1,11 @@
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { RootState } from '../../store'
-import { setErgoConfig } from '../../store/ergoSlice'
+// import { useDispatch, useSelector } from 'react-redux'
+// import { RootState } from '../../store'
+// import { setErgoConfig } from '../../store/ergoSlice'
 
 export const ErgoSection: React.FC = () => {
-  const dispatch = useDispatch()
-  const config = useSelector((state: RootState) => state.ergo)
+  // const dispatch = useDispatch()
+  // const config = useSelector((state: RootState) => state.ergo)
 
   return (
     <div className="sidebar-section">
@@ -14,8 +14,8 @@ export const ErgoSection: React.FC = () => {
         <span>Эргономика ЭКП</span>
         <i className="fas fa-angle-down"></i>
       </div>
-      <div className="section-content">
-        <button className="btn-primary" id="showErgoCalcBtn">Показать калькулятор</button>
+      <div className="section-content" id="ergoContent">
+        <p>Калькулятор эргономики будет реализован позже</p>
       </div>
     </div>
   )
