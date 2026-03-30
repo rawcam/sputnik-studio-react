@@ -22,7 +22,6 @@ const initialState: VcState = {
   resultText: '',
 }
 
-// Коэффициенты кодеков (упрощённо)
 const codecBitrates: Record<string, number> = {
   trueconf: 2.5,
   webrtc: 2.0,
@@ -50,7 +49,6 @@ const vcSlice = createSlice({
         state.resultValue = total
         state.resultText = `${total} Мбит/с (${perParticipant} Мбит/с на участника)`
       } else {
-        // Многоточечный вызов: расчёт нагрузки на MCU (упрощённо)
         const load = Math.round(state.multipointParticipants * 1.5)
         state.resultValue = load
         state.resultText = `Нагрузка: ${load} Мбит/с`
