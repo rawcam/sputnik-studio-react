@@ -1,18 +1,19 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+export type ProjectStatus = 'presale' | 'design' | 'ready' | 'construction' | 'done'
 export type ProjectCategory = 'new' | 'modernization' | 'service' | 'standard' | 'pilot'
 
 export interface IncomeItem {
   date: string
   amount: number
-  status?: 'planned' | 'received'
+  paid?: boolean
 }
 
 export interface ExpenseItem {
   date: string
   amount: number
-  type?: 'purchase' | 'salary' | 'subcontractor' | 'rent'
-  status?: 'planned' | 'paid'
+  type: 'purchase' | 'salary' | 'subcontractor' | 'rent'
+  paid?: boolean
 }
 
 export interface ServiceVisit {
@@ -26,30 +27,26 @@ export interface ServiceVisit {
 
 export interface Project {
   id: string
-  shortId: string           // 4-значный цифровой идентификатор
+  shortId: string
   category: ProjectCategory
   name: string
-  status: string            // presale, design, ready, construction, done
+  status: ProjectStatus
   statusStartDate: string
-  nextStatus?: string
+  nextStatus?: ProjectStatus
   nextStatusDate?: string
   progress: number
   startDate: string
-  budget: number            // сумма контракта
   engineer: string
   projectManager: string
   priority: boolean
   meetings: { date: string; subject: string }[]
   purchases: { name: string; status: string; date: string }[]
-  // Финансовые поля
   contractAmount: number
   incomeSchedule: IncomeItem[]
   expenseSchedule: ExpenseItem[]
   actualIncome: number
   actualExpenses: number
-  // Сервисные работы
   serviceVisits: ServiceVisit[]
-  // Для дорожной карты (план/факт) – можно добавить позже
 }
 
 interface ProjectsState {
@@ -60,24 +57,30 @@ const initialState: ProjectsState = {
   list: [],
 }
 
-// Функция для генерации короткого ID в заданном диапазоне
-const generateShortId = (category: ProjectCategory, existingIds: string[]): string => {
-  const ranges: Record<ProjectCategory, [number, number]> = {
-    new: [0, 1999],
-    modernization: [2000, 3999],
-    service: [4000, 5999],
-    standard: [6000, 7999],
-    pilot: [8000, 9999],
+function generateShortId(category: ProjectCategory, existingIds: string[]): string {
+  let rangeStart: number
+  switch (category) {
+    case 'new': rangeStart = 0; break
+    case 'modernization': rangeStart = 2000; break
+    case 'service': rangeStart = 4000; break
+    case 'standard': rangeStart = 6000; break
+    case 'pilot': rangeStart = 8000; break
   }
-  const [min, max] = ranges[category]
-  const existingNumbers = existingIds.map(id => parseInt(id, 10)).filter(n => n >= min && n <= max)
-  for (let i = 0; i < 100; i++) { // попыток 100
-    const candidate = Math.floor(Math.random() * (max - min + 1)) + min
-    const padded = candidate.toString().padStart(4, '0')
-    if (!existingIds.includes(padded)) return padded
+  const rangeEnd = rangeStart + 1999
+  const taken = new Set(existingIds.map(id => parseInt(id, 10)))
+  let candidate = Math.floor(Math.random() * 2000) + rangeStart
+  let attempts = 0
+  while (taken.has(candidate) && attempts < 2000) {
+    candidate = Math.floor(Math.random() * 2000) + rangeStart
+    attempts++
   }
-  // если не нашли свободный (маловероятно), вернуть первый возможный
-  return min.toString().padStart(4, '0')
+  for (let i = rangeStart; i <= rangeEnd; i++) {
+    if (!taken.has(i)) {
+      candidate = i
+      break
+    }
+  }
+  return candidate.toString().padStart(4, '0')
 }
 
 const projectsSlice = createSlice({
@@ -107,42 +110,24 @@ const projectsSlice = createSlice({
     deleteProject: (state, action: PayloadAction<string>) => {
       state.list = state.list.filter(p => p.id !== action.payload)
     },
-    // Дополнительные действия для обновления финансовых расписаний
-    updateIncomeSchedule: (state, action: PayloadAction<{ projectId: string; schedule: IncomeItem[] }>) => {
+    updateIncomePaid: (state, action: PayloadAction<{ projectId: string; index: number; paid: boolean }>) => {
       const project = state.list.find(p => p.id === action.payload.projectId)
       if (project) {
-        project.incomeSchedule = action.payload.schedule
-        project.actualIncome = project.incomeSchedule
-          .filter(i => i.status === 'received')
-          .reduce((sum, i) => sum + i.amount, 0)
+        const item = project.incomeSchedule[action.payload.index]
+        if (item) {
+          item.paid = action.payload.paid
+          project.actualIncome = project.incomeSchedule.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0)
+        }
       }
     },
-    updateExpenseSchedule: (state, action: PayloadAction<{ projectId: string; schedule: ExpenseItem[] }>) => {
+    updateExpensePaid: (state, action: PayloadAction<{ projectId: string; index: number; paid: boolean }>) => {
       const project = state.list.find(p => p.id === action.payload.projectId)
       if (project) {
-        project.expenseSchedule = action.payload.schedule
-        project.actualExpenses = project.expenseSchedule
-          .filter(e => e.status === 'paid')
-          .reduce((sum, e) => sum + e.amount, 0)
-      }
-    },
-    addServiceVisit: (state, action: PayloadAction<{ projectId: string; visit: ServiceVisit }>) => {
-      const project = state.list.find(p => p.id === action.payload.projectId)
-      if (project) {
-        project.serviceVisits.push(action.payload.visit)
-      }
-    },
-    updateServiceVisit: (state, action: PayloadAction<{ projectId: string; visitId: string; updates: Partial<ServiceVisit> }>) => {
-      const project = state.list.find(p => p.id === action.payload.projectId)
-      if (project) {
-        const visit = project.serviceVisits.find(v => v.id === action.payload.visitId)
-        if (visit) Object.assign(visit, action.payload.updates)
-      }
-    },
-    deleteServiceVisit: (state, action: PayloadAction<{ projectId: string; visitId: string }>) => {
-      const project = state.list.find(p => p.id === action.payload.projectId)
-      if (project) {
-        project.serviceVisits = project.serviceVisits.filter(v => v.id !== action.payload.visitId)
+        const item = project.expenseSchedule[action.payload.index]
+        if (item) {
+          item.paid = action.payload.paid
+          project.actualExpenses = project.expenseSchedule.filter(e => e.paid).reduce((sum, e) => sum + e.amount, 0)
+        }
       }
     },
   },
@@ -153,11 +138,8 @@ export const {
   addProject,
   updateProject,
   deleteProject,
-  updateIncomeSchedule,
-  updateExpenseSchedule,
-  addServiceVisit,
-  updateServiceVisit,
-  deleteServiceVisit,
+  updateIncomePaid,
+  updateExpensePaid,
 } = projectsSlice.actions
 
 export default projectsSlice.reducer
