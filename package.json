@@ -1,68 +1,29 @@
-import { useState, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { RootState } from '../store'
-import { addProject, seedDemoProjects } from '../store/projectsSlice'
-import { ProjectList } from '../components/projects/ProjectList'
-import { ProjectDetail } from '../features/projects/ProjectDetail'
-import { CreateProjectModal } from '../components/projects/CreateProjectModal'
-import { useAuth } from '../hooks/useAuth'
-import { useProjectsDb } from '../hooks/useProjectsDb'
-import { db } from '../db'
-import './ProjectsPage.css'
-
-export const ProjectsPage = () => {
-  const dispatch = useDispatch()
-  const { hasRole } = useAuth()
-  const { loadProjects, createProject } = useProjectsDb()
-  const projects = useSelector((state: RootState) => state.projects.list)
-  const [selectedProject, setSelectedProject] = useState<any>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-
-  useEffect(() => {
-    // Загрузка проектов из IndexedDB
-    const init = async () => {
-      const count = await db.projects.count()
-      if (count === 0) {
-        // Добавляем демо-проекты
-        const demos = seedDemoProjects()
-        for (const demo of demos) {
-          await createProject(demo)
-        }
-      }
-      await loadProjects()
-    }
-    init()
-  }, [])
-
-  const handleSelectProject = (project: any) => setSelectedProject(project)
-  const handleBack = () => setSelectedProject(null)
-  const handleCreate = async (projectData: any) => {
-    await createProject(projectData)
-    setShowCreateModal(false)
+{
+  "name": "sputnik-studio-react",
+  "private": true,
+  "version": "8.0.0",
+  "type": "module",
+  "homepage": "https://rawcam.github.io/sputnik-studio-react",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.2.1",
+    "dexie": "^3.2.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^9.1.0",
+    "react-router-dom": "^6.22.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.56",
+    "@types/react-dom": "^18.2.19",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.4"
   }
-
-  if (selectedProject) {
-    return <ProjectDetail project={selectedProject} onBack={handleBack} />
-  }
-
-  return (
-    <div className="projects-page">
-      <div className="dashboard-wrapper">
-        <div className="projects-header">
-          <h2>УПРАВЛЕНИЕ ПРОЕКТАМИ</h2>
-          {(hasRole('director') || hasRole('pm')) && (
-            <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-              <i className="fas fa-plus"></i> Новый проект
-            </button>
-          )}
-        </div>
-        <ProjectList projects={projects} onSelectProject={handleSelectProject} />
-      </div>
-      <CreateProjectModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onCreate={handleCreate}
-      />
-    </div>
-  )
 }
