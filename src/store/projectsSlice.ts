@@ -57,6 +57,32 @@ const initialState: ProjectsState = {
   list: [],
 }
 
+function generateShortId(category: ProjectCategory, existingIds: string[]): string {
+  let rangeStart: number
+  switch (category) {
+    case 'new': rangeStart = 0; break
+    case 'modernization': rangeStart = 2000; break
+    case 'service': rangeStart = 4000; break
+    case 'standard': rangeStart = 6000; break
+    case 'pilot': rangeStart = 8000; break
+  }
+  const rangeEnd = rangeStart + 1999
+  const taken = new Set(existingIds.map(id => parseInt(id, 10)))
+  let candidate = Math.floor(Math.random() * 2000) + rangeStart
+  let attempts = 0
+  while (taken.has(candidate) && attempts < 2000) {
+    candidate = Math.floor(Math.random() * 2000) + rangeStart
+    attempts++
+  }
+  for (let i = rangeStart; i <= rangeEnd; i++) {
+    if (!taken.has(i)) {
+      candidate = i
+      break
+    }
+  }
+  return candidate.toString().padStart(4, '0')
+}
+
 const projectsSlice = createSlice({
   name: 'projects',
   initialState,
@@ -64,8 +90,18 @@ const projectsSlice = createSlice({
     setProjects: (state, action: PayloadAction<Project[]>) => {
       state.list = action.payload
     },
-    addProject: (state, action: PayloadAction<Project>) => {
-      state.list.push(action.payload)
+    addProject: (state, action: PayloadAction<Omit<Project, 'id' | 'shortId'>>) => {
+      const existingIds = state.list.map(p => p.shortId)
+      const shortId = generateShortId(action.payload.category, existingIds)
+      const newId = Date.now().toString()
+      const newProject: Project = {
+        ...action.payload,
+        id: newId,
+        shortId,
+        actualIncome: action.payload.actualIncome ?? 0,
+        actualExpenses: action.payload.actualExpenses ?? 0,
+      }
+      state.list.push(newProject)
     },
     updateProject: (state, action: PayloadAction<Project>) => {
       const index = state.list.findIndex(p => p.id === action.payload.id)
@@ -108,7 +144,6 @@ export const {
 
 export default projectsSlice.reducer
 
-// Демо-данные
 export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
   const today = new Date().toISOString().slice(0, 10)
   const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
