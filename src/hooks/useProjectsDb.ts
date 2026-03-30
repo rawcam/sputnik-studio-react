@@ -1,5 +1,5 @@
 import { useDispatch } from 'react-redux'
-import { setProjects, addProject, Project, seedDemoProjects } from '../store/projectsSlice'
+import { setProjects, addProject, updateProject, deleteProject, Project, seedDemoProjects } from '../store/projectsSlice'
 import { db } from '../db'
 import { useState } from 'react'
 
@@ -23,7 +23,6 @@ export const useProjectsDb = () => {
   const addProjectToDb = async (project: Omit<Project, 'id' | 'shortId'>) => {
     setLoading(true)
     try {
-      // Генерируем shortId (можно улучшить)
       const existing = await db.projects.toArray()
       const existingShortIds = existing.map(p => p.shortId)
       let shortId: string
