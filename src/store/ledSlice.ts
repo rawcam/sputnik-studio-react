@@ -36,19 +36,17 @@ const initialState: LedState = {
   power: 0,
 }
 
-// Расчёт по кабинетам
-export const calcCabinet = (state: LedState): Partial<LedState> => {
+const calcCabinet = (state: LedState): Partial<LedState> => {
   const width_m = (state.cabinetWidth / 1000) * state.cabinetsW
   const height_m = (state.cabinetHeight / 1000) * state.cabinetsH
   const resW = Math.round(width_m / (state.pitch / 1000))
   const resH = Math.round(height_m / (state.pitch / 1000))
   const area = width_m * height_m
-  const power = area * (state.pitch === 0.7 ? 500 : state.pitch <= 1 ? 450 : 400) // упрощённо
+  const power = area * (state.pitch === 0.7 ? 500 : state.pitch <= 1 ? 450 : 400)
   return { width_m, height_m, resW, resH, area, power }
 }
 
-// Расчёт по разрешению
-export const calcResolution = (state: LedState): Partial<LedState> => {
+const calcResolution = (state: LedState): Partial<LedState> => {
   let targetW: number, targetH: number
   if (state.targetResolution === 'fhd') { targetW = 1920; targetH = 1080 }
   else if (state.targetResolution === '4k') { targetW = 3840; targetH = 2160 }
