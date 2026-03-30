@@ -10,8 +10,6 @@ export const ActiveTract: React.FC = () => {
   const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId)
   const activeTract = tracts.find(t => t.id === activeTractId) || null
   const [showModal, setShowModal] = useState(false)
-  const [deviceType, setDeviceType] = useState<'source' | 'tx' | 'rx' | 'matrix' | 'networkSwitch' | 'display' | 'ledProc' | 'splitter' | 'switch2x1' | 'dante'>('source')
-  const [editingDevice, setEditingDevice] = useState<TractDevice | null>(null)
 
   const handleNewTract = () => {
     const newId = Date.now().toString()
