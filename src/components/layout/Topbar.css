@@ -1,68 +1,48 @@
-.topbar {
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-light);
-  padding: 0 28px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 30;
-}
+import { useDispatch, useSelector } from 'react-redux'
+import { Link, useLocation } from 'react-router-dom'
+import { toggleTheme } from '../../store/themeSlice'
+import { RootState } from '../../store'
+import './Topbar.css'
 
-.topbar-logo {
-  font-weight: 700;
-  font-size: 1.3rem;
-  background: linear-gradient(135deg, var(--accent), #818cf8);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  letter-spacing: -0.5px;
-}
+export const Topbar = () => {
+  const dispatch = useDispatch()
+  const location = useLocation()
+  const theme = useSelector((state: RootState) => state.theme.mode)
 
-.topbar-nav {
-  display: flex;
-  gap: 8px;
-  background: var(--card-bg);
-  border-radius: 48px;
-  padding: 4px;
-  backdrop-filter: blur(4px);
-}
+  const getActiveClass = (path: string) => {
+    return location.pathname === path ? 'active' : ''
+  }
 
-.topbar-btn {
-  border: none;
-  background: transparent;
-  padding: 8px 24px;
-  border-radius: 40px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: var(--transition);
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.topbar-btn.active {
-  background: var(--accent);
-  color: white;
-  box-shadow: 0 2px 8px var(--accent-glow);
-}
-
-.topbar-actions button {
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: var(--transition);
-  padding: 8px;
-  border-radius: 40px;
-}
-
-.topbar-actions button:hover {
-  color: var(--accent);
-  background: var(--card-bg);
-  transform: scale(1.05);
+  return (
+    <div className="topbar">
+      <div className="topbar-logo">
+        <i className="fas fa-satellite-dish"></i> Sputnik Studio
+      </div>
+      <div className="topbar-nav">
+        <Link to="/dashboard" className={`topbar-btn ${getActiveClass('/dashboard')}`}>
+          Главная
+        </Link>
+        <Link to="/projects" className={`topbar-btn ${getActiveClass('/projects')}`}>
+          Проекты
+        </Link>
+        <Link to="/calculations" className={`topbar-btn ${getActiveClass('/calculations')}`}>
+          Расчёты
+        </Link>
+        <Link to="/templates" className={`topbar-btn ${getActiveClass('/templates')}`}>
+          Шаблоны
+        </Link>
+      </div>
+      <div className="topbar-actions">
+        <button onClick={() => dispatch(toggleTheme())} title="Тема">
+          <i className={`fas fa-${theme === 'dark' ? 'moon' : 'sun'}`}></i>
+        </button>
+        <button id="topbarSave" title="Сохранить">
+          <i className="fas fa-save"></i>
+        </button>
+        <button id="topbarExport" title="Экспорт">
+          <i className="fas fa-file-export"></i>
+        </button>
+      </div>
+    </div>
+  )
 }
