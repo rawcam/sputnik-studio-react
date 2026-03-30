@@ -18,6 +18,26 @@ const initialState: NetworkSettings = {
   redundancy: false,
 }
 
+// Вспомогательные функции для расчёта статистики
+export const getCableSpeed = (cable: string): number => {
+  const speeds: Record<string, number> = {
+    Cat5e: 1000,
+    Cat6: 1000,
+    Cat6a: 10000,
+    Cat7: 10000,
+    Cat8: 40000,
+    OM3: 10000,
+    wireless: 100,
+  }
+  return speeds[cable] || 1000
+}
+
+export const calcLoadPercent = (totalBitrate: number, cable: string): number => {
+  const speed = getCableSpeed(cable)
+  if (speed === 0) return 0
+  return Math.min(100, Math.round((totalBitrate / speed) * 100))
+}
+
 const networkSlice = createSlice({
   name: 'network',
   initialState,
