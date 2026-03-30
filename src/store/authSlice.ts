@@ -15,12 +15,11 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: (() => {
-    // Для тестирования: загружаем роль из localStorage или ставим pm по умолчанию
     const saved = localStorage.getItem('user')
     if (saved) return JSON.parse(saved)
     return { id: '1', name: 'ГИП', role: 'pm' }
   })(),
-  isAuthenticated: true, // пока всегда true, позже добавим логин
+  isAuthenticated: true,
 }
 
 const authSlice = createSlice({
