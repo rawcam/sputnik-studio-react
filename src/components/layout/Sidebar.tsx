@@ -2,8 +2,7 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import { useLocation } from 'react-router-dom'
 import { RootState } from '../../store'
-import { VideoSection } from '../../features/video/VideoSection'
-import { NetworkSection } from '../../features/network/NetworkSection'
+import { sidebarModules } from '../../config/sidebarModules'
 import './Sidebar.css'
 
 export const Sidebar: React.FC = () => {
@@ -25,18 +24,9 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
       <div id="sidebarSectionsContainer">
-        <VideoSection />
-        <NetworkSection />
-        {/* Остальные аккордеоны будут добавлены позже */}
-        <div className="sidebar-section">
-          <div className="section-header">
-            <i className="fas fa-cog"></i>
-            <span>Остальные настройки (скоро)</span>
-          </div>
-          <div className="section-content">
-            <p>Содержимое будет добавлено в следующих шагах</p>
-          </div>
-        </div>
+        {sidebarModules.map(module => (
+          <module.component key={module.id} />
+        ))}
       </div>
       <div className="sidebar-footer">Sputnik Studio v8.0<br />React Edition</div>
     </div>
