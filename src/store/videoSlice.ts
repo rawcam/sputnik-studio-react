@@ -16,8 +16,6 @@ const initialState: VideoSettings = {
   bitDepth: 10,
 }
 
-// Вспомогательные коэффициенты
-const resFactor: Record<string, number> = { '1080p': 1.0, '4K': 1.5, '8K': 2.5 }
 const chromaFactor: Record<string, number> = { '444': 1.2, '422': 1.0, '420': 0.9 }
 
 export const calcVideoBitrate = (settings: VideoSettings): number => {
