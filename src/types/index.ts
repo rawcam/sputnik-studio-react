@@ -1,4 +1,3 @@
-// Пустая заглушка для типов.
 export interface DeviceModel {
   name: string
   latency: number
