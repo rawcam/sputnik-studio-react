@@ -17,11 +17,11 @@ const initialState: PowerState = {
 }
 
 function calcUPS(totalPower: number, autonomy: number): number {
-  return Math.round(totalPower * autonomy * 1.2) // запас 20%
+  return Math.round(totalPower * autonomy * 1.2)
 }
 
 function calcCooling(totalPower: number): number {
-  return Math.round(totalPower / 3.412) // примерная мощность охлаждения в BTU/ч
+  return Math.round(totalPower / 3.412)
 }
 
 const powerSlice = createSlice({
