@@ -1,13 +1,14 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { setVideoSettings } from '../../store/videoSlice'
+import { setVideoSettings, calcVideoBitrate } from '../../store/videoSlice'
 
 export const VideoSection: React.FC = () => {
   const dispatch = useDispatch()
   const settings = useSelector((state: RootState) => state.video)
+  const bitrate = calcVideoBitrate(settings)
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: keyof typeof settings, value: any) => {
     dispatch(setVideoSettings({ [field]: value }))
   }
 
@@ -60,6 +61,10 @@ export const VideoSection: React.FC = () => {
               <option value="10">10</option>
               <option value="12">12</option>
             </select>
+          </div>
+          <div className="setting result">
+            <label>Битрейт:</label>
+            <span className="result-value">{bitrate} Мбит/с</span>
           </div>
         </div>
       </div>
