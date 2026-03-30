@@ -8,8 +8,9 @@ import './Sidebar.css'
 export const Sidebar: React.FC = () => {
   const collapsed = useSelector((state: RootState) => state.ui.sidebarCollapsed)
   const location = useLocation()
-  const isCalculations = location.pathname.endsWith('/calculations')
+  const isCalculations = location.pathname.includes('/calculations')
 
+  // Показываем сайдбар только на странице расчётов
   if (!isCalculations) return null
 
   return (
