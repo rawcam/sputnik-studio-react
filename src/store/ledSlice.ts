@@ -6,10 +6,10 @@ export interface LedState {
   cabinetHeight: number
   cabinetsW: number
   cabinetsH: number
-  targetResolution: string
+  pitch: number
+  targetResolution: 'fhd' | '4k' | 'custom'
   customResW: number
   customResH: number
-  pitch: number
   width_m: number
   height_m: number
   resW: number
@@ -24,10 +24,10 @@ const initialState: LedState = {
   cabinetHeight: 337.5,
   cabinetsW: 1,
   cabinetsH: 1,
+  pitch: 1.2,
   targetResolution: 'fhd',
   customResW: 1920,
   customResH: 1080,
-  pitch: 1.2,
   width_m: 0,
   height_m: 0,
   resW: 0,
@@ -36,15 +36,56 @@ const initialState: LedState = {
   power: 0,
 }
 
+// Расчёт по кабинетам
+export const calcCabinet = (state: LedState): Partial<LedState> => {
+  const width_m = (state.cabinetWidth / 1000) * state.cabinetsW
+  const height_m = (state.cabinetHeight / 1000) * state.cabinetsH
+  const resW = Math.round(width_m / (state.pitch / 1000))
+  const resH = Math.round(height_m / (state.pitch / 1000))
+  const area = width_m * height_m
+  const power = area * (state.pitch === 0.7 ? 500 : state.pitch <= 1 ? 450 : 400) // упрощённо
+  return { width_m, height_m, resW, resH, area, power }
+}
+
+// Расчёт по разрешению
+export const calcResolution = (state: LedState): Partial<LedState> => {
+  let targetW: number, targetH: number
+  if (state.targetResolution === 'fhd') { targetW = 1920; targetH = 1080 }
+  else if (state.targetResolution === '4k') { targetW = 3840; targetH = 2160 }
+  else { targetW = state.customResW; targetH = state.customResH }
+  const width_m = (targetW * state.pitch) / 1000
+  const height_m = (targetH * state.pitch) / 1000
+  const area = width_m * height_m
+  const power = area * (state.pitch === 0.7 ? 500 : state.pitch <= 1 ? 450 : 400)
+  return { width_m, height_m, resW: targetW, resH: targetH, area, power }
+}
+
 const ledSlice = createSlice({
   name: 'led',
   initialState,
   reducers: {
     setLedConfig: (state, action: PayloadAction<Partial<LedState>>) => {
       Object.assign(state, action.payload)
+      if (state.activeMode === 'cabinets') {
+        const result = calcCabinet(state)
+        Object.assign(state, result)
+      } else {
+        const result = calcResolution(state)
+        Object.assign(state, result)
+      }
+    },
+    setLedMode: (state, action: PayloadAction<'cabinets' | 'resolution'>) => {
+      state.activeMode = action.payload
+      if (state.activeMode === 'cabinets') {
+        const result = calcCabinet(state)
+        Object.assign(state, result)
+      } else {
+        const result = calcResolution(state)
+        Object.assign(state, result)
+      }
     },
   },
 })
 
-export const { setLedConfig } = ledSlice.actions
+export const { setLedConfig, setLedMode } = ledSlice.actions
 export default ledSlice.reducer
