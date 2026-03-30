@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import { Project, ProjectStatus, ProjectCategory } from '../../store/projectsSlice'
 import { updateProject } from '../../store/projectsSlice'
 import { useFinance } from '../../hooks/useFinance'
+import { useProjectsDb } from '../../hooks/useProjectsDb'
 
 interface ProjectDetailProps {
   project: Project
@@ -11,18 +12,28 @@ interface ProjectDetailProps {
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
   const dispatch = useDispatch()
+  const { updateProjectInDb } = useProjectsDb()
   const { getProjectMetrics } = useFinance()
   const metrics = getProjectMetrics(project.id)
   const [activeTab, setActiveTab] = useState<'info' | 'finances' | 'service'>('info')
   const [editedProject, setEditedProject] = useState<Project>(project)
+  const [saving, setSaving] = useState(false)
 
   const handleChange = (field: keyof Project, value: any) => {
     setEditedProject(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSave = () => {
-    dispatch(updateProject(editedProject))
-    alert('Сохранено')
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await updateProjectInDb(editedProject) // обновляет IndexedDB и dispatch updateProject
+      alert('Сохранено')
+    } catch (err) {
+      console.error(err)
+      alert('Ошибка сохранения')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const statusColors: Record<string, string> = {
@@ -179,8 +190,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
       )}
 
       <div className="detail-actions">
-        <button className="btn-primary" onClick={handleSave}>
-          Сохранить изменения
+        <button className="btn-primary" onClick={handleSave} disabled={saving}>
+          {saving ? 'Сохранение...' : 'Сохранить изменения'}
         </button>
       </div>
     </div>
