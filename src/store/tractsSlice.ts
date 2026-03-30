@@ -2,7 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { VideoSettings } from './videoSlice'
 import { calcVideoBitrate } from './videoSlice'
 
-// ========== ТИПЫ ==========
 export interface TractDevice {
   id: string
   type: string
@@ -57,7 +56,6 @@ interface TractsState {
   activeCalculator: string | null
 }
 
-// ========== НАЧАЛЬНОЕ СОСТОЯНИЕ ==========
 const initialState: TractsState = {
   tracts: [],
   activeTractId: null,
@@ -65,7 +63,6 @@ const initialState: TractsState = {
   activeCalculator: null,
 }
 
-// ========== ФУНКЦИЯ ПЕРЕСЧЁТА ==========
 export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract => {
   const allDevices: TractDevice[] = [...tract.sourceDevices, ...tract.sinkDevices]
   const switches = tract.networkSwitches
@@ -109,7 +106,6 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
   }
 }
 
-// ========== SLICE ==========
 const tractsSlice = createSlice({
   name: 'tracts',
   initialState,
