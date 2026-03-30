@@ -14,15 +14,20 @@ export const AllTractsView: React.FC = () => {
 
   return (
     <div className="all-tracts-view">
-      <h3>Все тракты</h3>
-      {tracts.length === 0 && <div>Нет трактов. Создайте первый.</div>}
-      <ul>
+      <h2>Все тракты</h2>
+      {tracts.length === 0 && <div className="empty-state">Нет трактов. Создайте первый.</div>}
+      <div className="tracts-list">
         {tracts.map(tract => (
-          <li key={tract.id} onClick={() => handleSelectTract(tract.id)}>
-            {tract.name} (задержка: {tract.totalLatency} мс, мощность: {tract.totalPower} Вт)
-          </li>
+          <div key={tract.id} className="tract-summary" onClick={() => handleSelectTract(tract.id)}>
+            <h3>{tract.name}</h3>
+            <div className="tract-summary-stats">
+              <span>Задержка: {tract.totalLatency} мс</span>
+              <span>Битрейт: {tract.totalBitrate} Мбит/с</span>
+              <span>Мощность: {tract.totalPower} Вт</span>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
       <button className="btn-primary" onClick={() => dispatch(setViewMode('single'))}>
         Вернуться к активному тракту
       </button>
