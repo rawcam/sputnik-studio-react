@@ -36,7 +36,7 @@ export const TractsSection: React.FC = () => {
         <span>TRACTS</span>
         <i className="fas fa-angle-down"></i>
       </div>
-      <div className="section-content" id="pathsContent">
+      <div className="section-content">
         <ul className="paths-list">
           {tracts.map(tract => (
             <li key={tract.id} onClick={() => handleSelect(tract.id)} className={tract.id === activeTractId ? 'active' : ''}>
