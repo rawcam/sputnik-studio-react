@@ -1,29 +1,26 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, recalcTract } from '../../store/tractsSlice'
+import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, TractDevice } from '../../store/tractsSlice'
+import { recalcTract } from '../../store/tractsSlice'
 import { AddDeviceModal } from './AddDeviceModal'
-import { TractDevice } from '../../store/tractsSlice'
+import { VideoSettings } from '../../store/videoSlice'
 
 export const ActiveTract: React.FC = () => {
   const dispatch = useDispatch()
   const tracts = useSelector((state: RootState) => state.tracts.tracts)
   const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId)
   const videoSettings = useSelector((state: RootState) => state.video)
-  const networkSettings = useSelector((state: RootState) => state.network)
   const activeTract = tracts.find(t => t.id === activeTractId) || null
-
   const [showModal, setShowModal] = useState(false)
 
-  // Пересчёт тракта при изменении устройств или настроек видео/сети
+  // Пересчёт при изменении устройств или настроек видео
   useEffect(() => {
     if (activeTract) {
-      const recalculated = recalcTract(activeTract, videoSettings, networkSettings)
-      if (JSON.stringify(recalculated) !== JSON.stringify(activeTract)) {
-        dispatch(updateTract(recalculated))
-      }
+      const recalculated = recalcTract(activeTract, videoSettings)
+      dispatch(updateTract(recalculated))
     }
-  }, [activeTract, videoSettings, networkSettings, dispatch])
+  }, [activeTract, videoSettings, dispatch])
 
   const handleNewTract = () => {
     const newId = Date.now().toString()
@@ -33,15 +30,8 @@ export const ActiveTract: React.FC = () => {
       sourceDevices: [],
       sinkDevices: [],
       networkSwitches: [],
-      totalLatency: 0,
-      totalBitrate: 0,
-      totalPower: 0,
-      totalPoEBudget: 0,
-      usedPoE: 0,
-      usedPorts: 0,
-      totalPorts: 0,
     }
-    dispatch({ type: 'tracts/addTract', payload: newTract })
+    dispatch(addTract(newTract))
     dispatch(setActiveTract(newId))
   }
 
@@ -73,13 +63,6 @@ export const ActiveTract: React.FC = () => {
     dispatch(setViewMode('all'))
   }
 
-  const handleDeleteTract = () => {
-    if (activeTract && confirm('Удалить тракт?')) {
-      dispatch(deleteTract(activeTract.id))
-      dispatch(setActiveTract(null))
-    }
-  }
-
   if (!activeTract) {
     return (
       <div className="active-tract-container">
@@ -107,7 +90,12 @@ export const ActiveTract: React.FC = () => {
           <button className="btn-primary" onClick={() => setShowModal(true)}>
             <i className="fas fa-plus"></i> Добавить устройство
           </button>
-          <button className="btn-danger" onClick={handleDeleteTract}>
+          <button className="btn-danger" onClick={() => {
+            if (confirm('Удалить тракт?')) {
+              dispatch(deleteTract(activeTract.id))
+              dispatch(setActiveTract(null))
+            }
+          }}>
             <i className="fas fa-trash-alt"></i> Удалить тракт
           </button>
         </div>
@@ -125,14 +113,6 @@ export const ActiveTract: React.FC = () => {
         <div className="stat-card">
           <div className="stat-label">Мощность</div>
           <div className="stat-value">{activeTract.totalPower} Вт</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">PoE (использовано)</div>
-          <div className="stat-value">{activeTract.usedPoE} / {activeTract.totalPoEBudget} Вт</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Порты (использовано)</div>
-          <div className="stat-value">{activeTract.usedPorts} / {activeTract.totalPorts}</div>
         </div>
       </div>
 
