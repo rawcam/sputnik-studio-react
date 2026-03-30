@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, TractDevice } from '../../store/tractsSlice'
+import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, addTract, TractDevice } from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
 import { AddDeviceModal } from './AddDeviceModal'
-import { VideoSettings } from '../../store/videoSlice'
 
 export const ActiveTract: React.FC = () => {
   const dispatch = useDispatch()
@@ -14,7 +13,6 @@ export const ActiveTract: React.FC = () => {
   const activeTract = tracts.find(t => t.id === activeTractId) || null
   const [showModal, setShowModal] = useState(false)
 
-  // Пересчёт при изменении устройств или настроек видео
   useEffect(() => {
     if (activeTract) {
       const recalculated = recalcTract(activeTract, videoSettings)
