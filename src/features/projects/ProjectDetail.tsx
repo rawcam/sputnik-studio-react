@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
-import { useDispatch } from 'react-redux'
 import { Project, ProjectStatus, ProjectCategory, IncomeItem, ExpenseItem } from '../../store/projectsSlice'
-import { updateProject } from '../../store/projectsSlice'
 import { useFinance } from '../../hooks/useFinance'
 import { useProjectsDb } from '../../hooks/useProjectsDb'
 
@@ -11,8 +9,7 @@ interface ProjectDetailProps {
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
-  const dispatch = useDispatch()
-  const { updateProjectInDb } = useProjectsDb()
+  const { updateProject } = useProjectsDb()
   const { getProjectMetrics } = useFinance()
   const metrics = getProjectMetrics(project.id)
   const [activeTab, setActiveTab] = useState<'info' | 'finances' | 'service'>('info')
@@ -39,7 +36,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
   const handleSave = async () => {
     setSaving(true)
     try {
-      await updateProjectInDb(editedProject)
+      await updateProject(editedProject)
       alert('Сохранено')
     } catch (err) {
       console.error(err)
@@ -96,7 +93,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
   const updateIncome = (index: number, field: keyof IncomeItem, value: any) => {
     const newIncomes = [...editedProject.incomeSchedule]
     newIncomes[index] = { ...newIncomes[index], [field]: value }
-    // Если меняем статус оплаты, пересчитываем actualIncome
     if (field === 'paid') {
       const actualIncome = newIncomes.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0)
       setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes, actualIncome }))
@@ -161,14 +157,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
     ready: '#10b981',
     construction: '#8b5cf6',
     done: '#6b7280',
-  }
-
-  const categoryLabels: Record<ProjectCategory, string> = {
-    new: 'Новый',
-    modernization: 'Модернизация',
-    service: 'Сервис',
-    standard: 'Типовой',
-    pilot: 'Пилот',
   }
 
   const purchaseStatusOptions = [
