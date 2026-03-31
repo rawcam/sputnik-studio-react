@@ -1,4 +1,4 @@
-// modelDB.ts – база моделей устройств (источники, передатчики, приёмники, матрицы, коммутаторы и т.д.)
+// modelDB.ts – база моделей устройств
 export const modelDB: Record<string, any[]> = {
   source: [
     { name: "Типовой ПК", latency: 5, poe: false, powerW: 200, icon: "fa-desktop", hasNetwork: true, shortPrefix: "PC" },
@@ -7,26 +7,26 @@ export const modelDB: Record<string, any[]> = {
     { name: "Медиаплеер", latency: 4, poe: false, powerW: 15, icon: "fa-play-circle", hasNetwork: true, shortPrefix: "MP" }
   ],
   tx: [
-    { name: "SDVoE", latency: 0.3, poe: true, poePower: 15, powerW: 15, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX" },
-    { name: "HDBaseT", latency: 0.1, poe: false, powerW: 13, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX" },
-    { name: "Оптика", latency: 0.05, poe: false, powerW: 5, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX" },
-    { name: "NDI|HX", latency: 25, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX" },
-    { name: "H.264", latency: 15, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX" },
-    { name: "H.265", latency: 20, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX" },
-    { name: "MJPEG", latency: 3, poe: true, poePower: 8, powerW: 8, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX" },
-    { name: "SDI", latency: 0.02, poe: false, powerW: 4, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX" },
-    { name: "Dante AV", latency: 1.5, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX" }
+    { name: "SDVoE", latency: 0.3, poe: true, poePower: 15, powerW: 15, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.8 },
+    { name: "HDBaseT", latency: 0.1, poe: false, powerW: 13, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX", bitrateFactor: 0.9 },
+    { name: "Оптика", latency: 0.05, poe: false, powerW: 5, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX", bitrateFactor: 1.0 },
+    { name: "NDI|HX", latency: 25, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.3 },
+    { name: "H.264", latency: 15, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.4 },
+    { name: "H.265", latency: 20, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.35 },
+    { name: "MJPEG", latency: 3, poe: true, poePower: 8, powerW: 8, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.7 },
+    { name: "SDI", latency: 0.02, poe: false, powerW: 4, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX", bitrateFactor: 1.0 },
+    { name: "Dante AV", latency: 1.5, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.8 }
   ],
   rx: [
-    { name: "SDVoE", latency: 0.3, poe: true, poePower: 15, powerW: 15, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX" },
-    { name: "HDBaseT", latency: 0.1, poe: false, powerW: 13, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX" },
-    { name: "Оптика", latency: 0.05, poe: false, powerW: 5, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX" },
-    { name: "NDI|HX", latency: 25, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX" },
-    { name: "H.264", latency: 15, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX" },
-    { name: "H.265", latency: 20, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX" },
-    { name: "MJPEG", latency: 3, poe: true, poePower: 8, powerW: 8, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX" },
-    { name: "SDI", latency: 0.02, poe: false, powerW: 4, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX" },
-    { name: "Dante AV", latency: 1.5, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX" }
+    { name: "SDVoE", latency: 0.3, poe: true, poePower: 15, powerW: 15, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.8 },
+    { name: "HDBaseT", latency: 0.1, poe: false, powerW: 13, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX", bitrateFactor: 0.9 },
+    { name: "Оптика", latency: 0.05, poe: false, powerW: 5, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX", bitrateFactor: 1.0 },
+    { name: "NDI|HX", latency: 25, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.3 },
+    { name: "H.264", latency: 15, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.4 },
+    { name: "H.265", latency: 20, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.35 },
+    { name: "MJPEG", latency: 3, poe: true, poePower: 8, powerW: 8, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.7 },
+    { name: "SDI", latency: 0.02, poe: false, powerW: 4, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX", bitrateFactor: 1.0 },
+    { name: "Dante AV", latency: 1.5, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.8 }
   ],
   matrix: [
     { name: "Без обработки 4x4", inputs: 4, outputs: 4, latencyIn: 0.1, latencyOut: 0.1, poe: false, powerW: 50, icon: "fa-project-diagram", hasNetwork: true, shortPrefix: "MX" },
