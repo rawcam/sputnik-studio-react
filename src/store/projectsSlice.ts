@@ -47,6 +47,8 @@ export interface Project {
   actualIncome: number
   actualExpenses: number
   serviceVisits: ServiceVisit[]
+  roadmapPlanned: { status: ProjectStatus; date: string }[]
+  roadmapActual: { status: ProjectStatus; date: string }[]
 }
 
 interface ProjectsState {
@@ -100,6 +102,8 @@ const projectsSlice = createSlice({
         shortId,
         actualIncome: action.payload.actualIncome ?? 0,
         actualExpenses: action.payload.actualExpenses ?? 0,
+        roadmapPlanned: action.payload.roadmapPlanned ?? [],
+        roadmapActual: action.payload.roadmapActual ?? [],
       }
       state.list.push(newProject)
     },
@@ -144,9 +148,13 @@ export const {
 
 export default projectsSlice.reducer
 
+// Демо-данные
 export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
   const today = new Date().toISOString().slice(0, 10)
   const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+  const twoWeeks = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10)
+  const threeWeeks = new Date(Date.now() + 21 * 86400000).toISOString().slice(0, 10)
+
   return [
     {
       name: 'Конференц-зал 1',
@@ -168,6 +176,20 @@ export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
       actualIncome: 500000,
       actualExpenses: 300000,
       serviceVisits: [],
+      roadmapPlanned: [
+        { status: 'presale', date: today },
+        { status: 'design', date: today },
+        { status: 'ready', date: nextWeek },
+        { status: 'construction', date: twoWeeks },
+        { status: 'done', date: threeWeeks }
+      ],
+      roadmapActual: [
+        { status: 'presale', date: today },
+        { status: 'design', date: today },
+        { status: 'ready', date: '' },
+        { status: 'construction', date: '' },
+        { status: 'done', date: '' }
+      ],
     },
     {
       name: 'Ситуационный центр',
@@ -189,6 +211,20 @@ export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
       actualIncome: 0,
       actualExpenses: 0,
       serviceVisits: [],
+      roadmapPlanned: [
+        { status: 'presale', date: today },
+        { status: 'design', date: nextWeek },
+        { status: 'ready', date: twoWeeks },
+        { status: 'construction', date: threeWeeks },
+        { status: 'done', date: new Date(Date.now() + 28 * 86400000).toISOString().slice(0,10) }
+      ],
+      roadmapActual: [
+        { status: 'presale', date: today },
+        { status: 'design', date: '' },
+        { status: 'ready', date: '' },
+        { status: 'construction', date: '' },
+        { status: 'done', date: '' }
+      ],
     },
     {
       name: 'Диспетчерская',
@@ -210,11 +246,20 @@ export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
       actualIncome: 890000,
       actualExpenses: 500000,
       serviceVisits: [{ id: '1', date: '2026-04-10', type: 'Плановое ТО', status: 'planned', responsible: 'Иванов И.И.' }],
+      roadmapPlanned: [
+        { status: 'presale', date: '2026-01-15' },
+        { status: 'design', date: '2026-01-25' },
+        { status: 'ready', date: '2026-02-05' },
+        { status: 'construction', date: '2026-02-15' },
+        { status: 'done', date: '2026-04-01' }
+      ],
+      roadmapActual: [
+        { status: 'presale', date: '2026-01-15' },
+        { status: 'design', date: '2026-01-25' },
+        { status: 'ready', date: '2026-02-05' },
+        { status: 'construction', date: '2026-02-15' },
+        { status: 'done', date: '' }
+      ],
     },
   ]
-}
-export interface Project {
-  // ... существующие поля
-  roadmapPlanned: { status: ProjectStatus; date: string }[]
-  roadmapActual: { status: ProjectStatus; date: string }[]
 }
