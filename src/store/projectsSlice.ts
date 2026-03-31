@@ -213,3 +213,8 @@ export const seedDemoProjects = (): Omit<Project, 'id' | 'shortId'>[] => {
     },
   ]
 }
+export interface Project {
+  // ... существующие поля
+  roadmapPlanned: { status: ProjectStatus; date: string }[]
+  roadmapActual: { status: ProjectStatus; date: string }[]
+}
