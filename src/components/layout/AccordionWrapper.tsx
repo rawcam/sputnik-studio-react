@@ -8,9 +8,8 @@ interface AccordionWrapperProps {
 export const AccordionWrapper: React.FC<AccordionWrapperProps> = ({ module }) => {
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(`accordion_${module.id}`)
-    return saved === 'true' // по умолчанию развёрнуты? но по ТЗ должны быть свёрнуты. Поменяем: если нет сохранённого значения, то true (свёрнут)
-      ? true
-      : saved === 'false' ? false : true // по умолчанию свёрнуты
+    // по умолчанию свёрнуты (true)
+    return saved !== null ? saved === 'true' : true
   })
 
   useEffect(() => {
