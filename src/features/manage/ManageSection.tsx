@@ -8,8 +8,12 @@ export const ManageSection: React.FC = () => {
         <span>УПРАВЛЕНИЕ</span>
         <i className="fas fa-angle-down"></i>
       </div>
-      <div className="section-content" id="manageContent">
+      <div className="section-content">
         <div className="manage-buttons">
+          <div className="setting" style={{ marginBottom: 12 }}>
+            <label style={{ flex: 1 }}>Имя проекта:</label>
+            <input type="text" id="projectNameInput" style={{ flex: 2 }} placeholder="Введите название проекта" />
+          </div>
           <button className="btn-secondary" id="saveToBrowserBtn"><i className="fas fa-database"></i><span> Сохранить в браузере</span></button>
           <button className="btn-secondary" id="exportJsonBtn"><i className="fas fa-file-export"></i><span> Экспорт JSON</span></button>
           <button className="btn-secondary" id="importJsonBtn"><i className="fas fa-file-import"></i><span> Импорт JSON</span></button>
