@@ -36,9 +36,7 @@ export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose,
           <label>Тип устройства:</label>
           <select value={deviceType} onChange={e => handleTypeChange(e.target.value as keyof typeof modelDB)}>
             {deviceTypes.map(type => (
-              <option key={type} value={type}>
-                {type}
-              </option>
+              <option key={type} value={type}>{type}</option>
             ))}
           </select>
         </div>
