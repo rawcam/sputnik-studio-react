@@ -1,4 +1,3 @@
-// portManager.ts – класс для управления портами коммутаторов
 export class PortManager {
   switches: any[]
 
