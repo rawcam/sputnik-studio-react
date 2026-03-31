@@ -91,3 +91,20 @@
 .role-select:hover {
   border-color: var(--accent);
 }
+/* ... existing styles ... */
+
+.role-select {
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  margin-right: 8px;
+  transition: var(--transition);
+}
+
+.role-select:hover {
+  border-color: var(--accent);
+}
