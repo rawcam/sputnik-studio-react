@@ -7,4 +7,12 @@ export interface DeviceModel {
   icon: string
   hasNetwork: boolean
   shortPrefix: string
+  bitrateFactor?: number
+  inputs?: number
+  outputs?: number
+  ports?: number
+  speed?: number
+  backplane?: number
+  switchingLatency?: number
+  poeBudget?: number
 }
