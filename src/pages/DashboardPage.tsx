@@ -13,30 +13,20 @@ export const DashboardPage = () => {
     <div className="dashboard-wrapper">
       <h2>ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
       <div className="dashboard-grid">
-        {/* Колонка 1: Финансы компании (только для директора) */}
         {hasRole('director') ? (
           <CompanyFinanceWidget />
         ) : (
-          <div className="widget-card placeholder">Финансы компании (доступны только директору)</div>
+          <div className="project-card">Финансы (доступны только директору)</div>
         )}
-
-        {/* Колонка 2: Финансы проектов (директор и ГИП) */}
         {(hasRole('director') || hasRole('pm')) ? (
           <ProjectsFinanceWidget />
         ) : (
-          <div className="widget-card placeholder">Финансы проектов (доступны руководителям)</div>
+          <div className="project-card">Финансы проектов (доступны ГИП и директору)</div>
         )}
-
-        {/* Колонка 3: Сервис (ближайшие выезды) */}
         <ServiceWidget />
-
-        {/* Колонка 4: Загрузка сотрудников */}
         <WorkloadWidget />
-
-        {/* Колонка 5: Риски */}
         <RisksWidget />
       </div>
-
       <div className="widget-section">
         <h3>Активные проекты</h3>
         <p>Здесь будет карусель проектов</p>
