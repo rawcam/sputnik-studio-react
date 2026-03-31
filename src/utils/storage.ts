@@ -1,11 +1,36 @@
 import { db } from '../db'
 import { store } from '../store'
-import { setProjects, seedDemoProjects } from '../store/projectsSlice'
+import { setProjects, seedDemoProjects, ProjectCategory } from '../store/projectsSlice'
 import { setTracts } from '../store/tractsSlice'
 import { setCompanyExpenses } from '../store/companyExpensesSlice'
 import { setServiceVisits } from '../store/serviceVisitsSlice'
 
-// Экспорт всех данных в JSON-файл
+function generateShortId(category: ProjectCategory, existingIds: string[]): string {
+  let rangeStart: number
+  switch (category) {
+    case 'new': rangeStart = 0; break
+    case 'modernization': rangeStart = 2000; break
+    case 'service': rangeStart = 4000; break
+    case 'standard': rangeStart = 6000; break
+    case 'pilot': rangeStart = 8000; break
+  }
+  const rangeEnd = rangeStart + 1999
+  const taken = new Set(existingIds.map(id => parseInt(id, 10)))
+  let candidate = Math.floor(Math.random() * 2000) + rangeStart
+  let attempts = 0
+  while (taken.has(candidate) && attempts < 2000) {
+    candidate = Math.floor(Math.random() * 2000) + rangeStart
+    attempts++
+  }
+  for (let i = rangeStart; i <= rangeEnd; i++) {
+    if (!taken.has(i)) {
+      candidate = i
+      break
+    }
+  }
+  return candidate.toString().padStart(4, '0')
+}
+
 export const exportToJson = async () => {
   const projects = await db.projects.toArray()
   const tracts = store.getState().tracts.tracts
@@ -22,7 +47,6 @@ export const exportToJson = async () => {
   URL.revokeObjectURL(url)
 }
 
-// Импорт из JSON-файла
 export const importFromJson = async (file: File) => {
   const text = await file.text()
   const data = JSON.parse(text)
@@ -45,7 +69,6 @@ export const importFromJson = async (file: File) => {
   alert('Импорт выполнен')
 }
 
-// Сохранение в localStorage (сохраняем все данные, кроме auth/theme/ui)
 export const saveToLocalStorage = async () => {
   const projects = await db.projects.toArray()
   const tracts = store.getState().tracts.tracts
@@ -56,7 +79,6 @@ export const saveToLocalStorage = async () => {
   alert('Сохранено в браузере')
 }
 
-// Загрузка из localStorage (восстановление)
 export const loadFromLocalStorage = async () => {
   const raw = localStorage.getItem('sputnik_backup')
   if (!raw) {
@@ -83,20 +105,17 @@ export const loadFromLocalStorage = async () => {
   alert('Данные восстановлены')
 }
 
-// Сброс проекта (очистка всех данных, демо-проекты)
 export const resetProject = async () => {
-  if (!confirm('Сбросить проект? Все данные будут удалены.') ) return
-  // Очищаем IndexedDB
+  if (!confirm('Сбросить проект? Все данные будут удалены.')) return
   await db.projects.clear()
   await db.companyExpenses.clear()
   await db.serviceVisits.clear()
-  // Очищаем localStorage (кроме темы и настроек сайдбара)
   localStorage.removeItem('sputnik_backup')
-  // Создаём демо-проекты
   const demos = seedDemoProjects()
   for (const demo of demos) {
-    const existingIds = (await db.projects.toArray()).map(p => p.shortId)
-    const shortId = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+    const existing = await db.projects.toArray()
+    const existingShortIds = existing.map(p => p.shortId)
+    const shortId = generateShortId(demo.category, existingShortIds)
     const newId = Date.now().toString()
     const newProject = {
       ...demo,
@@ -109,10 +128,9 @@ export const resetProject = async () => {
     }
     await db.projects.add(newProject)
   }
-  // Обновляем Redux
   const projects = await db.projects.toArray()
   store.dispatch(setProjects(projects))
-  store.dispatch(setTracts([])) // тракты сбрасываем
+  store.dispatch(setTracts([]))
   store.dispatch(setCompanyExpenses([]))
   store.dispatch(setServiceVisits([]))
   alert('Проект сброшен, загружены демо-данные')
