@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { Project, ProjectStatus, ProjectCategory, IncomeItem, ExpenseItem } from '../../store/projectsSlice'
+import { updateProject } from '../../store/projectsSlice'
 import { useFinance } from '../../hooks/useFinance'
 import { useProjectsDb } from '../../hooks/useProjectsDb'
 
@@ -9,10 +11,11 @@ interface ProjectDetailProps {
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
-  const { updateProject } = useProjectsDb()
+  const dispatch = useDispatch()
+  const { updateProject: updateProjectInDb } = useProjectsDb()
   const { getProjectMetrics } = useFinance()
   const metrics = getProjectMetrics(project.id)
-  const [activeTab, setActiveTab] = useState<'info' | 'finances' | 'service'>('info')
+  const [activeTab, setActiveTab] = useState<'info' | 'finances' | 'service' | 'roadmap'>('info')
   const [editedProject, setEditedProject] = useState<Project>(project)
   const [saving, setSaving] = useState(false)
 
@@ -36,7 +39,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
   const handleSave = async () => {
     setSaving(true)
     try {
-      await updateProject(editedProject)
+      await updateProjectInDb(editedProject)
       alert('Сохранено')
     } catch (err) {
       console.error(err)
@@ -192,6 +195,9 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
         </button>
         <button className={activeTab === 'service' ? 'active' : ''} onClick={() => setActiveTab('service')}>
           Сервис
+        </button>
+        <button className={activeTab === 'roadmap' ? 'active' : ''} onClick={() => setActiveTab('roadmap')}>
+          Дорожная карта
         </button>
       </div>
 
@@ -436,33 +442,47 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
           </div>
         </div>
       )}
-{activeTab === 'roadmap' && (
-  <div className="detail-section">
-    <h4>Дорожная карта (план/факт)</h4>
-    <table className="roadmap-table">
-      <thead>
-        <tr><th>Этап</th><th>Плановая дата</th><th>Фактическая дата</th></tr>
-      </thead>
-      <tbody>
-        {editedProject.roadmapPlanned.map((item, idx) => (
-          <tr key={idx}>
-            <td>{item.status}</td>
-            <td><input type="date" value={item.date} onChange={e => {
-              const newPlanned = [...editedProject.roadmapPlanned]
-              newPlanned[idx].date = e.target.value
-              setEditedProject(prev => ({ ...prev, roadmapPlanned: newPlanned }))
-            }} /></td>
-            <td><input type="date" value={editedProject.roadmapActual[idx]?.date || ''} onChange={e => {
-              const newActual = [...editedProject.roadmapActual]
-              newActual[idx] = { status: item.status, date: e.target.value }
-              setEditedProject(prev => ({ ...prev, roadmapActual: newActual }))
-            }} /></td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
+
+      {activeTab === 'roadmap' && (
+        <div className="detail-section">
+          <h4>Дорожная карта (план/факт)</h4>
+          <table className="roadmap-table">
+            <thead>
+              <tr><th>Этап</th><th>Плановая дата</th><th>Фактическая дата</th> </tr>
+            </thead>
+            <tbody>
+              {editedProject.roadmapPlanned.map((item, idx) => (
+                <tr key={idx}>
+                  <td>{item.status}</td>
+                  <td>
+                    <input
+                      type="date"
+                      value={item.date}
+                      onChange={e => {
+                        const newPlanned = [...editedProject.roadmapPlanned]
+                        newPlanned[idx].date = e.target.value
+                        setEditedProject(prev => ({ ...prev, roadmapPlanned: newPlanned }))
+                      }}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="date"
+                      value={editedProject.roadmapActual[idx]?.date || ''}
+                      onChange={e => {
+                        const newActual = [...editedProject.roadmapActual]
+                        newActual[idx] = { status: item.status, date: e.target.value }
+                        setEditedProject(prev => ({ ...prev, roadmapActual: newActual }))
+                      }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="detail-actions">
         <button className="btn-primary" onClick={handleSave} disabled={saving}>
           {saving ? 'Сохранение...' : 'Сохранить изменения'}
