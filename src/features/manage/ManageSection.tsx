@@ -1,5 +1,5 @@
 import React from 'react'
-import { exportToJson, importFromJson } from '../../utils/storage'
+import { exportToJson, importFromJson, saveToLocalStorage, loadFromLocalStorage, resetProject } from '../../utils/storage'
 
 export const ManageSection: React.FC = () => {
   const handleExport = () => exportToJson()
@@ -12,6 +12,18 @@ export const ManageSection: React.FC = () => {
       if (file) await importFromJson(file)
     }
     input.click()
+  }
+
+  const handleSave = () => saveToLocalStorage()
+  const handleLoad = () => loadFromLocalStorage()
+  const handleReset = () => resetProject()
+
+  const handlePrint = () => {
+    alert('Функция печати будет реализована позже')
+  }
+
+  const handleWiki = () => {
+    window.open('/wiki.html', '_blank')
   }
 
   return (
@@ -27,11 +39,27 @@ export const ManageSection: React.FC = () => {
             <label style={{ flex: 1 }}>Имя проекта:</label>
             <input type="text" id="projectNameInput" style={{ flex: 2 }} placeholder="Введите название проекта" />
           </div>
-          <button className="btn-secondary" onClick={handleExport}><i className="fas fa-file-export"></i><span> Экспорт JSON</span></button>
-          <button className="btn-secondary" onClick={handleImport}><i className="fas fa-file-import"></i><span> Импорт JSON</span></button>
-          <button className="btn-secondary" id="printReportBtnSidebar"><i className="fas fa-print"></i><span> Печать отчёта</span></button>
-          <button className="btn-secondary" id="wikiBtnSidebar"><i className="fas fa-book"></i><span> Wiki</span></button>
-          <button className="btn-danger" id="resetProjectBtn"><i className="fas fa-trash-alt"></i><span> Сброс проекта</span></button>
+          <button className="btn-secondary" onClick={handleSave}>
+            <i className="fas fa-database"></i><span> Сохранить в браузере</span>
+          </button>
+          <button className="btn-secondary" onClick={handleLoad}>
+            <i className="fas fa-upload"></i><span> Загрузить из браузера</span>
+          </button>
+          <button className="btn-secondary" onClick={handleExport}>
+            <i className="fas fa-file-export"></i><span> Экспорт JSON</span>
+          </button>
+          <button className="btn-secondary" onClick={handleImport}>
+            <i className="fas fa-file-import"></i><span> Импорт JSON</span>
+          </button>
+          <button className="btn-secondary" onClick={handlePrint}>
+            <i className="fas fa-print"></i><span> Печать отчёта</span>
+          </button>
+          <button className="btn-secondary" onClick={handleWiki}>
+            <i className="fas fa-book"></i><span> Wiki</span>
+          </button>
+          <button className="btn-danger" onClick={handleReset}>
+            <i className="fas fa-trash-alt"></i><span> Сброс проекта</span>
+          </button>
         </div>
       </div>
     </div>
