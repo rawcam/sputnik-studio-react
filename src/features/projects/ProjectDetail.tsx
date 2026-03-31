@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
-import { useDispatch } from 'react-redux'
 import { Project, ProjectStatus, ProjectCategory, IncomeItem, ExpenseItem } from '../../store/projectsSlice'
-import { updateProject } from '../../store/projectsSlice'
 import { useFinance } from '../../hooks/useFinance'
 import { useProjectsDb } from '../../hooks/useProjectsDb'
 
@@ -11,7 +9,6 @@ interface ProjectDetailProps {
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
-  const dispatch = useDispatch()
   const { updateProject: updateProjectInDb } = useProjectsDb()
   const { getProjectMetrics } = useFinance()
   const metrics = getProjectMetrics(project.id)
@@ -448,13 +445,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
           <h4>Дорожная карта (план/факт)</h4>
           <table className="roadmap-table">
             <thead>
-              <tr><th>Этап</th><th>Плановая дата</th><th>Фактическая дата</th> </tr>
+              <tr><th>Этап</th><th>Плановая дата</th><th>Фактическая дата</th>  </tr>
             </thead>
             <tbody>
               {editedProject.roadmapPlanned.map((item, idx) => (
                 <tr key={idx}>
-                  <td>{item.status}</td>
-                  <td>
+                  <td>{item.status} </tr>
+                   <td>
                     <input
                       type="date"
                       value={item.date}
@@ -464,8 +461,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                         setEditedProject(prev => ({ ...prev, roadmapPlanned: newPlanned }))
                       }}
                     />
-                  </td>
-                  <td>
+                   </tr>
+                   <td>
                     <input
                       type="date"
                       value={editedProject.roadmapActual[idx]?.date || ''}
@@ -475,7 +472,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                         setEditedProject(prev => ({ ...prev, roadmapActual: newActual }))
                       }}
                     />
-                  </td>
+                   </tr>
                 </tr>
               ))}
             </tbody>
