@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Topbar } from './components/layout/Topbar'
 import { Sidebar } from './components/layout/Sidebar'
@@ -5,9 +6,20 @@ import { DashboardPage } from './pages/DashboardPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CalculationsPage } from './pages/CalculationsPage'
 import { TemplatesPage } from './pages/TemplatesPage'
+import { useProjectsDb } from './hooks/useProjectsDb'
 import './styles/App.css'
 
 function App() {
+  const { initDemoData, loadProjects } = useProjectsDb()
+
+  useEffect(() => {
+    const init = async () => {
+      await initDemoData()
+      await loadProjects()
+    }
+    init()
+  }, [])
+
   return (
     <BrowserRouter basename="/sputnik-studio-react">
       <div className="app">
