@@ -22,7 +22,6 @@ export const Sidebar: React.FC = () => {
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        {/* Убираем заголовок и кнопку темы, оставляем только кнопку сворачивания */}
         <div className="collapse-btn" onClick={handleCollapse}>
           <i className={`fas fa-chevron-${collapsed ? 'right' : 'left'}`}></i>
         </div>
