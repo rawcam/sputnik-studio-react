@@ -2,7 +2,7 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import { useLocation } from 'react-router-dom'
 import { RootState } from '../../store'
-import { sidebarModules } from '../../config/sidebarModules'
+import { SortableSidebar } from './SortableSidebar'
 import './Sidebar.css'
 
 export const Sidebar: React.FC = () => {
@@ -24,9 +24,7 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
       <div id="sidebarSectionsContainer">
-        {sidebarModules.map(module => (
-          <module.component key={module.id} />
-        ))}
+        <SortableSidebar />
       </div>
       <div className="sidebar-footer">Sputnik Studio v8.0<br />React Edition</div>
     </div>
