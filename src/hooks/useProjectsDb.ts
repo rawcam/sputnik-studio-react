@@ -88,7 +88,7 @@ export const useProjectsDb = () => {
     error,
     loadProjects,
     addProject: addProjectToDb,
-    updateProject: updateProjectInDb,   // переименовано в updateProject
+    updateProject: updateProjectInDb,
     deleteProject: deleteProjectFromDb,
     initDemoData,
   }
