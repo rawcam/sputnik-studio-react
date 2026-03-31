@@ -436,7 +436,33 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
           </div>
         </div>
       )}
-
+{activeTab === 'roadmap' && (
+  <div className="detail-section">
+    <h4>Дорожная карта (план/факт)</h4>
+    <table className="roadmap-table">
+      <thead>
+        <tr><th>Этап</th><th>Плановая дата</th><th>Фактическая дата</th></tr>
+      </thead>
+      <tbody>
+        {editedProject.roadmapPlanned.map((item, idx) => (
+          <tr key={idx}>
+            <td>{item.status}</td>
+            <td><input type="date" value={item.date} onChange={e => {
+              const newPlanned = [...editedProject.roadmapPlanned]
+              newPlanned[idx].date = e.target.value
+              setEditedProject(prev => ({ ...prev, roadmapPlanned: newPlanned }))
+            }} /></td>
+            <td><input type="date" value={editedProject.roadmapActual[idx]?.date || ''} onChange={e => {
+              const newActual = [...editedProject.roadmapActual]
+              newActual[idx] = { status: item.status, date: e.target.value }
+              setEditedProject(prev => ({ ...prev, roadmapActual: newActual }))
+            }} /></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
       <div className="detail-actions">
         <button className="btn-primary" onClick={handleSave} disabled={saving}>
           {saving ? 'Сохранение...' : 'Сохранить изменения'}
