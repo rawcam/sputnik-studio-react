@@ -2,8 +2,12 @@ import React from 'react'
 import { exportToJson, importFromJson, saveToLocalStorage, loadFromLocalStorage, resetProject } from '../../utils/storage'
 
 export const ManageSection: React.FC = () => {
-  const handleExport = () => exportToJson()
+  const handleExport = () => {
+    console.log('Export clicked')
+    exportToJson()
+  }
   const handleImport = () => {
+    console.log('Import clicked')
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'application/json'
@@ -13,18 +17,20 @@ export const ManageSection: React.FC = () => {
     }
     input.click()
   }
-
-  const handleSave = () => saveToLocalStorage()
-  const handleLoad = () => loadFromLocalStorage()
-  const handleReset = () => resetProject()
-
-  const handlePrint = () => {
-    alert('Функция печати будет реализована позже')
+  const handleSave = () => {
+    console.log('Save to browser clicked')
+    saveToLocalStorage()
   }
-
-  const handleWiki = () => {
-    window.open('/wiki.html', '_blank')
+  const handleLoad = () => {
+    console.log('Load from browser clicked')
+    loadFromLocalStorage()
   }
+  const handleReset = () => {
+    console.log('Reset clicked')
+    resetProject()
+  }
+  const handlePrint = () => alert('Функция печати будет реализована позже')
+  const handleWiki = () => window.open('/wiki.html', '_blank')
 
   return (
     <div className="sidebar-section">
