@@ -445,13 +445,17 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
           <h4>Дорожная карта (план/факт)</h4>
           <table className="roadmap-table">
             <thead>
-              <tr><th>Этап</th><th>Плановая дата</th><th>Фактическая дата</th>  </tr>
+              <tr>
+                <th>Этап</th>
+                <th>Плановая дата</th>
+                <th>Фактическая дата</th>
+              </tr>
             </thead>
             <tbody>
               {editedProject.roadmapPlanned.map((item, idx) => (
                 <tr key={idx}>
-                  <td>{item.status} </tr>
-                   <td>
+                  <td>{item.status}</td>
+                  <td>
                     <input
                       type="date"
                       value={item.date}
@@ -461,8 +465,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                         setEditedProject(prev => ({ ...prev, roadmapPlanned: newPlanned }))
                       }}
                     />
-                   </tr>
-                   <td>
+                  </td>
+                  <td>
                     <input
                       type="date"
                       value={editedProject.roadmapActual[idx]?.date || ''}
@@ -472,7 +476,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                         setEditedProject(prev => ({ ...prev, roadmapActual: newActual }))
                       }}
                     />
-                   </tr>
+                  </td>
                 </tr>
               ))}
             </tbody>
