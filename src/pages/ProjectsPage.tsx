@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
 import { ProjectList } from '../components/projects/ProjectList'
 import { ProjectDetail } from '../features/projects/ProjectDetail'
@@ -15,35 +15,13 @@ export const ProjectsPage = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
-  const location = useLocation()
   const navigate = useNavigate()
 
-  // Получаем id из хеша
   const getProjectIdFromHash = () => {
-    const hash = location.hash
-    const queryStart = hash.indexOf('?')
-    if (queryStart === -1) return null
-    const query = hash.slice(queryStart + 1)
-    const params = new URLSearchParams(query)
-    return params.get('id')
+    const hash = window.location.hash
+    const match = hash.match(/[?&]id=([^&]+)/)
+    return match ? match[1] : null
   }
-
-  const projectId = getProjectIdFromHash()
-
-  // Устанавливаем selectedProject, когда проекты загружены и есть projectId
-  useEffect(() => {
-    if (projectId && projects.length > 0) {
-      const project = projects.find(p => p.id === projectId)
-      if (project) {
-        setSelectedProject(project)
-      } else {
-        // Если проект не найден, возможно, id невалидный, очищаем
-        setSelectedProject(null)
-      }
-    } else if (!projectId) {
-      setSelectedProject(null)
-    }
-  }, [projectId, projects])
 
   useEffect(() => {
     const init = async () => {
@@ -53,14 +31,28 @@ export const ProjectsPage = () => {
     init()
   }, [])
 
+  useEffect(() => {
+    const handleHashChange = () => {
+      const projectId = getProjectIdFromHash()
+      if (projectId && projects.length > 0) {
+        const project = projects.find(p => p.id === projectId)
+        setSelectedProject(project || null)
+      } else {
+        setSelectedProject(null)
+      }
+    }
+    handleHashChange()
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [projects])
+
   const handleSelectProject = (project: any) => {
-    setSelectedProject(project)
     navigate(`/projects?id=${project.id}`, { replace: true })
   }
 
   const handleBack = () => {
-    setSelectedProject(null)
     navigate('/projects', { replace: true })
+    setSelectedProject(null)
   }
 
   const handleCreate = async (projectData: any) => {
