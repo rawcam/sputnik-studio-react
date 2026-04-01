@@ -11,17 +11,10 @@ export const ErgoSection: React.FC = () => {
   }
 
   return (
-    <div className="sidebar-section">
-      <div className="section-header" data-section="ergo">
-        <i className="fas fa-chalkboard-user"></i>
-        <span>Эргономика ЭКП</span>
-        <i className="fas fa-angle-down"></i>
-      </div>
-      <div className="section-content">
-        <button className="btn-primary" onClick={openCalculator}>
-          <i className="fas fa-calculator"></i> Показать калькулятор
-        </button>
-      </div>
+    <div className="section-content-inner">
+      <button className="btn-primary" onClick={openCalculator}>
+        <i className="fas fa-calculator"></i> Показать калькулятор
+      </button>
     </div>
   )
 }
