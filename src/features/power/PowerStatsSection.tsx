@@ -12,15 +12,15 @@ export const PowerStatsSection: React.FC = () => {
     <div className="section-content-inner">
       <div className="widget-item">
         <span className="widget-label">PoE:</span>
-        <span className="widget-value">0</span>/<span>0</span> Вт
+        <span className="power-value">0</span>/<span>0</span> Вт
       </div>
       <div className="widget-item">
         <span className="widget-label">Мощность:</span>
-        <span className="widget-value">{totalPower} Вт</span>
+        <span className="power-value">{totalPower} Вт</span>
       </div>
       <div className="widget-item">
         <span className="widget-label">Тепло:</span>
-        <span className="widget-value">{totalBTU} BTU/ч</span>
+        <span className="power-value">{totalBTU} BTU/ч</span>
       </div>
     </div>
   )
