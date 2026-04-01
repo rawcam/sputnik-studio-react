@@ -8,7 +8,7 @@ export const modelDB: Record<string, any[]> = {
   ],
   tx: [
     { name: "SDVoE", latency: 0.3, poe: true, poePower: 15, powerW: 15, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.8 },
-    { name: "HDBaseT", latency: 0.1, poe: false, powerW: 13, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX", bitrateFactor: 0.9 },
+    { name: "HDBaseT", latency: 0.1, poe: false, poc: true, powerW: 13, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX", bitrateFactor: 0.9 },
     { name: "Оптика", latency: 0.05, poe: false, powerW: 5, icon: "fa-arrow-up", hasNetwork: false, shortPrefix: "TX", bitrateFactor: 1.0 },
     { name: "NDI|HX", latency: 25, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.3 },
     { name: "H.264", latency: 15, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-up", hasNetwork: true, shortPrefix: "TX", bitrateFactor: 0.4 },
@@ -19,7 +19,7 @@ export const modelDB: Record<string, any[]> = {
   ],
   rx: [
     { name: "SDVoE", latency: 0.3, poe: true, poePower: 15, powerW: 15, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.8 },
-    { name: "HDBaseT", latency: 0.1, poe: false, powerW: 13, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX", bitrateFactor: 0.9 },
+    { name: "HDBaseT", latency: 0.1, poe: false, poc: true, powerW: 13, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX", bitrateFactor: 0.9 },
     { name: "Оптика", latency: 0.05, poe: false, powerW: 5, icon: "fa-arrow-down", hasNetwork: false, shortPrefix: "RX", bitrateFactor: 1.0 },
     { name: "NDI|HX", latency: 25, poe: true, poePower: 10, powerW: 10, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.3 },
     { name: "H.264", latency: 15, poe: true, poePower: 12, powerW: 12, icon: "fa-arrow-down", hasNetwork: true, shortPrefix: "RX", bitrateFactor: 0.4 },
