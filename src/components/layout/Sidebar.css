@@ -275,3 +275,13 @@
   flex-direction: column;
   gap: 4px;
 }
+/* Переопределение старых отступов из global.css */
+.setting {
+  margin-bottom: 0 !important;
+}
+
+/* Гарантия центрирования иконок в компактном режиме (без display: block) */
+.sidebar.collapsed .section-header i:first-child {
+  display: inline-block !important;
+  margin: 0 !important;
+}
