@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import { setLedConfig, setLedMode } from '../../store/ledSlice'
-import { addDeviceToTract, setViewMode, setActiveCalculator } from '../../store/tractsSlice'
+import { addDeviceToTract } from '../../store/tractsSlice'
 
-export const LedCalculator: React.FC = () => {
+interface LedCalculatorProps {
+  onBack: () => void
+}
+
+export const LedCalculator: React.FC<LedCalculatorProps> = ({ onBack }) => {
   const dispatch = useDispatch()
   const ledConfig = useSelector((state: RootState) => state.led)
   const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId)
@@ -79,16 +83,11 @@ export const LedCalculator: React.FC = () => {
     alert('Устройство добавлено в тракт')
   }
 
-  const handleBack = () => {
-    dispatch(setViewMode('single'))
-    dispatch(setActiveCalculator(null))
-  }
-
   return (
     <div className="calculator-container">
       <div className="calculator-header">
         <h3>LED-калькулятор</h3>
-        <button className="btn-secondary" onClick={handleBack}>Назад к трактам</button>
+        <button className="btn-secondary" onClick={onBack}>Назад к трактам</button>
       </div>
 
       <div className="mode-buttons">
