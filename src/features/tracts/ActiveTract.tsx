@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, addTract, TractDevice } from '../../store/tractsSlice'
+import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, TractDevice } from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
 import { AddDeviceModal } from './AddDeviceModal'
+import { DeviceCard } from './DeviceCard'
 
 export const ActiveTract: React.FC = () => {
   const dispatch = useDispatch()
@@ -12,11 +13,11 @@ export const ActiveTract: React.FC = () => {
   const videoSettings = useSelector((state: RootState) => state.video)
   const activeTract = tracts.find(t => t.id === activeTractId) || null
   const [showModal, setShowModal] = useState(false)
+  const [modalColumn, setModalColumn] = useState<'source' | 'matrix' | 'sink'>('source')
 
   useEffect(() => {
     if (activeTract) {
       const recalculated = recalcTract(activeTract, videoSettings)
-      // Обновляем только если изменились вычисленные поля
       if (
         recalculated.totalLatency !== activeTract.totalLatency ||
         recalculated.totalBitrate !== activeTract.totalBitrate ||
@@ -33,38 +34,62 @@ export const ActiveTract: React.FC = () => {
       id: newId,
       name: `Тракт ${tracts.length + 1}`,
       sourceDevices: [],
+      matrixDevices: [],
       sinkDevices: [],
-      networkSwitches: [],
     }))
     dispatch(setActiveTract(newId))
   }
 
-  const handleAddDevice = (device: any) => {
+  const handleAddDevice = (device: any, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
+    const allDevices = [...activeTract.sourceDevices, ...activeTract.matrixDevices, ...activeTract.sinkDevices]
+    // Генерация короткого имени
+    let prefix = device.shortPrefix
+    if (column === 'source') prefix = device.shortPrefix || 'SRC'
+    if (column === 'matrix') prefix = device.shortPrefix || 'SW'
+    if (column === 'sink') prefix = device.shortPrefix || 'SNK'
+    let maxNum = 0
+    const regex = new RegExp(`^${prefix}(\\d+)$`)
+    allDevices.forEach(d => {
+      if (d.shortName && regex.test(d.shortName)) {
+        const num = parseInt(d.shortName.match(regex)![1], 10)
+        if (num > maxNum) maxNum = num
+      }
+    })
+    const shortName = prefix + (maxNum + 1)
+
     const newDevice: TractDevice = {
       id: Date.now().toString(),
       type: device.type,
       modelName: device.name,
       latency: device.latency || 0,
       poeEnabled: device.poe || false,
+      poePower: device.poePower || 0,
       powerW: device.powerW || 0,
-      shortName: device.shortPrefix + (activeTract.sourceDevices.length + activeTract.sinkDevices.length + 1),
-      attachedSwitchId: undefined,
-      attachedPortNumber: undefined,
+      shortName,
       ethernet: device.hasNetwork || false,
       bitrateFactor: device.bitrateFactor,
+      // для матриц
+      ports: device.ports,
+      poeBudget: device.poeBudget,
+      switchingLatency: device.switchingLatency,
     }
-    dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice }))
+    dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice, column }))
     setShowModal(false)
   }
 
-  const handleDeleteDevice = (deviceId: string) => {
+  const handleDeleteDevice = (deviceId: string, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
-    dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId }))
+    dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId, column }))
   }
 
   const handleBackToAll = () => {
     dispatch(setViewMode('all'))
+  }
+
+  const handleRename = (newName: string) => {
+    if (!activeTract) return
+    dispatch(updateTract({ ...activeTract, name: newName }))
   }
 
   if (!activeTract) {
@@ -88,12 +113,21 @@ export const ActiveTract: React.FC = () => {
   return (
     <div className="active-tract-container">
       <div className="tract-header">
-        <h2>{activeTract.name}</h2>
+        <div className="tract-name">
+          <input
+            type="text"
+            value={activeTract.name}
+            onChange={e => handleRename(e.target.value)}
+            className="tract-name-input"
+          />
+        </div>
+        <div className="tract-stats-summary">
+          <div className="stat-badge">⏱️ {activeTract.totalLatency} мс</div>
+          <div className="stat-badge">📡 {activeTract.totalBitrate} Мбит/с</div>
+          <div className="stat-badge">💡 {activeTract.totalPower} Вт</div>
+        </div>
         <div className="tract-actions">
           <button className="btn-secondary" onClick={handleBackToAll}>Все тракты</button>
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
-            <i className="fas fa-plus"></i> Добавить устройство
-          </button>
           <button className="btn-danger" onClick={() => {
             if (confirm('Удалить тракт?')) {
               dispatch(deleteTract(activeTract.id))
@@ -105,39 +139,62 @@ export const ActiveTract: React.FC = () => {
         </div>
       </div>
 
-      <div className="tract-stats">
-        <div className="stat-card">
-          <div className="stat-label">Задержка</div>
-          <div className="stat-value">{activeTract.totalLatency} мс</div>
+      <div className="tract-columns">
+        <div className="tract-column">
+          <div className="column-header">📡 Начало тракта</div>
+          <div className="devices-list">
+            {activeTract.sourceDevices.map(device => (
+              <DeviceCard
+                key={device.id}
+                device={device}
+                onDelete={() => handleDeleteDevice(device.id, 'source')}
+              />
+            ))}
+          </div>
+          <button className="add-btn" onClick={() => { setModalColumn('source'); setShowModal(true); }}>
+            + Добавить устройство
+          </button>
         </div>
-        <div className="stat-card">
-          <div className="stat-label">Битрейт</div>
-          <div className="stat-value">{activeTract.totalBitrate} Мбит/с</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Мощность</div>
-          <div className="stat-value">{activeTract.totalPower} Вт</div>
-        </div>
-      </div>
 
-      <div className="tract-devices">
-        <h3>Устройства</h3>
-        <div className="devices-list">
-          {activeTract.sourceDevices.map(device => (
-            <div key={device.id} className="device-item">
-              <span>{device.modelName} ({device.shortName})</span>
-              <button className="btn-small" onClick={() => handleDeleteDevice(device.id)}>
-                <i className="fas fa-trash-alt"></i>
-              </button>
-            </div>
-          ))}
+        <div className="tract-column">
+          <div className="column-header">🔄 Коммутация</div>
+          <div className="devices-list">
+            {activeTract.matrixDevices.map(device => (
+              <DeviceCard
+                key={device.id}
+                device={device}
+                onDelete={() => handleDeleteDevice(device.id, 'matrix')}
+              />
+            ))}
+          </div>
+          <button className="add-btn" onClick={() => { setModalColumn('matrix'); setShowModal(true); }}>
+            + Добавить коммутатор/матрицу
+          </button>
+        </div>
+
+        <div className="tract-column">
+          <div className="column-header">🖥️ Конец тракта</div>
+          <div className="devices-list">
+            {activeTract.sinkDevices.map(device => (
+              <DeviceCard
+                key={device.id}
+                device={device}
+                onDelete={() => handleDeleteDevice(device.id, 'sink')}
+              />
+            ))}
+          </div>
+          <button className="add-btn" onClick={() => { setModalColumn('sink'); setShowModal(true); }}>
+            + Добавить устройство
+          </button>
         </div>
       </div>
 
       <AddDeviceModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onAdd={handleAddDevice}
+        onAdd={(device) => handleAddDevice(device, modalColumn)}
+        column={modalColumn}
+        switches={activeTract.matrixDevices}
       />
     </div>
   )
