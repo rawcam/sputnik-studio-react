@@ -30,7 +30,21 @@ export const ProjectsPage = () => {
 
   const projectId = getProjectIdFromHash()
 
-  // Загружаем демо-данные и проекты при монтировании
+  // Устанавливаем selectedProject, когда проекты загружены и есть projectId
+  useEffect(() => {
+    if (projectId && projects.length > 0) {
+      const project = projects.find(p => p.id === projectId)
+      if (project) {
+        setSelectedProject(project)
+      } else {
+        // Если проект не найден, возможно, id невалидный, очищаем
+        setSelectedProject(null)
+      }
+    } else if (!projectId) {
+      setSelectedProject(null)
+    }
+  }, [projectId, projects])
+
   useEffect(() => {
     const init = async () => {
       await initDemoData()
@@ -39,26 +53,14 @@ export const ProjectsPage = () => {
     init()
   }, [])
 
-  // Следим за projectId и проектами, чтобы открыть детали
-  useEffect(() => {
-    if (projectId && projects.length > 0) {
-      const project = projects.find(p => p.id === projectId)
-      if (project) {
-        setSelectedProject(project)
-      }
-    } else if (!projectId) {
-      setSelectedProject(null)
-    }
-  }, [projectId, projects])
-
   const handleSelectProject = (project: any) => {
+    setSelectedProject(project)
     navigate(`/projects?id=${project.id}`, { replace: true })
-    // Не нужно сразу устанавливать selectedProject, так как это сделает useEffect
   }
 
   const handleBack = () => {
+    setSelectedProject(null)
     navigate('/projects', { replace: true })
-    // selectedProject очистится через useEffect
   }
 
   const handleCreate = async (projectData: any) => {
