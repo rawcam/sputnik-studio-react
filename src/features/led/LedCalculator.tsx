@@ -4,15 +4,12 @@ import { RootState } from '../../store'
 import { setLedConfig, setLedMode } from '../../store/ledSlice'
 import { addDeviceToTract } from '../../store/tractsSlice'
 
-interface LedCalculatorProps {
-  onBack: () => void
-}
-
-export const LedCalculator: React.FC<LedCalculatorProps> = ({ onBack }) => {
+export const LedCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const dispatch = useDispatch()
   const ledConfig = useSelector((state: RootState) => state.led)
   const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId)
 
+  const [mode, setMode] = useState<'cabinets' | 'resolution'>(ledConfig.activeMode)
   const [pitch, setPitch] = useState(ledConfig.pitch)
   const [cabinetWidth, setCabinetWidth] = useState(ledConfig.cabinetWidth)
   const [cabinetHeight, setCabinetHeight] = useState(ledConfig.cabinetHeight)
@@ -30,8 +27,6 @@ export const LedCalculator: React.FC<LedCalculatorProps> = ({ onBack }) => {
     area: ledConfig.area,
     power: ledConfig.power,
   })
-
-  const mode = ledConfig.activeMode
 
   useEffect(() => {
     const config = {
@@ -89,52 +84,51 @@ export const LedCalculator: React.FC<LedCalculatorProps> = ({ onBack }) => {
         <h3>LED-калькулятор</h3>
         <button className="btn-secondary" onClick={onBack}>Назад к трактам</button>
       </div>
+      <div className="calculator-form">
+        <div className="setting">
+          <label>Режим:</label>
+          <select value={mode} onChange={e => setMode(e.target.value as 'cabinets' | 'resolution')}>
+            <option value="cabinets">По кабинетам</option>
+            <option value="resolution">По разрешению</option>
+          </select>
+        </div>
 
-      <div className="mode-buttons">
-        <button className={mode === 'cabinets' ? 'active' : ''} onClick={() => dispatch(setLedMode('cabinets'))}>
-          По кабинетам
-        </button>
-        <button className={mode === 'resolution' ? 'active' : ''} onClick={() => dispatch(setLedMode('resolution'))}>
-          По разрешению
-        </button>
+        {mode === 'cabinets' && (
+          <>
+            <div className="setting"><label>Шаг пикселя (мм):</label><input type="number" step="0.1" value={pitch} onChange={e => setPitch(parseFloat(e.target.value))} /></div>
+            <div className="setting"><label>Ширина кабинета (мм):</label><input type="number" value={cabinetWidth} onChange={e => setCabinetWidth(parseFloat(e.target.value))} /></div>
+            <div className="setting"><label>Высота кабинета (мм):</label><input type="number" value={cabinetHeight} onChange={e => setCabinetHeight(parseFloat(e.target.value))} /></div>
+            <div className="setting"><label>Кабинетов по ширине:</label><input type="number" value={cabinetsW} onChange={e => setCabinetsW(parseInt(e.target.value))} /></div>
+            <div className="setting"><label>Кабинетов по высоте:</label><input type="number" value={cabinetsH} onChange={e => setCabinetsH(parseInt(e.target.value))} /></div>
+          </>
+        )}
+
+        {mode === 'resolution' && (
+          <>
+            <div className="setting"><label>Шаг пикселя (мм):</label><input type="number" step="0.1" value={pitch} onChange={e => setPitch(parseFloat(e.target.value))} /></div>
+            <div className="setting"><label>Целевое разрешение:</label>
+              <select value={targetResolution} onChange={e => setTargetResolution(e.target.value as 'fhd' | '4k' | 'custom')}>
+                <option value="fhd">Full HD (1920x1080)</option>
+                <option value="4k">4K (3840x2160)</option>
+                <option value="custom">Пользовательское</option>
+              </select>
+            </div>
+            {targetResolution === 'custom' && (
+              <>
+                <div className="setting"><label>Ширина (пикс):</label><input type="number" value={customResW} onChange={e => setCustomResW(parseInt(e.target.value))} /></div>
+                <div className="setting"><label>Высота (пикс):</label><input type="number" value={customResH} onChange={e => setCustomResH(parseInt(e.target.value))} /></div>
+              </>
+            )}
+          </>
+        )}
+
+        <div className="result-grid">
+          <div className="result-item"><span className="result-label">Разрешение</span><span className="result-value">{result.resW}×{result.resH}</span></div>
+          <div className="result-item"><span className="result-label">Размер (м)</span><span className="result-value">{result.width_m.toFixed(1)}×{result.height_m.toFixed(1)}</span></div>
+          <div className="result-item"><span className="result-label">Площадь (м²)</span><span className="result-value">{result.area.toFixed(1)}</span></div>
+          <div className="result-item"><span className="result-label">Мощность (Вт)</span><span className="result-value">{Math.round(result.power)}</span></div>
+        </div>
       </div>
-
-      {mode === 'cabinets' && (
-        <>
-          <div className="setting"><label>Шаг пикселя (мм):</label><input type="number" step="0.1" value={pitch} onChange={e => setPitch(parseFloat(e.target.value))} /></div>
-          <div className="setting"><label>Ширина кабинета (мм):</label><input type="number" value={cabinetWidth} onChange={e => setCabinetWidth(parseFloat(e.target.value))} /></div>
-          <div className="setting"><label>Высота кабинета (мм):</label><input type="number" value={cabinetHeight} onChange={e => setCabinetHeight(parseFloat(e.target.value))} /></div>
-          <div className="setting"><label>Кабинетов по ширине:</label><input type="number" value={cabinetsW} onChange={e => setCabinetsW(parseInt(e.target.value))} /></div>
-          <div className="setting"><label>Кабинетов по высоте:</label><input type="number" value={cabinetsH} onChange={e => setCabinetsH(parseInt(e.target.value))} /></div>
-        </>
-      )}
-
-      {mode === 'resolution' && (
-        <>
-          <div className="setting"><label>Шаг пикселя (мм):</label><input type="number" step="0.1" value={pitch} onChange={e => setPitch(parseFloat(e.target.value))} /></div>
-          <div className="setting"><label>Целевое разрешение:</label>
-            <select value={targetResolution} onChange={e => setTargetResolution(e.target.value as 'fhd' | '4k' | 'custom')}>
-              <option value="fhd">Full HD (1920x1080)</option>
-              <option value="4k">4K (3840x2160)</option>
-              <option value="custom">Пользовательское</option>
-            </select>
-          </div>
-          {targetResolution === 'custom' && (
-            <>
-              <div className="setting"><label>Ширина (пикс):</label><input type="number" value={customResW} onChange={e => setCustomResW(parseInt(e.target.value))} /></div>
-              <div className="setting"><label>Высота (пикс):</label><input type="number" value={customResH} onChange={e => setCustomResH(parseInt(e.target.value))} /></div>
-            </>
-          )}
-        </>
-      )}
-
-      <div className="result-grid">
-        <div className="result-item"><span className="result-label">Разрешение</span><span className="result-value">{result.resW}×{result.resH}</span></div>
-        <div className="result-item"><span className="result-label">Размер (м)</span><span className="result-value">{result.width_m.toFixed(1)}×{result.height_m.toFixed(1)}</span></div>
-        <div className="result-item"><span className="result-label">Площадь (м²)</span><span className="result-value">{result.area.toFixed(1)}</span></div>
-        <div className="result-item"><span className="result-label">Мощность (Вт)</span><span className="result-value">{Math.round(result.power)}</span></div>
-      </div>
-
       <div className="calculator-actions">
         <button className="btn-primary" onClick={handleAddToTract}>
           <i className="fas fa-plus"></i> Добавить в тракт
