@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { setLedConfig, setLedMode } from '../../store/ledSlice'
+import { setLedConfig } from '../../store/ledSlice'
 import { addDeviceToTract } from '../../store/tractsSlice'
 
 export const LedCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
