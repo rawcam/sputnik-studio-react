@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, addTract, TractDevice } from '../../store/tractsSlice'
+import {
+  updateTract,
+  deleteTract,
+  setActiveTract,
+  setViewMode,
+  addDeviceToTract,
+  removeDeviceFromTract,
+  addTract,
+  connectDeviceToNetwork,
+  disconnectDeviceFromNetwork,
+  TractDevice,
+} from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
 import { AddDeviceModal } from './AddDeviceModal'
 import { DeviceCard } from './DeviceCard'
@@ -71,6 +82,7 @@ export const ActiveTract: React.FC = () => {
       ports: device.ports,
       poeBudget: device.poeBudget,
       switchingLatency: device.switchingLatency,
+      poc: device.poc || false,
     }
     dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice, column }))
     setShowModal(false)
@@ -79,6 +91,16 @@ export const ActiveTract: React.FC = () => {
   const handleDeleteDevice = (deviceId: string, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
     dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId, column }))
+  }
+
+  const handleConnectDevice = (deviceId: string, switchId?: string) => {
+    if (!activeTract) return
+    dispatch(connectDeviceToNetwork({ tractId: activeTract.id, deviceId, switchId }))
+  }
+
+  const handleDisconnectDevice = (deviceId: string) => {
+    if (!activeTract) return
+    dispatch(disconnectDeviceFromNetwork({ tractId: activeTract.id, deviceId }))
   }
 
   const handleBackToAll = () => {
@@ -146,6 +168,9 @@ export const ActiveTract: React.FC = () => {
                 key={device.id}
                 device={device}
                 onDelete={() => handleDeleteDevice(device.id, 'source')}
+                onConnect={handleConnectDevice}
+                onDisconnect={handleDisconnectDevice}
+                switches={activeTract.matrixDevices}
               />
             ))}
           </div>
@@ -162,6 +187,9 @@ export const ActiveTract: React.FC = () => {
                 key={device.id}
                 device={device}
                 onDelete={() => handleDeleteDevice(device.id, 'matrix')}
+                onConnect={handleConnectDevice}
+                onDisconnect={handleDisconnectDevice}
+                switches={activeTract.matrixDevices}
               />
             ))}
           </div>
@@ -178,6 +206,9 @@ export const ActiveTract: React.FC = () => {
                 key={device.id}
                 device={device}
                 onDelete={() => handleDeleteDevice(device.id, 'sink')}
+                onConnect={handleConnectDevice}
+                onDisconnect={handleDisconnectDevice}
+                switches={activeTract.matrixDevices}
               />
             ))}
           </div>
