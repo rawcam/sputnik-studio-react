@@ -285,3 +285,31 @@
   display: inline-block !important;
   margin: 0 !important;
 }
+/* Центрирование иконок в компактном режиме */
+.sidebar.collapsed .section-header {
+  justify-content: center !important;
+  gap: 0 !important;
+  padding: 12px 0 !important;
+}
+
+.sidebar.collapsed .section-header i:first-child {
+  margin: 0 auto !important;
+  display: inline-block !important;
+  text-align: center !important;
+}
+
+/* Улучшенная подсветка для развёрнутого режима */
+.section-header:hover {
+  background: var(--accent-glow) !important;
+  padding-left: 20px !important;
+  cursor: pointer;
+}
+
+.section-header:hover i {
+  color: var(--accent) !important;
+}
+
+/* Для компактного режима подсветка уже есть */
+.sidebar.collapsed .section-header:hover {
+  background: var(--accent-glow) !important;
+}
