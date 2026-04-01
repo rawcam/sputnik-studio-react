@@ -218,11 +218,15 @@ export const ActiveTract: React.FC = () => {
       />
 
       {selectedDevice && (
-        <DeviceEditModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          device={selectedDevice}
-          onSave={handleUpdateDevice}
+  <DeviceEditModal
+    isOpen={showEditModal}
+    onClose={() => setShowEditModal(false)}
+    device={selectedDevice}
+    onSave={handleUpdateDevice}
+    switches={activeTract.matrixDevices}
+  />
+)}
+          
         />
       )}
     </div>
