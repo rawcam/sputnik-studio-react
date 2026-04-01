@@ -40,6 +40,14 @@
   padding: 4px;
 }
 
+.collapse-btn i {
+  transition: transform 0.2s ease;
+}
+
+.sidebar.collapsed .collapse-btn i {
+  transform: rotate(180deg);
+}
+
 .collapse-btn:hover {
   color: var(--accent);
 }
@@ -60,12 +68,17 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: var(--transition);
+  transition: background 0.2s, padding-left 0.2s;
 }
 
 .section-header:hover {
   background: var(--card-bg);
   padding-left: 20px;
+}
+
+.sidebar.collapsed .section-header:hover {
+  padding-left: 0;
+  background: var(--accent-glow);
 }
 
 .section-header i:first-child {
@@ -115,88 +128,12 @@
   border-top: 1px solid var(--border-light);
   margin-top: auto;
 }
+
+/* Стили для содержимого аккордеонов */
 .section-content-inner {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.mode-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.mode-btn {
-  background: transparent;
-  border: 1px solid var(--border-light);
-  border-radius: 40px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: var(--transition);
-}
-
-.mode-btn:hover {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-/* Компактные настройки (видео, сеть) */
-.compact-setting {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 0.75rem;
-  gap: 16px;
-}
-
-.compact-setting label {
-  flex-shrink: 0;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.compact-setting select,
-.compact-setting input[type="text"],
-.compact-setting input[type="number"] {
-  flex: 1;
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  border-radius: 20px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-panel-solid);
-  color: var(--text-primary);
-}
-
-.compact-setting.checkbox {
-  justify-content: flex-start;
-  gap: 8px;
-}
-
-.compact-setting.checkbox input {
-  width: auto;
-  margin: 0;
-}
-
-.compact-setting.result {
-  margin-top: 12px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-light);
-}
-.mode-btn i {
-  width: 20px;
-  text-align: center;
-}
-/* Стили для компактных элементов внутри сайдбара */
-.section-content-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .setting {
@@ -315,13 +252,16 @@
   font-size: 0.7rem;
 }
 
-.widget-value {
+.network-value {
   font-weight: 600;
-  font-size: 0.9rem;
-  background: linear-gradient(135deg, var(--text-primary), var(--accent));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.power-value {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--danger);
 }
 
 .manage-buttons {
