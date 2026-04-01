@@ -17,10 +17,18 @@ export const ProjectsPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // Парсим id из хеша
-  const hash = location.hash
-  const match = hash.match(/[?&]id=([^&]+)/)
-  const projectId = match ? match[1] : null
+  // Получаем id из хеша
+  const getProjectIdFromHash = () => {
+    const hash = location.hash
+    // Убираем начальную часть до '?'
+    const queryStart = hash.indexOf('?')
+    if (queryStart === -1) return null
+    const query = hash.slice(queryStart + 1)
+    const params = new URLSearchParams(query)
+    return params.get('id')
+  }
+
+  const projectId = getProjectIdFromHash()
   const selectedProject = projectId ? projects.find(p => p.id === projectId) : null
 
   useEffect(() => {
