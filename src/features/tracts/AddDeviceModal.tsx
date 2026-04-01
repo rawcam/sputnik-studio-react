@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { modelDB } from '../../utils/modelDB'
-import { TractDevice } from '../../store/tractsSlice'
 
 interface AddDeviceModalProps {
   isOpen: boolean
   onClose: () => void
   onAdd: (device: any) => void
   column: 'source' | 'matrix' | 'sink'
-  switches?: TractDevice[]   // список коммутаторов в тракте
 }
 
-export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose, onAdd, column, switches }) => {
+export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose, onAdd, column }) => {
   const [deviceType, setDeviceType] = useState<keyof typeof modelDB>('source')
   const [selectedModel, setSelectedModel] = useState<any>(null)
 
   const deviceTypes = Object.keys(modelDB) as (keyof typeof modelDB)[]
-  // Фильтруем типы в зависимости от колонки
   const allowedTypes = {
     source: ['source', 'tx'],
     matrix: ['matrix', 'networkSwitch', 'splitter', 'switch2x1', 'ledProc'],
