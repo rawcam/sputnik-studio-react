@@ -211,12 +211,15 @@ export const ActiveTract: React.FC = () => {
         column={modalColumn}
       />
 
-      {selectedDevice && (
-        <DeviceEditModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          device={selectedDevice}
-          tractId={activeTract.id}
+      // Внутри рендера, где вызывается DeviceEditModal, замените на:
+          {selectedDevice && (
+            <DeviceEditModal
+              isOpen={showEditModal}
+              onClose={() => setShowEditModal(false)}
+              device={selectedDevice}
+              tractId={activeTract.id}
+            />
+          )}
         />
       )}
     </div>
