@@ -27,28 +27,21 @@ export const TractsSection: React.FC = () => {
   }
 
   return (
-    <div className="sidebar-section">
-      <div className="section-header" data-section="paths">
-        <i className="fas fa-road"></i>
-        <span>TRACTS</span>
-        <i className="fas fa-angle-down"></i>
-      </div>
-      <div className="section-content">
-        <ul className="paths-list">
-          {tracts.map(tract => (
-            <li key={tract.id} onClick={() => handleSelect(tract.id)} className={tract.id === activeTractId ? 'active' : ''}>
-              {tract.name}
-            </li>
-          ))}
-        </ul>
-        <div className="tracts-actions">
-          <button className="btn-primary add-path-btn" onClick={handleNew}>
-            <i className="fas fa-plus"></i><span> Новый тракт</span>
-          </button>
-          <button className="btn-secondary" onClick={() => dispatch(setViewMode('all'))}>
-            <i className="fas fa-th-list"></i><span> Отобразить все тракты</span>
-          </button>
-        </div>
+    <div className="section-content-inner">
+      <ul className="paths-list">
+        {tracts.map(tract => (
+          <li key={tract.id} onClick={() => handleSelect(tract.id)} className={tract.id === activeTractId ? 'active' : ''}>
+            {tract.name}
+          </li>
+        ))}
+      </ul>
+      <div className="tracts-actions">
+        <button className="mode-btn" onClick={handleNew}>
+          <i className="fas fa-plus"></i> Новый тракт
+        </button>
+        <button className="mode-btn" onClick={() => dispatch(setViewMode('all'))}>
+          <i className="fas fa-th-list"></i> Отобразить все тракты
+        </button>
       </div>
     </div>
   )
