@@ -13,11 +13,11 @@ export const SoundSection: React.FC = () => {
   }
 
   const modes = [
-    { mode: 'spl', label: 'SPL на расстоянии', icon: 'fa-volume-up' },
-    { mode: 'drop', label: 'Падение SPL', icon: 'fa-chart-line' },
-    { mode: 'power', label: 'Изменение SPL от мощности', icon: 'fa-bolt' },
-    { mode: 'rt60', label: 'RT60 (реверберация)', icon: 'fa-hourglass-half' },
-    { mode: 'speakers', label: 'Подбор громкоговорителей', icon: 'fa-microphone-alt' },
+    { mode: 'spl', label: 'SPL на расстоянии', icon: 'fas fa-volume-up' },
+    { mode: 'drop', label: 'Падение SPL', icon: 'fas fa-chart-line' },
+    { mode: 'power', label: 'Изменение SPL от мощности', icon: 'fas fa-bolt' },
+    { mode: 'rt60', label: 'RT60 (реверберация)', icon: 'fas fa-hourglass-half' },
+    { mode: 'speakers', label: 'Подбор громкоговорителей', icon: 'fas fa-microphone-alt' },
   ]
 
   return (
