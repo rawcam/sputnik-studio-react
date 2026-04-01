@@ -46,3 +46,16 @@ export const TractsSection: React.FC = () => {
     </div>
   )
 }
+const handleNew = () => {
+  console.log('handleNew called, tracts length:', tracts.length)
+  const newId = Date.now().toString()
+  dispatch(addTract({
+    id: newId,
+    name: `Тракт ${tracts.length + 1}`,
+    sourceDevices: [],
+    sinkDevices: [],
+    networkSwitches: [],
+  }))
+  dispatch(setActiveTract(newId))
+  dispatch(setViewMode('single'))
+}
