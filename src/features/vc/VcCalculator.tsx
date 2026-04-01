@@ -49,7 +49,7 @@ export const VcCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       shortName: `VC${Math.floor(Math.random() * 1000)}`,
       ethernet: true,
     }
-    dispatch(addDeviceToTract({ tractId: activeTractId, device }))
+    dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }))
     alert('Устройство добавлено в тракт')
   }
 
