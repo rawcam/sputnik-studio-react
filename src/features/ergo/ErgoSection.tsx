@@ -1,14 +1,13 @@
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { RootState } from '../../store'
-import { setErgoConfig } from '../../store/ergoSlice'
+import { useDispatch } from 'react-redux'
+import { setViewMode, setActiveCalculator } from '../../store/tractsSlice'
 
 export const ErgoSection: React.FC = () => {
   const dispatch = useDispatch()
-  const config = useSelector((state: RootState) => state.ergo)
 
-  const handleChange = (field: string, value: any) => {
-    dispatch(setErgoConfig({ [field]: value }))
+  const openCalculator = () => {
+    dispatch(setViewMode('calculator'))
+    dispatch(setActiveCalculator('ergo'))
   }
 
   return (
@@ -19,13 +18,9 @@ export const ErgoSection: React.FC = () => {
         <i className="fas fa-angle-down"></i>
       </div>
       <div className="section-content">
-        <div className="setting"><label>Ширина экрана (см):</label><input type="number" value={config.screenWidth} onChange={e => handleChange('screenWidth', parseFloat(e.target.value))} /></div>
-        <div className="setting"><label>Высота экрана (см):</label><input type="number" value={config.screenHeight} onChange={e => handleChange('screenHeight', parseFloat(e.target.value))} /></div>
-        <div className="setting"><label>Расстояние до экрана (см):</label><input type="number" value={config.distance} onChange={e => handleChange('distance', parseFloat(e.target.value))} /></div>
-        <div className="result-item">
-          <span className="result-label">Рекомендация</span>
-          <span className="result-value">{config.resultText}</span>
-        </div>
+        <button className="btn-primary" onClick={openCalculator}>
+          <i className="fas fa-calculator"></i> Показать калькулятор
+        </button>
       </div>
     </div>
   )
