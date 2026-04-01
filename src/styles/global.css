@@ -916,3 +916,219 @@ input:focus, select:focus, textarea:focus {
 .add-btn:hover {
   background: var(--accent-hover);
 }
+/* ========== КАРУСЕЛЬ ПРОЕКТОВ ========== */
+.projects-carousel-wrapper {
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.projects-carousel {
+  position: relative;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.embla {
+  overflow: hidden;
+}
+
+.embla__container {
+  display: flex;
+  gap: 24px;
+}
+
+.embla__slide {
+  flex: 0 0 calc(100% / 1 - 24px);
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .embla__slide {
+    flex: 0 0 calc(100% / 2 - 24px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .embla__slide {
+    flex: 0 0 calc(100% / 3 - 24px);
+  }
+}
+
+@media (min-width: 1280px) {
+  .embla__slide {
+    flex: 0 0 calc(100% / 4 - 24px);
+  }
+}
+
+.carousel-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.carousel-button:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.carousel-button-prev {
+  left: 0;
+}
+
+.carousel-button-next {
+  right: 0;
+}
+
+@media (max-width: 768px) {
+  .carousel-button {
+    display: none;
+  }
+  .projects-carousel {
+    padding: 0;
+  }
+}
+
+/* ========== КАРТОЧКИ ПРОЕКТОВ (компактные) ========== */
+.project-card {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: var(--border-radius-card);
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+  animation: fadeInUp 0.4s ease-out;
+  margin-bottom: 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.priority-card {
+  border-left: 4px solid #f97316;
+  background: linear-gradient(90deg, rgba(249,115,22,0.05) 0%, var(--bg-panel) 100%);
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.project-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.project-status {
+  font-size: 0.7rem;
+  padding: 2px 10px;
+  border-radius: 40px;
+  background: var(--card-bg);
+}
+
+.priority-badge {
+  background: #f97316;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  margin-left: 8px;
+}
+
+.project-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 0.7rem;
+  margin: 4px 0;
+}
+
+.project-progress-bar {
+  background: var(--card-bg);
+  border-radius: 20px;
+  height: 6px;
+  margin: 4px 0;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 0.3s ease;
+  background: var(--accent);
+}
+
+.project-roadmap {
+  margin: 4px 0;
+  font-size: 0.65rem;
+}
+
+.roadmap-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roadmap-status.current {
+  background: var(--accent);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 20px;
+}
+
+.roadmap-status.next {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 20px;
+}
+
+.roadmap-arrow {
+  color: var(--text-secondary);
+  font-size: 0.6rem;
+}
+
+.roadmap-date {
+  color: var(--text-muted);
+  font-size: 0.6rem;
+}
+
+.project-details summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.7rem;
+  margin: 6px 0 4px;
+}
+
+.meetings-list, .purchases-list {
+  margin-top: 6px;
+}
+
+.meeting-item, .purchase-item {
+  font-size: 0.65rem;
+  padding: 2px 0;
+  border-bottom: 1px dashed var(--border-light);
+}
