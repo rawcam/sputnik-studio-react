@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, addTract, TractDevice } from '../../store/tractsSlice'
@@ -12,11 +12,19 @@ export const ActiveTract: React.FC = () => {
   const videoSettings = useSelector((state: RootState) => state.video)
   const activeTract = tracts.find(t => t.id === activeTractId) || null
   const [showModal, setShowModal] = useState(false)
+  const prevTractRef = useRef<Tract | null>(null)
 
   useEffect(() => {
     if (activeTract) {
       const recalculated = recalcTract(activeTract, videoSettings)
-      dispatch(updateTract(recalculated))
+      // Обновляем только если изменились вычисленные поля
+      if (
+        recalculated.totalLatency !== activeTract.totalLatency ||
+        recalculated.totalBitrate !== activeTract.totalBitrate ||
+        recalculated.totalPower !== activeTract.totalPower
+      ) {
+        dispatch(updateTract(recalculated))
+      }
     }
   }, [activeTract, videoSettings, dispatch])
 
