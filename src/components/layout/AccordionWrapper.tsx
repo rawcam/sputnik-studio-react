@@ -8,7 +8,6 @@ interface AccordionWrapperProps {
 export const AccordionWrapper: React.FC<AccordionWrapperProps> = ({ module }) => {
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem(`accordion_${module.id}`)
-    // по умолчанию свёрнуты (true)
     return saved !== null ? saved === 'true' : true
   })
 
