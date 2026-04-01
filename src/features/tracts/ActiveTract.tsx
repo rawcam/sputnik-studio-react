@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, TractDevice } from '../../store/tractsSlice'
+import { updateTract, deleteTract, setActiveTract, setViewMode, addDeviceToTract, removeDeviceFromTract, addTract, TractDevice } from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
 import { AddDeviceModal } from './AddDeviceModal'
 import { DeviceCard } from './DeviceCard'
@@ -43,7 +43,6 @@ export const ActiveTract: React.FC = () => {
   const handleAddDevice = (device: any, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
     const allDevices = [...activeTract.sourceDevices, ...activeTract.matrixDevices, ...activeTract.sinkDevices]
-    // Генерация короткого имени
     let prefix = device.shortPrefix
     if (column === 'source') prefix = device.shortPrefix || 'SRC'
     if (column === 'matrix') prefix = device.shortPrefix || 'SW'
@@ -69,7 +68,6 @@ export const ActiveTract: React.FC = () => {
       shortName,
       ethernet: device.hasNetwork || false,
       bitrateFactor: device.bitrateFactor,
-      // для матриц
       ports: device.ports,
       poeBudget: device.poeBudget,
       switchingLatency: device.switchingLatency,
@@ -194,7 +192,6 @@ export const ActiveTract: React.FC = () => {
         onClose={() => setShowModal(false)}
         onAdd={(device) => handleAddDevice(device, modalColumn)}
         column={modalColumn}
-        switches={activeTract.matrixDevices}
       />
     </div>
   )
