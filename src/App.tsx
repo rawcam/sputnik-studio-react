@@ -1,5 +1,4 @@
-import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Topbar } from './components/layout/Topbar'
 import { Sidebar } from './components/layout/Sidebar'
 import { DashboardPage } from './pages/DashboardPage'
@@ -7,6 +6,7 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { CalculationsPage } from './pages/CalculationsPage'
 import { TemplatesPage } from './pages/TemplatesPage'
 import { useProjectsDb } from './hooks/useProjectsDb'
+import { useEffect } from 'react'
 import './styles/App.css'
 
 function App() {
@@ -21,7 +21,7 @@ function App() {
   }, [])
 
   return (
-    <BrowserRouter basename="/sputnik-studio-react">
+    <HashRouter>
       <div className="app">
         <Topbar />
         <div className="app-layout">
@@ -37,7 +37,7 @@ function App() {
           </main>
         </div>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 
