@@ -12,7 +12,7 @@ export const PowerSection: React.FC = () => {
 
   return (
     <div className="section-content-inner">
-      <button className="btn-primary" onClick={openCalculator}>
+      <button className="mode-btn" onClick={openCalculator}>
         <i className="fas fa-calculator"></i> Калькулятор питания
       </button>
     </div>
