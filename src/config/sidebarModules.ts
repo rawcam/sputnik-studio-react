@@ -18,15 +18,15 @@ export interface SidebarModule {
 }
 
 export const sidebarModules: SidebarModule[] = [
-  { id: 'video', title: 'VIDEO', icon: 'fa-video', component: VideoSection },
-  { id: 'network', title: 'NETWORK', icon: 'fa-network-wired', component: NetworkSection },
-  { id: 'led', title: 'LED', icon: 'fa-border-all', component: LedSection },
-  { id: 'sound', title: 'SOUND', icon: 'fa-headphones', component: SoundSection },
-  { id: 'vc', title: 'VC (ВКС)', icon: 'fa-chalkboard', component: VcSection },
-  { id: 'ergo', title: 'Эргономика ЭКП', icon: 'fa-chalkboard-user', component: ErgoSection },
-  { id: 'tracts', title: 'TRACTS', icon: 'fa-road', component: TractsSection },
-  { id: 'networkStats', title: 'СЕТЬ', icon: 'fa-chart-line', component: NetworkStatsSection },
-  { id: 'powerStats', title: 'ПИТАНИЕ', icon: 'fa-bolt', component: PowerStatsSection },
-  { id: 'power', title: 'ЭНЕРГИЯ', icon: 'fa-bolt', component: PowerSection },
-  { id: 'manage', title: 'УПРАВЛЕНИЕ', icon: 'fa-cog', component: ManageSection },
+  { id: 'video', title: 'VIDEO', icon: 'fas fa-video', component: VideoSection },
+  { id: 'network', title: 'NETWORK', icon: 'fas fa-network-wired', component: NetworkSection },
+  { id: 'led', title: 'LED', icon: 'fas fa-border-all', component: LedSection },
+  { id: 'sound', title: 'SOUND', icon: 'fas fa-headphones', component: SoundSection },
+  { id: 'vc', title: 'VC (ВКС)', icon: 'fas fa-chalkboard', component: VcSection },
+  { id: 'ergo', title: 'Эргономика ЭКП', icon: 'fas fa-chalkboard-user', component: ErgoSection },
+  { id: 'tracts', title: 'TRACTS', icon: 'fas fa-road', component: TractsSection },
+  { id: 'networkStats', title: 'СЕТЬ', icon: 'fas fa-chart-line', component: NetworkStatsSection },
+  { id: 'powerStats', title: 'ПИТАНИЕ', icon: 'fas fa-bolt', component: PowerStatsSection },
+  { id: 'power', title: 'ЭНЕРГИЯ', icon: 'fas fa-bolt', component: PowerSection },
+  { id: 'manage', title: 'УПРАВЛЕНИЕ', icon: 'fas fa-cog', component: ManageSection },
 ]
