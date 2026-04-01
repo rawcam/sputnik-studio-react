@@ -13,21 +13,14 @@ export const LedSection: React.FC = () => {
   }
 
   return (
-    <div className="sidebar-section">
-      <div className="section-header" data-section="led">
-        <i className="fas fa-border-all"></i>
-        <span>LED</span>
-        <i className="fas fa-angle-down"></i>
-      </div>
-      <div className="section-content">
-        <div className="mode-buttons">
-          <button className="mode-btn" onClick={() => openCalculator('cabinets')}>
-            <i className="fas fa-th-large"></i> По кабинетам
-          </button>
-          <button className="mode-btn" onClick={() => openCalculator('resolution')}>
-            <i className="fas fa-bullseye"></i> По разрешению
-          </button>
-        </div>
+    <div className="section-content-inner">
+      <div className="mode-buttons">
+        <button className="mode-btn" onClick={() => openCalculator('cabinets')}>
+          <i className="fas fa-th-large"></i> По кабинетам
+        </button>
+        <button className="mode-btn" onClick={() => openCalculator('resolution')}>
+          <i className="fas fa-bullseye"></i> По разрешению
+        </button>
       </div>
     </div>
   )
