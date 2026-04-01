@@ -760,3 +760,13 @@ input:focus, select:focus, textarea:focus {
   justify-content: flex-end;
   gap: 16px;
 }
+/* Дополнительные стили для сайдбара (гарантия) */
+.sidebar.collapsed .section-header i:first-child {
+  margin: 0 auto !important;
+  display: block !important;
+  text-align: center !important;
+}
+
+.section-header:hover {
+  background: var(--card-bg) !important;
+}
