@@ -21,20 +21,13 @@ export const SoundSection: React.FC = () => {
   ]
 
   return (
-    <div className="sidebar-section">
-      <div className="section-header" data-section="sound">
-        <i className="fas fa-headphones"></i>
-        <span>SOUND</span>
-        <i className="fas fa-angle-down"></i>
-      </div>
-      <div className="section-content">
-        <div className="mode-buttons">
-          {modes.map(m => (
-            <button key={m.mode} className="mode-btn" onClick={() => openCalculator(m.mode as any)}>
-              <i className={m.icon}></i> {m.label}
-            </button>
-          ))}
-        </div>
+    <div className="section-content-inner">
+      <div className="mode-buttons">
+        {modes.map(m => (
+          <button key={m.mode} className="mode-btn" onClick={() => openCalculator(m.mode as any)}>
+            <i className={m.icon}></i> {m.label}
+          </button>
+        ))}
       </div>
     </div>
   )
