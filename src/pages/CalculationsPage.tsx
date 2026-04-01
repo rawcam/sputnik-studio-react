@@ -40,11 +40,7 @@ export const CalculationsPage: React.FC = () => {
 
   const renderContent = () => {
     if (viewMode === 'calculator' && activeCalculator) {
-      return (
-        <div className="calculator-view">
-          {renderCalculator()}
-        </div>
-      )
+      return <div className="calculator-view">{renderCalculator()}</div>
     }
     if (viewMode === 'all') {
       return <AllTractsView />
