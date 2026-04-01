@@ -96,54 +96,76 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
 }
 
 // Функция для автоматического назначения порта при включении Ethernet
+// Возвращает новый тракт (не мутирует исходный)
 export const assignNetwork = (
   tract: Tract,
-  device: TractDevice
+  deviceId: string,
+  updatedDevice: Partial<TractDevice>
 ): { success: boolean; error?: string; updatedTract?: Tract } => {
-  if (!device.ethernet) {
-    // Если Ethernet выключен, освобождаем порт
-    if (device.attachedSwitchId) {
-      const sw = tract.matrixDevices.find(s => s.id === device.attachedSwitchId)
-      if (sw) {
-        if (device.attachedPortNumber) {
-          sw.usedPorts = sw.usedPorts?.filter(p => p !== device.attachedPortNumber) || []
-        }
-        if (device.poeEnabled) {
-          sw.usedPoE = (sw.usedPoE || 0) - (device.poePower || 0)
-        }
+  // Находим устройство в тракте
+  const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
+  const device = allDevices.find(d => d.id === deviceId)
+  if (!device) return { success: false, error: 'Устройство не найдено' }
+
+  // Если Ethernet выключен, освобождаем порт и возвращаем тракт без изменений
+  if (updatedDevice.ethernet === false && device.ethernet) {
+    // Нужно отключить устройство от сети
+    const newTract = { ...tract }
+    const targetSwitch = newTract.matrixDevices.find(sw => sw.id === device.attachedSwitchId)
+    if (targetSwitch && device.attachedPortNumber) {
+      targetSwitch.usedPorts = targetSwitch.usedPorts?.filter(p => p !== device.attachedPortNumber) || []
+      if (device.poeEnabled) {
+        targetSwitch.usedPoE = (targetSwitch.usedPoE || 0) - (device.poePower || 0)
       }
-      device.attachedSwitchId = undefined
-      device.attachedPortNumber = undefined
     }
-    return { success: true, updatedTract: tract }
+    // Обновляем устройство в нужном массиве
+    const deviceCopy = { ...device, attachedSwitchId: undefined, attachedPortNumber: undefined, ethernet: false }
+    // Заменяем устройство в массивах
+    const updateArray = (arr: TractDevice[]) => arr.map(d => d.id === deviceId ? deviceCopy : d)
+    newTract.sourceDevices = updateArray(newTract.sourceDevices)
+    newTract.matrixDevices = updateArray(newTract.matrixDevices)
+    newTract.sinkDevices = updateArray(newTract.sinkDevices)
+    return { success: true, updatedTract: newTract }
   }
 
-  // Если Ethernet включён, ищем коммутатор
-  const targetSwitch = tract.matrixDevices.find(sw => {
-    if (!sw.ports) return false
-    const freePorts = sw.ports - (sw.usedPorts?.length || 0)
-    if (freePorts === 0) return false
-    if (device.poeEnabled && (!sw.poeBudget || (sw.poeBudget - (sw.usedPoE || 0) < (device.poePower || 0)))) return false
-    return true
-  })
-  if (!targetSwitch) {
-    return { success: false, error: 'Нет подходящего коммутатора с свободными портами и достаточным PoE-бюджетом' }
-  }
-  const freePorts = targetSwitch.ports! - (targetSwitch.usedPorts?.length || 0)
-  if (freePorts === 0) return { success: false, error: 'Нет свободных портов' }
-  if (device.poeEnabled) {
-    const usedPoE = targetSwitch.usedPoE || 0
-    if ((targetSwitch.poeBudget || 0) - usedPoE < (device.poePower || 0)) {
-      return { success: false, error: 'Недостаточно PoE-бюджета' }
+  // Если Ethernet включается, ищем коммутатор
+  if (updatedDevice.ethernet === true && !device.ethernet) {
+    const targetSwitch = tract.matrixDevices.find(sw => {
+      if (!sw.ports) return false
+      const freePorts = sw.ports - (sw.usedPorts?.length || 0)
+      if (freePorts === 0) return false
+      const devicePoE = updatedDevice.poeEnabled !== undefined ? updatedDevice.poeEnabled : device.poeEnabled
+      const devicePoEPower = updatedDevice.poePower !== undefined ? updatedDevice.poePower : device.poePower
+      if (devicePoE && (!sw.poeBudget || (sw.poeBudget - (sw.usedPoE || 0) < (devicePoEPower || 0)))) return false
+      return true
+    })
+    if (!targetSwitch) {
+      return { success: false, error: 'Нет подходящего коммутатора с свободными портами и достаточным PoE-бюджетом' }
     }
-    targetSwitch.usedPoE = usedPoE + (device.poePower || 0)
+    // Создаём копию тракта и коммутатора
+    const newTract = { ...tract }
+    const swIndex = newTract.matrixDevices.findIndex(sw => sw.id === targetSwitch.id)
+    if (swIndex === -1) return { success: false, error: 'Коммутатор не найден' }
+    const sw = { ...newTract.matrixDevices[swIndex] }
+    // Находим свободный порт
+    let newPort = 1
+    const used = new Set(sw.usedPorts || [])
+    while (used.has(newPort)) newPort++
+    sw.usedPorts = [...(sw.usedPorts || []), newPort]
+    if (updatedDevice.poeEnabled) {
+      sw.usedPoE = (sw.usedPoE || 0) + (updatedDevice.poePower || device.poePower || 0)
+    }
+    newTract.matrixDevices[swIndex] = sw
+    // Обновляем устройство
+    const deviceCopy = { ...device, attachedSwitchId: sw.id, attachedPortNumber: newPort, ethernet: true }
+    const updateArray = (arr: TractDevice[]) => arr.map(d => d.id === deviceId ? deviceCopy : d)
+    newTract.sourceDevices = updateArray(newTract.sourceDevices)
+    newTract.matrixDevices = updateArray(newTract.matrixDevices)
+    newTract.sinkDevices = updateArray(newTract.sinkDevices)
+    return { success: true, updatedTract: newTract }
   }
-  let newPort = 1
-  const used = new Set(targetSwitch.usedPorts || [])
-  while (used.has(newPort)) newPort++
-  targetSwitch.usedPorts = [...(targetSwitch.usedPorts || []), newPort]
-  device.attachedSwitchId = targetSwitch.id
-  device.attachedPortNumber = newPort
+
+  // Если Ethernet не меняется, просто возвращаем тракт без изменений
   return { success: true, updatedTract: tract }
 }
 
@@ -209,16 +231,39 @@ const tractsSlice = createSlice({
     updateDeviceInTract: (state, action: PayloadAction<{ tractId: string; deviceId: string; updates: Partial<TractDevice> }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
       if (!tract) return
+      // Находим устройство в массивах
+      let found = false
+      const updateArray = (arr: TractDevice[]) => arr.map(d => {
+        if (d.id === action.payload.deviceId) {
+          found = true
+          return { ...d, ...action.payload.updates }
+        }
+        return d
+      })
+      tract.sourceDevices = updateArray(tract.sourceDevices)
+      if (!found) tract.matrixDevices = updateArray(tract.matrixDevices)
+      if (!found) tract.sinkDevices = updateArray(tract.sinkDevices)
+      // Теперь обрабатываем сетевое подключение, если изменились ethernet или poe
       const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
       const device = allDevices.find(d => d.id === action.payload.deviceId)
-      if (!device) return
-      Object.assign(device, action.payload.updates)
-      // После обновления пересчитываем сеть, если изменились Ethernet или PoE
-      if ('ethernet' in action.payload.updates || 'poeEnabled' in action.payload.updates || 'poePower' in action.payload.updates) {
-        const result = assignNetwork(tract, device)
-        if (!result.success) {
-          console.warn(result.error)
-          // Можно откатить изменения, но пока просто предупреждение
+      if (device && (action.payload.updates.ethernet !== undefined || action.payload.updates.poeEnabled !== undefined)) {
+        const result = assignNetwork(tract, action.payload.deviceId, action.payload.updates)
+        if (result.success && result.updatedTract) {
+          // Заменяем текущий тракт на обновлённый
+          const index = state.tracts.findIndex(t => t.id === tract.id)
+          if (index !== -1) {
+            // Пересчитываем статистику
+            const recalculated = recalcTract(result.updatedTract, (state as any).videoSettings || { resolution: '4K', chroma: '422', fps: 60, colorSpace: 'YCbCr', bitDepth: 10 })
+            state.tracts[index] = recalculated
+          }
+        }
+      } else {
+        // Если сеть не трогали, просто пересчитываем тракт
+        const index = state.tracts.findIndex(t => t.id === tract.id)
+        if (index !== -1) {
+          const videoSettings = (state as any).videoSettings || { resolution: '4K', chroma: '422', fps: 60, colorSpace: 'YCbCr', bitDepth: 10 }
+          const recalculated = recalcTract(tract, videoSettings)
+          state.tracts[index] = recalculated
         }
       }
     },
