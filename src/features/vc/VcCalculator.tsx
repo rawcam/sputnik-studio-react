@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { setVcConfig, setVcMode } from '../../store/vcSlice'
+import { setVcConfig } from '../../store/vcSlice'
 import { addDeviceToTract } from '../../store/tractsSlice'
 
 export const VcCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
