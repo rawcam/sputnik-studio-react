@@ -71,7 +71,7 @@ export const SoundCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) =>
       shortName: `SPK${Math.floor(Math.random() * 1000)}`,
       ethernet: false,
     }
-    dispatch(addDeviceToTract({ tractId: activeTractId, device }))
+    dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }))
     alert('Устройство добавлено в тракт')
   }
 
