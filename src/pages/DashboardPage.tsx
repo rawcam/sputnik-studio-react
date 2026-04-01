@@ -15,7 +15,6 @@ export const DashboardPage: React.FC = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
   const activeProjects = projects.filter(p => p.status !== 'done')
 
-  // Заглушка для перехода к деталям проекта – позже можно добавить роутинг или модалку
   const handleSelectProject = (project: any) => {
     // Временное действие: показать alert с id проекта
     alert(`Выбран проект: ${project.name} (id: ${project.id})`)
