@@ -85,6 +85,7 @@ export const ActiveTract: React.FC = () => {
       poeBudget: device.poeBudget,
       switchingLatency: device.switchingLatency,
       poc: device.poc || false,
+      usb: device.usb || undefined,
     }
     dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice, column }))
     setShowModal(false)
@@ -221,7 +222,6 @@ export const ActiveTract: React.FC = () => {
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           device={selectedDevice}
-          switches={activeTract.matrixDevices}
           onSave={handleUpdateDevice}
         />
       )}
