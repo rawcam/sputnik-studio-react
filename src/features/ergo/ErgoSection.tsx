@@ -6,8 +6,8 @@ export const ErgoSection: React.FC = () => {
   const dispatch = useDispatch()
 
   const openCalculator = () => {
-    dispatch(setViewMode('calculator'))
     dispatch(setActiveCalculator('ergo'))
+    dispatch(setViewMode('calculator'))
   }
 
   return (
