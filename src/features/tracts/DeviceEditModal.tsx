@@ -1,20 +1,18 @@
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { TractDevice, connectDeviceToNetwork, disconnectDeviceFromNetwork, updateDeviceInTract } from '../../store/tractsSlice'
+import { TractDevice } from '../../store/tractsSlice'
+import { updateDeviceInTract } from '../../store/tractsSlice'
 
 interface DeviceEditModalProps {
   isOpen: boolean
   onClose: () => void
   device: TractDevice
   tractId: string
-  onSave?: () => void   // опционально, можно не использовать
 }
 
 export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, tractId }) => {
   const dispatch = useDispatch()
   const [editedDevice, setEditedDevice] = useState<TractDevice>(device)
-  const [originalEthernet, setOriginalEthernet] = useState(device.ethernet)
-  const [originalPoeEnabled, setOriginalPoeEnabled] = useState(device.poeEnabled)
 
   const handleChange = (field: keyof TractDevice, value: any) => {
     setEditedDevice(prev => ({ ...prev, [field]: value }))
@@ -58,39 +56,8 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
   ]
 
   const handleSave = () => {
-    // 1. Обновляем параметры устройства (мощность, PoE, USB, Ethernet)
-    const updates: Partial<TractDevice> = {
-      powerW: editedDevice.powerW,
-      poeEnabled: editedDevice.poeEnabled,
-      poePower: editedDevice.poePower,
-      usb: editedDevice.usb,
-      ethernet: editedDevice.ethernet,
-    }
-    dispatch(updateDeviceInTract({ tractId, deviceId: device.id, updates }))
-
-    // 2. Если изменился Ethernet или PoE, вызываем подключение/отключение
-    const ethernetChanged = editedDevice.ethernet !== originalEthernet
-    const poeChanged = editedDevice.poeEnabled !== originalPoeEnabled
-
-    if (ethernetChanged) {
-      if (editedDevice.ethernet) {
-        // Включаем Ethernet – пытаемся подключить
-        dispatch(connectDeviceToNetwork({ tractId, deviceId: device.id }))
-      } else {
-        // Отключаем Ethernet – отключаем от сети
-        dispatch(disconnectDeviceFromNetwork({ tractId, deviceId: device.id }))
-      }
-    } else if (poeChanged && editedDevice.poeEnabled) {
-      // Если изменился только PoE (и он включён), возможно, нужно переподключить для обновления PoE-бюджета
-      // Проще сначала отключить, потом подключить заново
-      if (device.attachedSwitchId) {
-        dispatch(disconnectDeviceFromNetwork({ tractId, deviceId: device.id }))
-        dispatch(connectDeviceToNetwork({ tractId, deviceId: device.id }))
-      } else if (editedDevice.ethernet) {
-        dispatch(connectDeviceToNetwork({ tractId, deviceId: device.id }))
-      }
-    }
-
+    // Отправляем только обновление устройства, сеть будет обработана в слайсе
+    dispatch(updateDeviceInTract({ tractId, deviceId: device.id, updates: editedDevice }))
     onClose()
   }
 
