@@ -19,8 +19,8 @@ export const TractsSection: React.FC = () => {
       id: newId,
       name: `Тракт ${tracts.length + 1}`,
       sourceDevices: [],
+      matrixDevices: [],
       sinkDevices: [],
-      networkSwitches: [],
     }))
     dispatch(setActiveTract(newId))
     dispatch(setViewMode('single'))
