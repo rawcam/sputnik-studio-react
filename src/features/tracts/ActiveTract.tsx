@@ -28,6 +28,7 @@ export const ActiveTract: React.FC = () => {
   const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
+  // Пересчёт тракта при изменении его устройств или видео настроек
   useEffect(() => {
     if (activeTract) {
       const recalculated = recalcTract(activeTract, videoSettings)
@@ -75,11 +76,11 @@ export const ActiveTract: React.FC = () => {
       type: device.type,
       modelName: device.name,
       latency: device.latency || 0,
-      poeEnabled: device.poe || false,
-      poePower: device.poePower || 0,
+      poeEnabled: false,           // всегда false при добавлении
+      poePower: device.poePower || 0, // сохраняем, но не включаем
       powerW: device.powerW || 0,
       shortName,
-      ethernet: device.hasNetwork || false,
+      ethernet: false,             // всегда false при добавлении
       bitrateFactor: device.bitrateFactor,
       ports: device.ports,
       poeBudget: device.poeBudget,
