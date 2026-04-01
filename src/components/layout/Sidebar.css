@@ -192,3 +192,140 @@
   width: 20px;
   text-align: center;
 }
+/* Стили для компактных элементов внутри сайдбара */
+.section-content-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+}
+
+.setting label {
+  flex: 1;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.setting select,
+.setting input[type="text"] {
+  flex: 2;
+  padding: 4px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+}
+
+.setting.checkbox-row {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.setting.checkbox-row label {
+  flex: 0;
+}
+
+.setting.checkbox-row input {
+  margin-left: auto;
+}
+
+.mode-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.mode-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.mode-btn i {
+  width: 20px;
+  text-align: center;
+}
+
+.mode-btn.danger:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.paths-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.paths-list li {
+  padding: 6px 12px;
+  margin-bottom: 4px;
+  background: var(--card-bg);
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: var(--transition);
+}
+
+.paths-list li:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.paths-list li.active {
+  background: var(--accent);
+  color: white;
+}
+
+.tracts-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.widget-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.8rem;
+  padding: 4px 0;
+}
+
+.widget-label {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
+.widget-value {
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.manage-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
