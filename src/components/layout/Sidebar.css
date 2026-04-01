@@ -58,7 +58,7 @@
 }
 
 .section-header {
-  padding: 12px 16px;
+  padding: 10px 16px;
   font-weight: 500;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -85,6 +85,7 @@
   font-size: 0.9rem;
   width: 20px;
   text-align: center;
+  transition: transform 0.2s;
 }
 
 .section-header i:last-child {
@@ -98,7 +99,7 @@
 }
 
 .section-content {
-  padding: 12px 16px;
+  padding: 8px 16px;
   transition: all 0.2s;
 }
 
@@ -133,7 +134,7 @@
 .section-content-inner {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .setting {
@@ -141,7 +142,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .setting label {
@@ -158,7 +159,7 @@
   border: 1px solid var(--border-light);
   background: var(--bg-panel-solid);
   color: var(--text-primary);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .setting.checkbox-row {
@@ -178,8 +179,8 @@
   background: transparent;
   border: 1px solid var(--border-light);
   border-radius: 40px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
+  padding: 4px 12px;
+  font-size: 0.7rem;
   text-align: left;
   display: flex;
   align-items: center;
@@ -212,12 +213,12 @@
 }
 
 .paths-list li {
-  padding: 6px 12px;
+  padding: 4px 12px;
   margin-bottom: 4px;
   background: var(--card-bg);
   border-radius: 40px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   transition: var(--transition);
 }
 
@@ -234,38 +235,38 @@
 .tracts-actions {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
 }
 
 .widget-item {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 0.8rem;
-  padding: 4px 0;
+  font-size: 0.75rem;
+  padding: 2px 0;
 }
 
 .widget-label {
   color: var(--text-secondary);
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
 }
 
 .network-value {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--accent);
 }
 
 .power-value {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--danger);
 }
 
 .manage-buttons {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
