@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 import { RootState } from '../store'
 import { ProjectList } from '../components/projects/ProjectList'
 import { ProjectDetail } from '../features/projects/ProjectDetail'
@@ -14,6 +15,7 @@ export const ProjectsPage = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
     const init = async () => {
@@ -23,8 +25,26 @@ export const ProjectsPage = () => {
     init()
   }, [])
 
+  // Проверяем параметр id в URL и открываем детали, если он есть
+  useEffect(() => {
+    const projectId = searchParams.get('id')
+    if (projectId) {
+      const project = projects.find(p => p.id === projectId)
+      if (project) {
+        setSelectedProject(project)
+      } else {
+        // Если проект не найден (например, ещё не загрузился), можно очистить параметр
+        // но здесь мы оставим как есть
+      }
+    }
+  }, [searchParams, projects])
+
   const handleSelectProject = (project: any) => setSelectedProject(project)
-  const handleBack = () => setSelectedProject(null)
+  const handleBack = () => {
+    setSelectedProject(null)
+    // Очищаем параметр id в URL, чтобы вернуться к списку
+    window.history.replaceState({}, '', '/projects')
+  }
   const handleCreate = async (projectData: any) => {
     await addProject(projectData)
     setShowCreateModal(false)
