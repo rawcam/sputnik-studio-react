@@ -1,15 +1,24 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import { setViewMode, setActiveCalculator } from '../../store/tractsSlice'
+import { setSoundMode } from '../../store/soundSlice'
 
 export const SoundSection: React.FC = () => {
   const dispatch = useDispatch()
 
-  const openCalculator = (mode: string) => {
-    dispatch(setViewMode('calculator'))
+  const openCalculator = (mode: 'spl' | 'drop' | 'power' | 'rt60' | 'speakers') => {
+    dispatch(setSoundMode(mode))
     dispatch(setActiveCalculator('sound'))
-    // режим можно передать через localStorage или в слайс sound, но пока просто открываем калькулятор
+    dispatch(setViewMode('calculator'))
   }
+
+  const modes = [
+    { mode: 'spl', label: 'SPL на расстоянии', icon: 'fa-volume-up' },
+    { mode: 'drop', label: 'Падение SPL', icon: 'fa-chart-line' },
+    { mode: 'power', label: 'Изменение SPL от мощности', icon: 'fa-bolt' },
+    { mode: 'rt60', label: 'RT60 (реверберация)', icon: 'fa-hourglass-half' },
+    { mode: 'speakers', label: 'Подбор громкоговорителей', icon: 'fa-microphone-alt' },
+  ]
 
   return (
     <div className="sidebar-section">
@@ -20,11 +29,11 @@ export const SoundSection: React.FC = () => {
       </div>
       <div className="section-content">
         <div className="mode-buttons">
-          <button className="mode-btn" onClick={() => openCalculator('spl')}><i className="fas fa-volume-up"></i> SPL на расстоянии</button>
-          <button className="mode-btn" onClick={() => openCalculator('drop')}><i className="fas fa-chart-line"></i> Падение SPL от расстояния</button>
-          <button className="mode-btn" onClick={() => openCalculator('power')}><i className="fas fa-bolt"></i> Изменение SPL от мощности</button>
-          <button className="mode-btn" onClick={() => openCalculator('rt60')}><i className="fas fa-hourglass-half"></i> RT60 (реверберация)</button>
-          <button className="mode-btn" onClick={() => openCalculator('speakers')}><i className="fas fa-microphone-alt"></i> Подбор громкоговорителей</button>
+          {modes.map(m => (
+            <button key={m.mode} className="mode-btn" onClick={() => openCalculator(m.mode as any)}>
+              <i className={m.icon}></i> {m.label}
+            </button>
+          ))}
         </div>
       </div>
     </div>
