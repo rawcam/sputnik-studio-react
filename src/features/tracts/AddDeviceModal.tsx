@@ -1,17 +1,39 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { modelDB } from '../../utils/modelDB'
+import { TractDevice } from '../../store/tractsSlice'
 
 interface AddDeviceModalProps {
   isOpen: boolean
   onClose: () => void
   onAdd: (device: any) => void
+  column: 'source' | 'matrix' | 'sink'
+  switches?: TractDevice[]   // список коммутаторов в тракте
 }
 
-export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose, onAdd }) => {
+export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose, onAdd, column, switches }) => {
   const [deviceType, setDeviceType] = useState<keyof typeof modelDB>('source')
   const [selectedModel, setSelectedModel] = useState<any>(null)
 
   const deviceTypes = Object.keys(modelDB) as (keyof typeof modelDB)[]
+  // Фильтруем типы в зависимости от колонки
+  const allowedTypes = {
+    source: ['source', 'tx'],
+    matrix: ['matrix', 'networkSwitch', 'splitter', 'switch2x1', 'ledProc'],
+    sink: ['rx', 'display', 'dante', 'ledScreen']
+  }
+  const filteredTypes = deviceTypes.filter(t => allowedTypes[column].includes(t))
+
+  useEffect(() => {
+    if (filteredTypes.length) {
+      setDeviceType(filteredTypes[0])
+    }
+  }, [column])
+
+  useEffect(() => {
+    if (deviceType) {
+      setSelectedModel(modelDB[deviceType][0] || null)
+    }
+  }, [deviceType])
 
   const handleTypeChange = (type: keyof typeof modelDB) => {
     setDeviceType(type)
@@ -35,7 +57,7 @@ export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose,
         <div className="setting">
           <label>Тип устройства:</label>
           <select value={deviceType} onChange={e => handleTypeChange(e.target.value as keyof typeof modelDB)}>
-            {deviceTypes.map(type => (
+            {filteredTypes.map(type => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
