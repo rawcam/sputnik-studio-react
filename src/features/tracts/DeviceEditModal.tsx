@@ -1,21 +1,23 @@
-import React, { useState, useEffect } from 'react'
-import { TractDevice } from '../../store/tractsSlice'
+import React, { useState } from 'react'
+import { useDispatch } from 'react-redux'
+import { TractDevice, connectDeviceToNetwork, disconnectDeviceFromNetwork, updateDeviceInTract } from '../../store/tractsSlice'
 
 interface DeviceEditModalProps {
   isOpen: boolean
   onClose: () => void
   device: TractDevice
-  onSave: (updatedDevice: TractDevice) => void
-  switches?: TractDevice[] // список коммутаторов в тракте для проверки доступности
+  tractId: string
+  onSave?: () => void   // опционально, можно не использовать
 }
 
-export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, onSave, switches = [] }) => {
+export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, tractId }) => {
+  const dispatch = useDispatch()
   const [editedDevice, setEditedDevice] = useState<TractDevice>(device)
-  const [error, setError] = useState<string | null>(null)
+  const [originalEthernet, setOriginalEthernet] = useState(device.ethernet)
+  const [originalPoeEnabled, setOriginalPoeEnabled] = useState(device.poeEnabled)
 
   const handleChange = (field: keyof TractDevice, value: any) => {
     setEditedDevice(prev => ({ ...prev, [field]: value }))
-    setError(null)
   }
 
   const poeOptions = [
@@ -37,64 +39,60 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
     if (val === 'false') {
       handleChange('poeEnabled', false)
       handleChange('poePower', undefined)
-      // Если отключаем PoE, Ethernet остаётся как есть (пользователь может оставить для управления)
-    } else {
-      let power = 15.4
-      if (val === 'true-at') power = 30
-      if (val === 'true-bt') power = 60
+    } else if (val === 'true-af') {
       handleChange('poeEnabled', true)
-      handleChange('poePower', power)
-      // При включении PoE автоматически включаем Ethernet
-      if (!editedDevice.ethernet) {
-        handleChange('ethernet', true)
-      }
+      handleChange('poePower', 15.4)
+    } else if (val === 'true-at') {
+      handleChange('poeEnabled', true)
+      handleChange('poePower', 30)
+    } else if (val === 'true-bt') {
+      handleChange('poeEnabled', true)
+      handleChange('poePower', 60)
     }
   }
-
-  const handleEthernetChange = (checked: boolean) => {
-    if (checked) {
-      // Проверяем, есть ли свободный порт в каком-нибудь коммутаторе
-      const hasFreePort = switches.some(sw => {
-        const freePorts = (sw.ports || 0) - (sw.usedPorts?.length || 0)
-        if (freePorts === 0) return false
-        if (editedDevice.poeEnabled && (!sw.poeBudget || (sw.poeBudget - (sw.usedPoE || 0) < (editedDevice.poePower || 0)))) return false
-        return true
-      })
-      if (!hasFreePort) {
-        setError('Нет доступных коммутаторов с свободными портами и достаточным PoE-бюджетом')
-        return
-      }
-      handleChange('ethernet', true)
-    } else {
-      // При отключении Ethernet отключаем PoE
-      if (editedDevice.poeEnabled) {
-        handleChange('poeEnabled', false)
-        handleChange('poePower', undefined)
-      }
-      handleChange('ethernet', false)
-      // Также сбрасываем привязку к коммутатору (будет в слайсе)
-    }
-  }
-
-  const handleSave = () => {
-    if (editedDevice.ethernet && switches.length === 0) {
-      setError('Нет коммутаторов в тракте. Сначала добавьте коммутатор.')
-      return
-    }
-    onSave(editedDevice)
-    onClose()
-  }
-
-  useEffect(() => {
-    setEditedDevice(device)
-    setError(null)
-  }, [device])
 
   const usbOptions = [
     { value: 'none', label: 'Нет' },
     { value: '2.0', label: 'USB 2.0' },
     { value: '3.0', label: 'USB 3.0' },
   ]
+
+  const handleSave = () => {
+    // 1. Обновляем параметры устройства (мощность, PoE, USB, Ethernet)
+    const updates: Partial<TractDevice> = {
+      powerW: editedDevice.powerW,
+      poeEnabled: editedDevice.poeEnabled,
+      poePower: editedDevice.poePower,
+      usb: editedDevice.usb,
+      ethernet: editedDevice.ethernet,
+    }
+    dispatch(updateDeviceInTract({ tractId, deviceId: device.id, updates }))
+
+    // 2. Если изменился Ethernet или PoE, вызываем подключение/отключение
+    const ethernetChanged = editedDevice.ethernet !== originalEthernet
+    const poeChanged = editedDevice.poeEnabled !== originalPoeEnabled
+
+    if (ethernetChanged) {
+      if (editedDevice.ethernet) {
+        // Включаем Ethernet – пытаемся подключить
+        dispatch(connectDeviceToNetwork({ tractId, deviceId: device.id }))
+      } else {
+        // Отключаем Ethernet – отключаем от сети
+        dispatch(disconnectDeviceFromNetwork({ tractId, deviceId: device.id }))
+      }
+    } else if (poeChanged && editedDevice.poeEnabled) {
+      // Если изменился только PoE (и он включён), возможно, нужно переподключить для обновления PoE-бюджета
+      // Проще сначала отключить, потом подключить заново
+      if (device.attachedSwitchId) {
+        dispatch(disconnectDeviceFromNetwork({ tractId, deviceId: device.id }))
+        dispatch(connectDeviceToNetwork({ tractId, deviceId: device.id }))
+      } else if (editedDevice.ethernet) {
+        dispatch(connectDeviceToNetwork({ tractId, deviceId: device.id }))
+      }
+    }
+
+    onClose()
+  }
 
   if (!isOpen) return null
 
@@ -138,11 +136,10 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
             <input
               type="checkbox"
               checked={editedDevice.ethernet || false}
-              onChange={e => handleEthernetChange(e.target.checked)}
+              onChange={e => handleChange('ethernet', e.target.checked)}
               style={{ width: 'auto', margin: 0 }}
             />
           </div>
-          {error && <div style={{ color: 'var(--danger)', fontSize: '0.75rem', textAlign: 'center' }}>{error}</div>}
         </div>
         <div className="modal-buttons" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
           <button className="btn-primary" onClick={handleSave}>Сохранить</button>
