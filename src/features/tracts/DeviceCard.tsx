@@ -15,8 +15,6 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onClick, onDelet
     return 'fas fa-microchip'
   }
 
-  const isConnected = device.attachedSwitchId !== undefined
-
   return (
     <div className="device-card" onClick={onClick}>
       <div className="device-header">
@@ -25,16 +23,13 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onClick, onDelet
           {device.modelName}
         </div>
         <div className="device-short">{device.shortName}</div>
+        <button className="delete-device" onClick={onDelete}>✕</button>
       </div>
       <div className="device-details">
+        <span>⚡ {device.powerW} Вт</span>
+        {device.poeEnabled && <span>🔌 PoE ({device.poePower} Вт)</span>}
+        {device.usb && device.usb !== 'none' && <span>🔌 USB {device.usb}</span>}
         <span>⏱️ {device.latency} мс</span>
-        {device.poeEnabled && <span>🔌 PoE {device.poePower} Вт</span>}
-        {device.poc && <span>⚡ PoC</span>}
-        <span>💡 {device.powerW} Вт</span>
-        {isConnected && <span>🔗 {device.attachedSwitchId?.slice(-3)} порт {device.attachedPortNumber}</span>}
-        <button className="delete-device" onClick={onDelete}>
-          <i className="fas fa-trash-alt"></i>
-        </button>
       </div>
     </div>
   )
