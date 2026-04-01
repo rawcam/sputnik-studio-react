@@ -13,7 +13,7 @@ export const NetworkSection: React.FC = () => {
 
   return (
     <div className="section-content-inner">
-      <div className="compact-setting">
+      <div className="setting">
         <label>Среда передачи:</label>
         <select value={settings.cable} onChange={e => handleChange('cable', e.target.value)}>
           <option value="Cat5e">Cat5e</option>
@@ -25,22 +25,22 @@ export const NetworkSection: React.FC = () => {
           <option value="wireless">Беспровод</option>
         </select>
       </div>
-      <div className="compact-setting checkbox">
+      <div className="setting checkbox-row">
         <label>Multicast:</label>
         <input type="checkbox" checked={settings.multicast} onChange={e => handleChange('multicast', e.target.checked)} />
       </div>
-      <div className="compact-setting checkbox">
+      <div className="setting checkbox-row">
         <label>QoS:</label>
         <input type="checkbox" checked={settings.qos} onChange={e => handleChange('qos', e.target.checked)} />
       </div>
-      <div className="compact-setting">
+      <div className="setting">
         <label>Тип сети:</label>
         <select value={settings.networkType} onChange={e => handleChange('networkType', e.target.value)}>
           <option value="managed">Управляемая</option>
           <option value="unmanaged">Неуправляемая</option>
         </select>
       </div>
-      <div className="compact-setting">
+      <div className="setting">
         <label>Синхронизация:</label>
         <select value={settings.syncProtocol} onChange={e => handleChange('syncProtocol', e.target.value)}>
           <option value="ptp">PTP</option>
@@ -48,7 +48,7 @@ export const NetworkSection: React.FC = () => {
           <option value="none">Нет</option>
         </select>
       </div>
-      <div className="compact-setting checkbox">
+      <div className="setting checkbox-row">
         <label>Резервирование:</label>
         <input type="checkbox" checked={settings.redundancy} onChange={e => handleChange('redundancy', e.target.checked)} />
       </div>
