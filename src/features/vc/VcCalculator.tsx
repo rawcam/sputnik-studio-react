@@ -39,7 +39,7 @@ export const VcCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       alert('Нет активного тракта. Сначала создайте или выберите тракт.')
       return
     }
-    const device = {
+    const newDevice = {
       id: Date.now().toString(),
       type: 'vcDevice',
       modelName: `Кодек ВКС (${result.text})`,
