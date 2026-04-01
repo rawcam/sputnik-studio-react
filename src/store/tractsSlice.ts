@@ -21,6 +21,8 @@ export interface TractDevice {
   poeBudget?: number
   switchingLatency?: number
   usedPoE?: number
+  // для PoC
+  poc?: boolean
 }
 
 export interface Tract {
@@ -94,27 +96,37 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
   }
 }
 
-// Автоматическое назначение сети
-export const assignNetwork = (
+// Вспомогательная функция для поиска подходящего коммутатора
+const findAvailableSwitch = (tract: Tract, device: TractDevice): TractDevice | undefined => {
+  return tract.matrixDevices.find(sw => {
+    if (!sw.ports) return false
+    const freePorts = sw.ports - (sw.usedPorts?.length || 0)
+    if (freePorts === 0) return false
+    if (device.poeEnabled && (!sw.poeBudget || (sw.poeBudget - (sw.usedPoE || 0) < (device.poePower || 0)))) return false
+    return true
+  })
+}
+
+// Подключить устройство к сети (автоматический выбор коммутатора и порта)
+export const connectDeviceToNetwork = (
   tract: Tract,
-  device: TractDevice,
-  matrixId?: string
+  deviceId: string,
+  switchId?: string
 ): { success: boolean; error?: string; updatedTract?: Tract } => {
+  const device = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices].find(d => d.id === deviceId)
+  if (!device) return { success: false, error: 'Устройство не найдено' }
+  if (!device.ethernet) return { success: false, error: 'Устройство не поддерживает сетевое подключение' }
+
   let targetSwitch: TractDevice | undefined
-  if (matrixId) {
-    targetSwitch = tract.matrixDevices.find(sw => sw.id === matrixId)
+  if (switchId) {
+    targetSwitch = tract.matrixDevices.find(sw => sw.id === switchId)
   } else {
-    targetSwitch = tract.matrixDevices.find(sw => {
-      if (!sw.ports) return false
-      const freePorts = sw.ports - (sw.usedPorts?.length || 0)
-      if (freePorts === 0) return false
-      if (device.poeEnabled && (!sw.poeBudget || (sw.poeBudget - (sw.usedPoE || 0) < (device.poePower || 0)))) return false
-      return true
-    })
+    targetSwitch = findAvailableSwitch(tract, device)
   }
   if (!targetSwitch) {
     return { success: false, error: 'Нет подходящего коммутатора с свободными портами и достаточным PoE-бюджетом' }
   }
+
   const freePorts = targetSwitch.ports! - (targetSwitch.usedPorts?.length || 0)
   if (freePorts === 0) return { success: false, error: 'Нет свободных портов' }
   if (device.poeEnabled) {
@@ -130,6 +142,26 @@ export const assignNetwork = (
   targetSwitch.usedPorts = [...(targetSwitch.usedPorts || []), newPort]
   device.attachedSwitchId = targetSwitch.id
   device.attachedPortNumber = newPort
+  return { success: true, updatedTract: tract }
+}
+
+// Отключить устройство от сети
+export const disconnectDeviceFromNetwork = (tract: Tract, deviceId: string): { success: boolean; error?: string; updatedTract?: Tract } => {
+  const device = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices].find(d => d.id === deviceId)
+  if (!device) return { success: false, error: 'Устройство не найдено' }
+  if (!device.attachedSwitchId) return { success: false, error: 'Устройство не подключено к сети' }
+
+  const sw = tract.matrixDevices.find(s => s.id === device.attachedSwitchId)
+  if (sw) {
+    if (device.attachedPortNumber) {
+      sw.usedPorts = sw.usedPorts?.filter(p => p !== device.attachedPortNumber) || []
+    }
+    if (device.poeEnabled) {
+      sw.usedPoE = (sw.usedPoE || 0) - (device.poePower || 0)
+    }
+  }
+  device.attachedSwitchId = undefined
+  device.attachedPortNumber = undefined
   return { success: true, updatedTract: tract }
 }
 
@@ -173,13 +205,7 @@ const tractsSlice = createSlice({
     addDeviceToTract: (state, action: PayloadAction<{ tractId: string; device: TractDevice; column: 'source' | 'matrix' | 'sink' }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
       if (!tract) return
-      if (action.payload.device.ethernet) {
-        const result = assignNetwork(tract, action.payload.device)
-        if (!result.success) {
-          console.warn(result.error)
-          return
-        }
-      }
+      // НЕ вызываем assignNetwork, просто добавляем устройство
       if (action.payload.column === 'source') {
         tract.sourceDevices.push(action.payload.device)
       } else if (action.payload.column === 'matrix') {
@@ -197,6 +223,22 @@ const tractsSlice = createSlice({
         tract.matrixDevices = tract.matrixDevices.filter(d => d.id !== action.payload.deviceId)
       } else if (action.payload.column === 'sink') {
         tract.sinkDevices = tract.sinkDevices.filter(d => d.id !== action.payload.deviceId)
+      }
+    },
+    connectDeviceToNetwork: (state, action: PayloadAction<{ tractId: string; deviceId: string; switchId?: string }>) => {
+      const tract = state.tracts.find(t => t.id === action.payload.tractId)
+      if (!tract) return
+      const result = connectDeviceToNetwork(tract, action.payload.deviceId, action.payload.switchId)
+      if (!result.success) {
+        console.warn(result.error)
+      }
+    },
+    disconnectDeviceFromNetwork: (state, action: PayloadAction<{ tractId: string; deviceId: string }>) => {
+      const tract = state.tracts.find(t => t.id === action.payload.tractId)
+      if (!tract) return
+      const result = disconnectDeviceFromNetwork(tract, action.payload.deviceId)
+      if (!result.success) {
+        console.warn(result.error)
       }
     },
     updateDeviceInTract: (state, action: PayloadAction<{ tractId: string; deviceId: string; updates: Partial<TractDevice> }>) => {
@@ -219,6 +261,8 @@ export const {
   setActiveCalculator,
   addDeviceToTract,
   removeDeviceFromTract,
+  connectDeviceToNetwork,
+  disconnectDeviceFromNetwork,
   updateDeviceInTract,
 } = tractsSlice.actions
 
