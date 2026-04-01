@@ -8,38 +8,26 @@ export interface TractDevice {
   modelName: string
   latency: number
   poeEnabled?: boolean
+  poePower?: number
   powerW: number
   shortName: string
   attachedSwitchId?: string
   attachedPortNumber?: number
   ethernet?: boolean
   bitrateFactor?: number
-}
-
-export interface SwitchPort {
-  number: number
-  deviceId: string | null
-}
-
-export interface NetworkSwitch {
-  id: string
-  type: 'networkSwitch'
-  modelName: string
-  ports: SwitchPort[]
-  speed: number
-  switchingLatency: number
-  poeBudget: number
-  powerW: number
-  shortName: string
-  attachedTo?: string
+  // для матриц и коммутаторов
+  ports?: number
+  usedPorts?: number[]
+  poeBudget?: number
+  switchingLatency?: number
 }
 
 export interface Tract {
   id: string
   name: string
   sourceDevices: TractDevice[]
+  matrixDevices: TractDevice[]   // вместо networkSwitches и матриц
   sinkDevices: TractDevice[]
-  networkSwitches: NetworkSwitch[]
   totalLatency: number
   totalBitrate: number
   totalPower: number
@@ -63,36 +51,38 @@ const initialState: TractsState = {
   activeCalculator: null,
 }
 
+// Функция пересчёта
 export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract => {
-  const allDevices: TractDevice[] = [...tract.sourceDevices, ...tract.sinkDevices]
-  const switches = tract.networkSwitches
-
-  const totalLatency = allDevices.reduce((sum, d) => sum + d.latency, 0) +
-    switches.reduce((sum, s) => sum + s.switchingLatency, 0)
-
+  const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
+  // Задержка
+  let totalLatency = 0
+  allDevices.forEach(d => totalLatency += d.latency || 0)
+  // Битрейт
   let totalBitrate = calcVideoBitrate(videoSettings)
-  allDevices.forEach(dev => {
-    if (dev.bitrateFactor !== undefined) {
-      totalBitrate = totalBitrate * dev.bitrateFactor
-    }
+  allDevices.forEach(d => {
+    if (d.bitrateFactor !== undefined) totalBitrate *= d.bitrateFactor
   })
   totalBitrate = Math.round(totalBitrate)
-
+  // Мощность и PoE
   let totalPower = 0
   let usedPoE = 0
-  const totalPoEBudget = switches.reduce((sum, sw) => sum + (sw.poeBudget || 0), 0)
-
-  allDevices.forEach(dev => {
-    totalPower += dev.powerW || 0
-    if (dev.poeEnabled) usedPoE += dev.powerW || 0
-  })
-  switches.forEach(sw => {
+  let totalPoEBudget = 0
+  tract.matrixDevices.forEach(sw => {
+    totalPoEBudget += sw.poeBudget || 0
     totalPower += sw.powerW || 0
-    if (sw.poeBudget) usedPoE += sw.powerW
   })
-
-  const totalPorts = switches.reduce((sum, sw) => sum + sw.ports.length, 0)
-  const usedPorts = switches.reduce((sum, sw) => sum + sw.ports.filter(p => p.deviceId !== null).length, 0)
+  allDevices.forEach(d => {
+    totalPower += d.powerW || 0
+    if (d.poeEnabled) usedPoE += d.poePower || d.powerW || 0
+  })
+  // Порты
+  let totalPorts = 0, usedPorts = 0
+  tract.matrixDevices.forEach(sw => {
+    if (sw.ports) {
+      totalPorts += sw.ports
+      usedPorts += sw.usedPorts?.length || 0
+    }
+  })
 
   return {
     ...tract,
@@ -104,6 +94,47 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
     usedPorts,
     totalPorts,
   }
+}
+
+// Вспомогательная функция для автоматического назначения порта и PoE
+export const assignNetwork = (
+  tract: Tract,
+  device: TractDevice,
+  matrixId?: string
+): { success: boolean; error?: string; updatedTract?: Tract } => {
+  // Находим подходящий коммутатор
+  let targetSwitch: TractDevice | undefined
+  if (matrixId) {
+    targetSwitch = tract.matrixDevices.find(sw => sw.id === matrixId)
+  } else {
+    targetSwitch = tract.matrixDevices.find(sw => {
+      if (!sw.ports) return false
+      const freePorts = sw.ports - (sw.usedPorts?.length || 0)
+      if (freePorts === 0) return false
+      if (device.poeEnabled && (!sw.poeBudget || (sw.poeBudget - (sw.usedPoE || 0) < (device.poePower || 0)))) return false
+      return true
+    })
+  }
+  if (!targetSwitch) {
+    return { success: false, error: 'Нет подходящего коммутатора с свободными портами и достаточным PoE-бюджетом' }
+  }
+  const freePorts = targetSwitch.ports! - (targetSwitch.usedPorts?.length || 0)
+  if (freePorts === 0) return { success: false, error: 'Нет свободных портов' }
+  if (device.poeEnabled) {
+    const usedPoE = targetSwitch.usedPoE || 0
+    if ((targetSwitch.poeBudget || 0) - usedPoE < (device.poePower || 0)) {
+      return { success: false, error: 'Недостаточно PoE-бюджета' }
+    }
+    targetSwitch.usedPoE = usedPoE + (device.poePower || 0)
+  }
+  // Назначаем первый свободный порт
+  let newPort = 1
+  const used = new Set(targetSwitch.usedPorts || [])
+  while (used.has(newPort)) newPort++
+  targetSwitch.usedPorts = [...(targetSwitch.usedPorts || []), newPort]
+  device.attachedSwitchId = targetSwitch.id
+  device.attachedPortNumber = newPort
+  return { success: true, updatedTract: tract }
 }
 
 const tractsSlice = createSlice({
@@ -143,26 +174,45 @@ const tractsSlice = createSlice({
     setActiveCalculator: (state, action: PayloadAction<string | null>) => {
       state.activeCalculator = action.payload
     },
-    addDeviceToTract: (state, action: PayloadAction<{ tractId: string; device: TractDevice }>) => {
+    addDeviceToTract: (state, action: PayloadAction<{ tractId: string; device: TractDevice; column: 'source' | 'matrix' | 'sink' }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
-      if (tract) {
+      if (!tract) return
+      // Автоматическое назначение сети
+      if (action.payload.device.ethernet) {
+        const result = assignNetwork(tract, action.payload.device)
+        if (!result.success) {
+          // Если не удалось, можно показать предупреждение, но в редьюсере нельзя показывать alert
+          console.warn(result.error)
+          return
+        }
+      }
+      if (action.payload.column === 'source') {
         tract.sourceDevices.push(action.payload.device)
+      } else if (action.payload.column === 'matrix') {
+        tract.matrixDevices.push(action.payload.device)
+      } else if (action.payload.column === 'sink') {
+        tract.sinkDevices.push(action.payload.device)
       }
     },
-    removeDeviceFromTract: (state, action: PayloadAction<{ tractId: string; deviceId: string }>) => {
+    removeDeviceFromTract: (state, action: PayloadAction<{ tractId: string; deviceId: string; column: 'source' | 'matrix' | 'sink' }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
-      if (tract) {
+      if (!tract) return
+      if (action.payload.column === 'source') {
         tract.sourceDevices = tract.sourceDevices.filter(d => d.id !== action.payload.deviceId)
+      } else if (action.payload.column === 'matrix') {
+        const removed = tract.matrixDevices.find(d => d.id === action.payload.deviceId)
+        tract.matrixDevices = tract.matrixDevices.filter(d => d.id !== action.payload.deviceId)
+        // Освобождаем порты? В этой версии не требуется
+      } else if (action.payload.column === 'sink') {
         tract.sinkDevices = tract.sinkDevices.filter(d => d.id !== action.payload.deviceId)
       }
     },
-    addSwitchToTract: (state, action: PayloadAction<{ tractId: string; sw: NetworkSwitch }>) => {
+    updateDeviceInTract: (state, action: PayloadAction<{ tractId: string; deviceId: string; updates: Partial<TractDevice> }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
-      if (tract) tract.networkSwitches.push(action.payload.sw)
-    },
-    removeSwitchFromTract: (state, action: PayloadAction<{ tractId: string; switchId: string }>) => {
-      const tract = state.tracts.find(t => t.id === action.payload.tractId)
-      if (tract) tract.networkSwitches = tract.networkSwitches.filter(s => s.id !== action.payload.switchId)
+      if (!tract) return
+      const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
+      const device = allDevices.find(d => d.id === action.payload.deviceId)
+      if (device) Object.assign(device, action.payload.updates)
     },
   },
 })
@@ -177,8 +227,7 @@ export const {
   setActiveCalculator,
   addDeviceToTract,
   removeDeviceFromTract,
-  addSwitchToTract,
-  removeSwitchFromTract,
+  updateDeviceInTract,
 } = tractsSlice.actions
 
 export default tractsSlice.reducer
