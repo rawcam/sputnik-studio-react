@@ -1,5 +1,6 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
 import { useAuth } from '../hooks/useAuth'
 import { CompanyFinanceWidget } from '../components/widgets/CompanyFinanceWidget'
@@ -12,40 +13,31 @@ import './DashboardPage.css'
 
 export const DashboardPage: React.FC = () => {
   const { hasRole } = useAuth()
+  const navigate = useNavigate()
   const projects = useSelector((state: RootState) => state.projects.list)
   const activeProjects = projects.filter(p => p.status !== 'done')
 
   const handleSelectProject = (project: any) => {
-    // Временное действие: показать alert с id проекта
-    alert(`Выбран проект: ${project.name} (id: ${project.id})`)
-    // В будущем здесь можно добавить навигацию к детальной странице
+    // Переход на страницу проектов с параметром id
+    navigate(`/projects?id=${project.id}`)
   }
 
   return (
     <div className="dashboard-wrapper">
       <h2>ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
       <div className="dashboard-grid">
-        {/* Колонка 1: Финансы компании (только для директора) */}
         {hasRole('director') ? (
           <CompanyFinanceWidget />
         ) : (
           <div className="project-card">Финансы компании (только директор)</div>
         )}
-
-        {/* Колонка 2: Финансы проектов (директор и ГИП) */}
         {(hasRole('director') || hasRole('pm')) ? (
           <ProjectsFinanceWidget />
         ) : (
           <div className="project-card">Финансы проектов (только директор/ГИП)</div>
         )}
-
-        {/* Колонка 3: Сервис и регламент */}
         <ServiceWidget />
-
-        {/* Колонка 4: Загрузка сотрудников */}
         <WorkloadWidget />
-
-        {/* Колонка 5: Риски и уведомления */}
         <RisksWidget />
       </div>
 
