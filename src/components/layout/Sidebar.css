@@ -145,7 +145,49 @@
   color: white;
   border-color: var(--accent);
 }
+/* Компактные настройки (видео, сеть) */
+.compact-setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+  gap: 16px;
+}
 
+.compact-setting label {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.compact-setting select,
+.compact-setting input[type="text"],
+.compact-setting input[type="number"] {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel-solid);
+  color: var(--text-primary);
+}
+
+.compact-setting.checkbox {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.compact-setting.checkbox input {
+  width: auto;
+  margin: 0;
+}
+
+.compact-setting.result {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
 .mode-btn i {
   width: 20px;
   text-align: center;
