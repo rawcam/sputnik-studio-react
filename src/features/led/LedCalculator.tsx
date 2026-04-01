@@ -59,7 +59,7 @@ export const LedCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       alert('Нет активного тракта. Сначала создайте или выберите тракт.')
       return
     }
-    const device = {
+    const newDevice = {
       id: Date.now().toString(),
       type: 'ledScreen',
       modelName: `LED экран ${result.resW}x${result.resH}`,
