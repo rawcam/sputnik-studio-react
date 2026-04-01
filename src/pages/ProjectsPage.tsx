@@ -14,13 +14,13 @@ export const ProjectsPage = () => {
   const { loadProjects, addProject, initDemoData } = useProjectsDb()
   const projects = useSelector((state: RootState) => state.projects.list)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<any>(null)
   const location = useLocation()
   const navigate = useNavigate()
 
   // Получаем id из хеша
   const getProjectIdFromHash = () => {
     const hash = location.hash
-    // Убираем начальную часть до '?'
     const queryStart = hash.indexOf('?')
     if (queryStart === -1) return null
     const query = hash.slice(queryStart + 1)
@@ -29,8 +29,8 @@ export const ProjectsPage = () => {
   }
 
   const projectId = getProjectIdFromHash()
-  const selectedProject = projectId ? projects.find(p => p.id === projectId) : null
 
+  // Загружаем демо-данные и проекты при монтировании
   useEffect(() => {
     const init = async () => {
       await initDemoData()
@@ -39,12 +39,26 @@ export const ProjectsPage = () => {
     init()
   }, [])
 
+  // Следим за projectId и проектами, чтобы открыть детали
+  useEffect(() => {
+    if (projectId && projects.length > 0) {
+      const project = projects.find(p => p.id === projectId)
+      if (project) {
+        setSelectedProject(project)
+      }
+    } else if (!projectId) {
+      setSelectedProject(null)
+    }
+  }, [projectId, projects])
+
   const handleSelectProject = (project: any) => {
     navigate(`/projects?id=${project.id}`, { replace: true })
+    // Не нужно сразу устанавливать selectedProject, так как это сделает useEffect
   }
 
   const handleBack = () => {
     navigate('/projects', { replace: true })
+    // selectedProject очистится через useEffect
   }
 
   const handleCreate = async (projectData: any) => {
