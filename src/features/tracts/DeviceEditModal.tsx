@@ -17,9 +17,9 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
 
   const poeOptions = [
     { value: 'false', label: 'Нет' },
-    { value: 'true-af', label: 'Да (15.4 Вт)' },
-    { value: 'true-at', label: 'Да (30 Вт)' },
-    { value: 'true-bt', label: 'Да (60 Вт)' },
+    { value: 'true-af', label: '15.4 Вт' },
+    { value: 'true-at', label: '30 Вт' },
+    { value: 'true-bt', label: '60 Вт' },
   ]
 
   const getPoeValue = () => {
@@ -61,51 +61,33 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
 
   return (
     <div className="modal" style={{ display: 'flex' }}>
-      <div className="modal-content" style={{ maxWidth: '700px' }}>
+      <div className="modal-content" style={{ maxWidth: '500px' }}>
         <span className="modal-close" onClick={onClose}>×</span>
-        <h3>Редактирование устройства</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          {/* Левая колонка */}
-          <div>
-            <div className="setting">
-              <label>Модель:</label>
-              <span>{editedDevice.modelName}</span>
-            </div>
-            <div className="setting">
-              <label>Короткое имя:</label>
-              <input type="text" value={editedDevice.shortName} onChange={e => handleChange('shortName', e.target.value)} />
-            </div>
-            <div className="setting">
-              <label>Задержка (мс):</label>
-              <input type="number" step="0.1" value={editedDevice.latency} onChange={e => handleChange('latency', parseFloat(e.target.value))} />
-            </div>
+        <h3>Редактировать устройство</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+          <div className="setting">
+            <label>Мощность (Вт):</label>
+            <input type="number" value={editedDevice.powerW} onChange={e => handleChange('powerW', parseFloat(e.target.value))} />
           </div>
-          {/* Правая колонка */}
-          <div>
-            <div className="setting">
-              <label>Мощность (Вт):</label>
-              <input type="number" value={editedDevice.powerW} onChange={e => handleChange('powerW', parseFloat(e.target.value))} />
-            </div>
-            <div className="setting">
-              <label>PoE:</label>
-              <select value={getPoeValue()} onChange={e => handlePoeChange(e.target.value)}>
-                {poeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-              </select>
-            </div>
-            <div className="setting">
-              <label>USB:</label>
-              <select value={editedDevice.usb || 'none'} onChange={e => handleChange('usb', e.target.value === 'none' ? undefined : e.target.value)}>
-                {usbOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-              </select>
-            </div>
-            <div className="setting">
-              <label>Ethernet:</label>
-              <input
-                type="checkbox"
-                checked={editedDevice.ethernet || false}
-                onChange={e => handleChange('ethernet', e.target.checked)}
-              />
-            </div>
+          <div className="setting">
+            <label>PoE:</label>
+            <select value={getPoeValue()} onChange={e => handlePoeChange(e.target.value)}>
+              {poeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          </div>
+          <div className="setting">
+            <label>USB:</label>
+            <select value={editedDevice.usb || 'none'} onChange={e => handleChange('usb', e.target.value === 'none' ? undefined : e.target.value)}>
+              {usbOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          </div>
+          <div className="setting">
+            <label>Ethernet:</label>
+            <input
+              type="checkbox"
+              checked={editedDevice.ethernet || false}
+              onChange={e => handleChange('ethernet', e.target.checked)}
+            />
           </div>
         </div>
         <div className="modal-buttons">
