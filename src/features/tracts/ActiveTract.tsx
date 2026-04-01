@@ -9,13 +9,13 @@ import {
   addDeviceToTract,
   removeDeviceFromTract,
   addTract,
-  connectDeviceToNetwork,
-  disconnectDeviceFromNetwork,
+  updateDeviceInTract,
   TractDevice,
 } from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
 import { AddDeviceModal } from './AddDeviceModal'
 import { DeviceCard } from './DeviceCard'
+import { DeviceEditModal } from './DeviceEditModal'
 
 export const ActiveTract: React.FC = () => {
   const dispatch = useDispatch()
@@ -25,6 +25,8 @@ export const ActiveTract: React.FC = () => {
   const activeTract = tracts.find(t => t.id === activeTractId) || null
   const [showModal, setShowModal] = useState(false)
   const [modalColumn, setModalColumn] = useState<'source' | 'matrix' | 'sink'>('source')
+  const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   useEffect(() => {
     if (activeTract) {
@@ -93,14 +95,9 @@ export const ActiveTract: React.FC = () => {
     dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId, column }))
   }
 
-  const handleConnectDevice = (deviceId: string, switchId?: string) => {
+  const handleUpdateDevice = (updatedDevice: TractDevice) => {
     if (!activeTract) return
-    dispatch(connectDeviceToNetwork({ tractId: activeTract.id, deviceId, switchId }))
-  }
-
-  const handleDisconnectDevice = (deviceId: string) => {
-    if (!activeTract) return
-    dispatch(disconnectDeviceFromNetwork({ tractId: activeTract.id, deviceId }))
+    dispatch(updateDeviceInTract({ tractId: activeTract.id, deviceId: updatedDevice.id, updates: updatedDevice }))
   }
 
   const handleBackToAll = () => {
@@ -167,10 +164,8 @@ export const ActiveTract: React.FC = () => {
               <DeviceCard
                 key={device.id}
                 device={device}
-                onDelete={() => handleDeleteDevice(device.id, 'source')}
-                onConnect={handleConnectDevice}
-                onDisconnect={handleDisconnectDevice}
-                switches={activeTract.matrixDevices}
+                onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
+                onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'source'); }}
               />
             ))}
           </div>
@@ -186,10 +181,8 @@ export const ActiveTract: React.FC = () => {
               <DeviceCard
                 key={device.id}
                 device={device}
-                onDelete={() => handleDeleteDevice(device.id, 'matrix')}
-                onConnect={handleConnectDevice}
-                onDisconnect={handleDisconnectDevice}
-                switches={activeTract.matrixDevices}
+                onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
+                onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'matrix'); }}
               />
             ))}
           </div>
@@ -205,10 +198,8 @@ export const ActiveTract: React.FC = () => {
               <DeviceCard
                 key={device.id}
                 device={device}
-                onDelete={() => handleDeleteDevice(device.id, 'sink')}
-                onConnect={handleConnectDevice}
-                onDisconnect={handleDisconnectDevice}
-                switches={activeTract.matrixDevices}
+                onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
+                onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'sink'); }}
               />
             ))}
           </div>
@@ -224,6 +215,16 @@ export const ActiveTract: React.FC = () => {
         onAdd={(device) => handleAddDevice(device, modalColumn)}
         column={modalColumn}
       />
+
+      {selectedDevice && (
+        <DeviceEditModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          device={selectedDevice}
+          switches={activeTract.matrixDevices}
+          onSave={handleUpdateDevice}
+        />
+      )}
     </div>
   )
 }
