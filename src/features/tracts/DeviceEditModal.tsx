@@ -65,7 +65,7 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
         <span className="modal-close" onClick={onClose}>×</span>
         <h3>Редактирование устройства</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          {/* Левая колонка – основные параметры */}
+          {/* Левая колонка */}
           <div>
             <div className="setting">
               <label>Модель:</label>
@@ -80,7 +80,7 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
               <input type="number" step="0.1" value={editedDevice.latency} onChange={e => handleChange('latency', parseFloat(e.target.value))} />
             </div>
           </div>
-          {/* Правая колонка – настройки питания и интерфейсов */}
+          {/* Правая колонка */}
           <div>
             <div className="setting">
               <label>Мощность (Вт):</label>
@@ -97,6 +97,14 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
               <select value={editedDevice.usb || 'none'} onChange={e => handleChange('usb', e.target.value === 'none' ? undefined : e.target.value)}>
                 {usbOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
+            </div>
+            <div className="setting">
+              <label>Ethernet:</label>
+              <input
+                type="checkbox"
+                checked={editedDevice.ethernet || false}
+                onChange={e => handleChange('ethernet', e.target.checked)}
+              />
             </div>
           </div>
         </div>
