@@ -26,7 +26,7 @@ export const PowerCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) =>
       alert('Нет активного тракта. Сначала создайте или выберите тракт.')
       return
     }
-    const device = {
+    const newDevice = {
       id: Date.now().toString(),
       type: 'powerDevice',
       modelName: `ИБП ${Math.round(totalPower * upsAutonomy * 1.2)} ВА`,
