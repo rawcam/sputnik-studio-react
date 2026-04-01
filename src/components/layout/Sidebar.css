@@ -1,3 +1,8 @@
+:root {
+  --sidebar-width: 300px;
+  --sidebar-collapsed-width: 80px;
+}
+
 .sidebar {
   width: var(--sidebar-width);
   background: var(--bg-panel);
@@ -15,7 +20,7 @@
 }
 
 .sidebar.collapsed {
-  width: var(--sidebar-collapsed-width);
+  width: var(--sidebar-collapsed-width) !important;
 }
 
 .sidebar-header {
@@ -113,8 +118,8 @@
 }
 
 .sidebar.collapsed .section-header {
-  justify-content: center;
-  padding: 12px 0;
+  justify-content: center !important;
+  padding: 12px 0 !important;
 }
 
 .sidebar.collapsed .section-content {
@@ -134,7 +139,7 @@
 .section-content-inner {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 4px !important;
 }
 
 .setting {
