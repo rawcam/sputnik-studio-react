@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
@@ -13,10 +13,14 @@ export const ProjectsPage = () => {
   const { hasRole } = useAuth()
   const { loadProjects, addProject, initDemoData } = useProjectsDb()
   const projects = useSelector((state: RootState) => state.projects.list)
-  const [selectedProject, setSelectedProject] = useState<any>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
+
+  // Парсим id из хеша
+  const hash = location.hash
+  const match = hash.match(/[?&]id=([^&]+)/)
+  const projectId = match ? match[1] : null
+  const selectedProject = projectId ? projects.find(p => p.id === projectId) : null
 
   useEffect(() => {
     const init = async () => {
@@ -26,39 +30,17 @@ export const ProjectsPage = () => {
     init()
   }, [])
 
-  // Читаем id из hash при загрузке или изменении location
-  useEffect(() => {
-    const hash = location.hash
-    const match = hash.match(/[?&]id=([^&]+)/)
-    if (match) {
-      const projectId = match[1]
-      const project = projects.find(p => p.id === projectId)
-      if (project) {
-        setSelectedProject(project)
-      } else {
-        // Если проект ещё не загрузился, но id есть – можно подождать, но сейчас просто очистим
-        setSelectedProject(null)
-      }
-    } else {
-      setSelectedProject(null)
-    }
-  }, [location, projects])
-
   const handleSelectProject = (project: any) => {
-    setSelectedProject(project)
-    // Обновляем URL, добавляя параметр id
     navigate(`/projects?id=${project.id}`, { replace: true })
   }
 
   const handleBack = () => {
-    setSelectedProject(null)
-    // Очищаем параметр id в URL
     navigate('/projects', { replace: true })
   }
 
   const handleCreate = async (projectData: any) => {
     await addProject(projectData)
-    setShowCreateModal(false)
+    // после создания не переходим в детали, остаёмся в списке
   }
 
   if (selectedProject) {
@@ -71,7 +53,12 @@ export const ProjectsPage = () => {
         <div className="projects-header">
           <h2>УПРАВЛЕНИЕ ПРОЕКТАМИ</h2>
           {(hasRole('director') || hasRole('pm')) && (
-            <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+            <button className="btn-primary" onClick={() => {
+              // Показываем модалку создания проекта
+              // нужно будет добавить состояние для модалки
+              const modal = document.querySelector('#createProjectModal') as any;
+              if (modal) modal.style.display = 'flex';
+            }}>
               <i className="fas fa-plus"></i> Новый проект
             </button>
           )}
@@ -79,8 +66,8 @@ export const ProjectsPage = () => {
         <ProjectList projects={projects} onSelectProject={handleSelectProject} />
       </div>
       <CreateProjectModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        isOpen={false}
+        onClose={() => {}}
         onCreate={handleCreate}
       />
     </div>
