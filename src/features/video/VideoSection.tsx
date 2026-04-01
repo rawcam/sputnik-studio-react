@@ -57,7 +57,7 @@ export const VideoSection: React.FC = () => {
       </div>
       <div className="setting result">
         <label>Битрейт:</label>
-        <span className="result-value">{bitrate} Мбит/с</span>
+        <span className="network-value">{bitrate} Мбит/с</span>
       </div>
     </div>
   )
