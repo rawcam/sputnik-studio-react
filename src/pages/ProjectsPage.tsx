@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
@@ -13,6 +13,7 @@ export const ProjectsPage = () => {
   const { hasRole } = useAuth()
   const { loadProjects, addProject, initDemoData } = useProjectsDb()
   const projects = useSelector((state: RootState) => state.projects.list)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -40,7 +41,7 @@ export const ProjectsPage = () => {
 
   const handleCreate = async (projectData: any) => {
     await addProject(projectData)
-    // после создания не переходим в детали, остаёмся в списке
+    setShowCreateModal(false)
   }
 
   if (selectedProject) {
@@ -53,12 +54,7 @@ export const ProjectsPage = () => {
         <div className="projects-header">
           <h2>УПРАВЛЕНИЕ ПРОЕКТАМИ</h2>
           {(hasRole('director') || hasRole('pm')) && (
-            <button className="btn-primary" onClick={() => {
-              // Показываем модалку создания проекта
-              // нужно будет добавить состояние для модалки
-              const modal = document.querySelector('#createProjectModal') as any;
-              if (modal) modal.style.display = 'flex';
-            }}>
+            <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
               <i className="fas fa-plus"></i> Новый проект
             </button>
           )}
@@ -66,8 +62,8 @@ export const ProjectsPage = () => {
         <ProjectList projects={projects} onSelectProject={handleSelectProject} />
       </div>
       <CreateProjectModal
-        isOpen={false}
-        onClose={() => {}}
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
         onCreate={handleCreate}
       />
     </div>
