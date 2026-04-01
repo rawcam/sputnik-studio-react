@@ -2,12 +2,8 @@ import React from 'react'
 import { exportToJson, importFromJson, saveToLocalStorage, loadFromLocalStorage, resetProject } from '../../utils/storage'
 
 export const ManageSection: React.FC = () => {
-  const handleExport = () => {
-    console.log('Export clicked')
-    exportToJson()
-  }
+  const handleExport = () => exportToJson()
   const handleImport = () => {
-    console.log('Import clicked')
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'application/json'
@@ -17,56 +13,40 @@ export const ManageSection: React.FC = () => {
     }
     input.click()
   }
-  const handleSave = () => {
-    console.log('Save to browser clicked')
-    saveToLocalStorage()
-  }
-  const handleLoad = () => {
-    console.log('Load from browser clicked')
-    loadFromLocalStorage()
-  }
-  const handleReset = () => {
-    console.log('Reset clicked')
-    resetProject()
-  }
+  const handleSave = () => saveToLocalStorage()
+  const handleLoad = () => loadFromLocalStorage()
+  const handleReset = () => resetProject()
   const handlePrint = () => alert('Функция печати будет реализована позже')
   const handleWiki = () => window.open('/wiki.html', '_blank')
 
   return (
-    <div className="sidebar-section">
-      <div className="section-header" data-section="manage">
-        <i className="fas fa-cog"></i>
-        <span>УПРАВЛЕНИЕ</span>
-        <i className="fas fa-angle-down"></i>
+    <div className="section-content-inner">
+      <div className="setting" style={{ marginBottom: 12 }}>
+        <label style={{ flex: 1 }}>Имя проекта:</label>
+        <input type="text" id="projectNameInput" style={{ flex: 2 }} placeholder="Введите название проекта" />
       </div>
-      <div className="section-content">
-        <div className="manage-buttons">
-          <div className="setting" style={{ marginBottom: 12 }}>
-            <label style={{ flex: 1 }}>Имя проекта:</label>
-            <input type="text" id="projectNameInput" style={{ flex: 2 }} placeholder="Введите название проекта" />
-          </div>
-          <button className="btn-secondary" onClick={handleSave}>
-            <i className="fas fa-database"></i><span> Сохранить в браузере</span>
-          </button>
-          <button className="btn-secondary" onClick={handleLoad}>
-            <i className="fas fa-upload"></i><span> Загрузить из браузера</span>
-          </button>
-          <button className="btn-secondary" onClick={handleExport}>
-            <i className="fas fa-file-export"></i><span> Экспорт JSON</span>
-          </button>
-          <button className="btn-secondary" onClick={handleImport}>
-            <i className="fas fa-file-import"></i><span> Импорт JSON</span>
-          </button>
-          <button className="btn-secondary" onClick={handlePrint}>
-            <i className="fas fa-print"></i><span> Печать отчёта</span>
-          </button>
-          <button className="btn-secondary" onClick={handleWiki}>
-            <i className="fas fa-book"></i><span> Wiki</span>
-          </button>
-          <button className="btn-danger" onClick={handleReset}>
-            <i className="fas fa-trash-alt"></i><span> Сброс проекта</span>
-          </button>
-        </div>
+      <div className="manage-buttons">
+        <button className="mode-btn" onClick={handleSave}>
+          <i className="fas fa-database"></i> Сохранить в браузере
+        </button>
+        <button className="mode-btn" onClick={handleLoad}>
+          <i className="fas fa-upload"></i> Загрузить из браузера
+        </button>
+        <button className="mode-btn" onClick={handleExport}>
+          <i className="fas fa-file-export"></i> Экспорт JSON
+        </button>
+        <button className="mode-btn" onClick={handleImport}>
+          <i className="fas fa-file-import"></i> Импорт JSON
+        </button>
+        <button className="mode-btn" onClick={handlePrint}>
+          <i className="fas fa-print"></i> Печать отчёта
+        </button>
+        <button className="mode-btn" onClick={handleWiki}>
+          <i className="fas fa-book"></i> Wiki
+        </button>
+        <button className="mode-btn danger" onClick={handleReset}>
+          <i className="fas fa-trash-alt"></i> Сброс проекта
+        </button>
       </div>
     </div>
   )
