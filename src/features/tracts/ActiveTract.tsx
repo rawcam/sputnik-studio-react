@@ -9,7 +9,6 @@ import {
   addDeviceToTract,
   removeDeviceFromTract,
   addTract,
-  updateDeviceInTract,
   TractDevice,
 } from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
@@ -28,7 +27,6 @@ export const ActiveTract: React.FC = () => {
   const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
-  // Пересчёт тракта при изменении его устройств или видео настроек
   useEffect(() => {
     if (activeTract) {
       const recalculated = recalcTract(activeTract, videoSettings)
@@ -76,11 +74,11 @@ export const ActiveTract: React.FC = () => {
       type: device.type,
       modelName: device.name,
       latency: device.latency || 0,
-      poeEnabled: false,           // всегда false при добавлении
-      poePower: device.poePower || 0, // сохраняем, но не включаем
+      poeEnabled: false,
+      poePower: device.poePower || 0,
       powerW: device.powerW || 0,
       shortName,
-      ethernet: false,             // всегда false при добавлении
+      ethernet: false,
       bitrateFactor: device.bitrateFactor,
       ports: device.ports,
       poeBudget: device.poeBudget,
@@ -95,11 +93,6 @@ export const ActiveTract: React.FC = () => {
   const handleDeleteDevice = (deviceId: string, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
     dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId, column }))
-  }
-
-  const handleUpdateDevice = (updatedDevice: TractDevice) => {
-    if (!activeTract) return
-    dispatch(updateDeviceInTract({ tractId: activeTract.id, deviceId: updatedDevice.id, updates: updatedDevice }))
   }
 
   const handleBackToAll = () => {
@@ -223,7 +216,7 @@ export const ActiveTract: React.FC = () => {
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           device={selectedDevice}
-          onSave={handleUpdateDevice}
+          tractId={activeTract.id}
         />
       )}
     </div>
