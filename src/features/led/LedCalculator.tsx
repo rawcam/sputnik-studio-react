@@ -74,7 +74,7 @@ export const LedCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       resH: result.resH,
       area: result.area,
     }
-    dispatch(addDeviceToTract({ tractId: activeTractId, device }))
+    dispatch(addDeviceToTract({ tractId: activeTractId, device: newDevice, column: 'sink' }))
     alert('Устройство добавлено в тракт')
   }
 
