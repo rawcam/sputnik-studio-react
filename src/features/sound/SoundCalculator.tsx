@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { setSoundConfig, setSoundMode } from '../../store/soundSlice'
+import { setSoundConfig } from '../../store/soundSlice'
 import { addDeviceToTract } from '../../store/tractsSlice'
 
 export const SoundCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -22,7 +22,6 @@ export const SoundCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) =>
   const [roomVolume, setRoomVolume] = useState(sound.roomVolume)
   const [roomArea, setRoomArea] = useState(sound.roomArea)
   const [avgAbsorption, setAvgAbsorption] = useState(sound.avgAbsorption)
-  const [speakerPower, setSpeakerPower] = useState(sound.speakerPower)
   const [speakerSensitivity, setSpeakerSensitivity] = useState(sound.speakerSensitivity)
   const [requiredSPL, setRequiredSPL] = useState(sound.requiredSPL)
   const [result, setResult] = useState({ value: sound.resultValue, text: sound.resultText })
@@ -46,13 +45,12 @@ export const SoundCalculator: React.FC<{ onBack: () => void }> = ({ onBack }) =>
       config.roomArea = roomArea
       config.avgAbsorption = avgAbsorption
     } else if (mode === 'speakers') {
-      config.speakerPower = speakerPower
       config.speakerSensitivity = speakerSensitivity
       config.requiredSPL = requiredSPL
       config.distance = distance
     }
     dispatch(setSoundConfig(config))
-  }, [mode, sensitivity, sourcePower, distance, headroom, roomGain, startDistance, endDistance, powerChangeFrom, powerChangeTo, roomVolume, roomArea, avgAbsorption, speakerPower, speakerSensitivity, requiredSPL, dispatch])
+  }, [mode, sensitivity, sourcePower, distance, headroom, roomGain, startDistance, endDistance, powerChangeFrom, powerChangeTo, roomVolume, roomArea, avgAbsorption, speakerSensitivity, requiredSPL, dispatch])
 
   useEffect(() => {
     setResult({ value: sound.resultValue, text: sound.resultText })
