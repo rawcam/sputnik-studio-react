@@ -1,14 +1,15 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import { setViewMode, setActiveCalculator } from '../../store/tractsSlice'
+import { setLedMode } from '../../store/ledSlice'
 
 export const LedSection: React.FC = () => {
   const dispatch = useDispatch()
 
   const openCalculator = (mode: 'cabinets' | 'resolution') => {
-    dispatch(setViewMode('calculator'))
+    dispatch(setLedMode(mode))
     dispatch(setActiveCalculator('led'))
-    // дополнительно можно сохранить выбранный режим в ledSlice, но это сделает сам калькулятор при монтировании
+    dispatch(setViewMode('calculator'))
   }
 
   return (
