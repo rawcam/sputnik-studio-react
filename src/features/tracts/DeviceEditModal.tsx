@@ -5,33 +5,52 @@ interface DeviceEditModalProps {
   isOpen: boolean
   onClose: () => void
   device: TractDevice
-  switches: TractDevice[]
   onSave: (updatedDevice: TractDevice) => void
 }
 
-export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, switches, onSave }) => {
+export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, onSave }) => {
   const [editedDevice, setEditedDevice] = useState<TractDevice>(device)
-  const [selectedSwitchId, setSelectedSwitchId] = useState<string>(device.attachedSwitchId || '')
-  const [networkEnabled, setNetworkEnabled] = useState(!!device.attachedSwitchId)
 
   const handleChange = (field: keyof TractDevice, value: any) => {
     setEditedDevice(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleNetworkToggle = (enabled: boolean) => {
-    setNetworkEnabled(enabled)
-    if (!enabled) {
-      setSelectedSwitchId('')
-      handleChange('attachedSwitchId', undefined)
-      handleChange('attachedPortNumber', undefined)
+  const poeOptions = [
+    { value: 'false', label: 'Нет' },
+    { value: 'true-af', label: 'Да (15.4 Вт)' },
+    { value: 'true-at', label: 'Да (30 Вт)' },
+    { value: 'true-bt', label: 'Да (60 Вт)' },
+  ]
+
+  const getPoeValue = () => {
+    if (!editedDevice.poeEnabled) return 'false'
+    if (editedDevice.poePower === 15.4) return 'true-af'
+    if (editedDevice.poePower === 30) return 'true-at'
+    if (editedDevice.poePower === 60) return 'true-bt'
+    return 'false'
+  }
+
+  const handlePoeChange = (val: string) => {
+    if (val === 'false') {
+      handleChange('poeEnabled', false)
+      handleChange('poePower', undefined)
+    } else if (val === 'true-af') {
+      handleChange('poeEnabled', true)
+      handleChange('poePower', 15.4)
+    } else if (val === 'true-at') {
+      handleChange('poeEnabled', true)
+      handleChange('poePower', 30)
+    } else if (val === 'true-bt') {
+      handleChange('poeEnabled', true)
+      handleChange('poePower', 60)
     }
   }
 
-  const handleSwitchChange = (switchId: string) => {
-    setSelectedSwitchId(switchId)
-    // Здесь можно автоматически назначить порт, но пока оставим пустым
-    handleChange('attachedSwitchId', switchId || undefined)
-  }
+  const usbOptions = [
+    { value: 'none', label: 'Нет' },
+    { value: '2.0', label: 'USB 2.0' },
+    { value: '3.0', label: 'USB 3.0' },
+  ]
 
   const handleSave = () => {
     onSave(editedDevice)
@@ -60,61 +79,25 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
               <label>Задержка (мс):</label>
               <input type="number" step="0.1" value={editedDevice.latency} onChange={e => handleChange('latency', parseFloat(e.target.value))} />
             </div>
+          </div>
+          {/* Правая колонка – настройки питания и интерфейсов */}
+          <div>
             <div className="setting">
               <label>Мощность (Вт):</label>
               <input type="number" value={editedDevice.powerW} onChange={e => handleChange('powerW', parseFloat(e.target.value))} />
             </div>
             <div className="setting">
               <label>PoE:</label>
-              <input
-                type="checkbox"
-                checked={editedDevice.poeEnabled || false}
-                onChange={e => handleChange('poeEnabled', e.target.checked)}
-              />
+              <select value={getPoeValue()} onChange={e => handlePoeChange(e.target.value)}>
+                {poeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
             </div>
-            {editedDevice.poeEnabled && (
-              <div className="setting">
-                <label>PoE мощность (Вт):</label>
-                <input
-                  type="number"
-                  value={editedDevice.poePower || 0}
-                  onChange={e => handleChange('poePower', parseFloat(e.target.value))}
-                />
-              </div>
-            )}
-          </div>
-          {/* Правая колонка – сетевое подключение */}
-          <div>
             <div className="setting">
-              <label>Сетевое подключение:</label>
-              <input
-                type="checkbox"
-                checked={networkEnabled}
-                onChange={e => handleNetworkToggle(e.target.checked)}
-              />
+              <label>USB:</label>
+              <select value={editedDevice.usb || 'none'} onChange={e => handleChange('usb', e.target.value === 'none' ? undefined : e.target.value)}>
+                {usbOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
             </div>
-            {networkEnabled && (
-              <>
-                <div className="setting">
-                  <label>Коммутатор:</label>
-                  <select value={selectedSwitchId} onChange={e => handleSwitchChange(e.target.value)}>
-                    <option value="">-- Не выбран --</option>
-                    {switches.map(sw => (
-                      <option key={sw.id} value={sw.id}>
-                        {sw.shortName} (свободно портов: {(sw.ports || 0) - (sw.usedPorts?.length || 0)})
-                        {sw.poeBudget ? `, PoE ${((sw.poeBudget || 0) - (sw.usedPoE || 0)).toFixed(0)} Вт` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {selectedSwitchId && (
-                  <div className="setting">
-                    <label>Порт (автоматически):</label>
-                    <span>будет назначен первый свободный</span>
-                  </div>
-                )}
-              </>
-            )}
           </div>
         </div>
         <div className="modal-buttons">
