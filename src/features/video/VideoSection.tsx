@@ -14,7 +14,7 @@ export const VideoSection: React.FC = () => {
 
   return (
     <div className="section-content-inner">
-      <div className="compact-setting">
+      <div className="setting">
         <label>Разрешение:</label>
         <select value={settings.resolution} onChange={e => handleChange('resolution', e.target.value)}>
           <option value="1080p">1080p</option>
@@ -22,7 +22,7 @@ export const VideoSection: React.FC = () => {
           <option value="8K">8K</option>
         </select>
       </div>
-      <div className="compact-setting">
+      <div className="setting">
         <label>Субдискретизация:</label>
         <select value={settings.chroma} onChange={e => handleChange('chroma', e.target.value)}>
           <option value="444">4:4:4</option>
@@ -30,7 +30,7 @@ export const VideoSection: React.FC = () => {
           <option value="420">4:2:0</option>
         </select>
       </div>
-      <div className="compact-setting">
+      <div className="setting">
         <label>FPS:</label>
         <select value={settings.fps} onChange={e => handleChange('fps', Number(e.target.value))}>
           <option value="24">24</option>
@@ -40,14 +40,14 @@ export const VideoSection: React.FC = () => {
           <option value="60">60</option>
         </select>
       </div>
-      <div className="compact-setting">
+      <div className="setting">
         <label>Цветовое пространство:</label>
         <select value={settings.colorSpace} onChange={e => handleChange('colorSpace', e.target.value)}>
           <option value="RGB">RGB</option>
           <option value="YCbCr">YCbCr</option>
         </select>
       </div>
-      <div className="compact-setting">
+      <div className="setting">
         <label>Глубина цвета (бит):</label>
         <select value={settings.bitDepth} onChange={e => handleChange('bitDepth', Number(e.target.value))}>
           <option value="8">8</option>
@@ -55,7 +55,7 @@ export const VideoSection: React.FC = () => {
           <option value="12">12</option>
         </select>
       </div>
-      <div className="compact-setting result">
+      <div className="setting result">
         <label>Битрейт:</label>
         <span className="result-value">{bitrate} Мбит/с</span>
       </div>
