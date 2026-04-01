@@ -14,23 +14,23 @@ export const NetworkStatsSection: React.FC = () => {
     <div className="section-content-inner">
       <div className="widget-item">
         <span className="widget-label">Битрейт:</span>
-        <span className="widget-value">{totalBitrate} Мбит/с</span>
+        <span className="network-value">{totalBitrate} Мбит/с</span>
       </div>
       <div className="widget-item">
         <span className="widget-label">Загрузка:</span>
-        <span className="widget-value">{loadPercent}%</span>
+        <span className="network-value">{loadPercent}%</span>
       </div>
       <div className="widget-item">
         <span className="widget-label">Порты:</span>
-        <span className="widget-value">0</span>/<span>0</span>
+        <span className="network-value">0</span>/<span>0</span>
       </div>
       <div className="widget-item">
         <span className="widget-label">Multicast:</span>
-        <span className="widget-value">{network.multicast ? 'Вкл' : 'Выкл'}</span>
+        <span className="network-value">{network.multicast ? 'Вкл' : 'Выкл'}</span>
       </div>
       <div className="widget-item">
         <span className="widget-label">QoS:</span>
-        <span className="widget-value">{network.qos ? 'Вкл' : 'Выкл'}</span>
+        <span className="network-value">{network.qos ? 'Вкл' : 'Выкл'}</span>
       </div>
     </div>
   )
