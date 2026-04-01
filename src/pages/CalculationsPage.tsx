@@ -34,21 +34,23 @@ export const CalculationsPage: React.FC = () => {
       case 'power':
         return <PowerCalculator onBack={handleBackToTracts} />
       default:
-        return <div>Неизвестный калькулятор</div>
+        return null
     }
   }
 
-  if (viewMode === 'calculator' && activeCalculator) {
-    return (
-      <div className="calculations-page">
-        {renderCalculator()}
-      </div>
-    )
+  const renderContent = () => {
+    if (viewMode === 'calculator' && activeCalculator) {
+      return (
+        <div className="calculator-view">
+          {renderCalculator()}
+        </div>
+      )
+    }
+    if (viewMode === 'all') {
+      return <AllTractsView />
+    }
+    return <ActiveTract />
   }
 
-  if (viewMode === 'all') {
-    return <AllTractsView />
-  }
-
-  return <ActiveTract />
+  return <div className="calculations-page">{renderContent()}</div>
 }
