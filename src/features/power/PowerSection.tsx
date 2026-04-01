@@ -6,8 +6,8 @@ export const PowerSection: React.FC = () => {
   const dispatch = useDispatch()
 
   const openCalculator = () => {
-    dispatch(setViewMode('calculator'))
     dispatch(setActiveCalculator('power'))
+    dispatch(setViewMode('calculator'))
   }
 
   return (
