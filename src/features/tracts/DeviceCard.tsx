@@ -29,6 +29,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onClick, onDelet
         <span>⚡ {device.powerW} Вт</span>
         {device.poeEnabled && <span>🔌 PoE ({device.poePower} Вт)</span>}
         {device.usb && device.usb !== 'none' && <span>🔌 USB {device.usb}</span>}
+        {device.ethernet && <span>🔗 Ethernet</span>}
         <span>⏱️ {device.latency} мс</span>
       </div>
     </div>
