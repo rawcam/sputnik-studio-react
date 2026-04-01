@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import { setLedConfig, setLedMode } from '../../store/ledSlice'
-import { addDeviceToTract } from '../../store/tractsSlice'
+import { addDeviceToTract, setViewMode, setActiveCalculator } from '../../store/tractsSlice'
 
 export const LedCalculator: React.FC = () => {
   const dispatch = useDispatch()
@@ -80,17 +80,15 @@ export const LedCalculator: React.FC = () => {
   }
 
   const handleBack = () => {
-    // возврат к трактам будет через родительский компонент
-    // в CalculationsPage мы используем setViewMode('single')
-    // здесь мы просто диспатчим, но лучше передать колбэк через пропсы
-    // пока заглушка
+    dispatch(setViewMode('single'))
+    dispatch(setActiveCalculator(null))
   }
 
   return (
     <div className="calculator-container">
       <div className="calculator-header">
         <h3>LED-калькулятор</h3>
-        <button className="btn-secondary" onClick={() => window.location.reload()}>Назад к трактам</button>
+        <button className="btn-secondary" onClick={handleBack}>Назад к трактам</button>
       </div>
 
       <div className="mode-buttons">
