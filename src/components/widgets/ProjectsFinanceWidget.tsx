@@ -2,17 +2,18 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { getProjectMargins } from '../../utils/financeUtils'
 import { useAuth } from '../../hooks/useAuth'
+import { getProjectMargins } from '../../utils/financeUtils'
 
 export const ProjectsFinanceWidget: React.FC = () => {
   const navigate = useNavigate()
-  const projects = useSelector((state: RootState) => state.projects.list)
   const { hasRole } = useAuth()
+  const projects = useSelector((state: RootState) => state.projects.list)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
+  // Закрытие меню по клику вне
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node) &&
@@ -24,11 +25,14 @@ export const ProjectsFinanceWidget: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Доступно только директору и ГИП
   if (!hasRole('director') && !hasRole('pm')) return null
 
+  // Рассчитываем маржу для каждого проекта
   const projectMargins = projects.map(p => ({
     id: p.id,
     name: p.name,
+    shortId: p.shortId,
     margin: getProjectMargins(p).actualMargin,
     profitability: getProjectMargins(p).actualProfitability,
   })).filter(p => p.margin !== 0 || p.profitability !== 0)
@@ -46,6 +50,11 @@ export const ProjectsFinanceWidget: React.FC = () => {
     navigate('/finance/projects')
   }
 
+  const handleProjectClick = (projectId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigate(`/projects?id=${projectId}`)
+  }
+
   const handleMenuToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
     setMenuOpen(prev => !prev)
@@ -53,10 +62,12 @@ export const ProjectsFinanceWidget: React.FC = () => {
 
   const handleMenuAction = (action: string) => {
     setMenuOpen(false)
-    if (action === 'sortByMargin') {
+    if (action === 'refresh') {
+      alert('Обновление данных (демо)')
+    } else if (action === 'sortByMargin') {
       alert('Сортировка по марже (демо)')
     } else if (action === 'export') {
-      alert('Экспорт CSV (демо)')
+      alert('Экспорт в CSV (демо)')
     } else if (action === 'hide') {
       const hidden = JSON.parse(localStorage.getItem('hiddenWidgets') || '[]')
       if (!hidden.includes('projectsFinance')) {
@@ -66,11 +77,6 @@ export const ProjectsFinanceWidget: React.FC = () => {
         window.location.reload()
       }
     }
-  }
-
-  const handleProjectClick = (projectId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    navigate(`/projects?id=${projectId}`)
   }
 
   return (
@@ -85,6 +91,7 @@ export const ProjectsFinanceWidget: React.FC = () => {
           </button>
           {menuOpen && (
             <div className="dashboard-widget-menu" ref={menuRef}>
+              <div className="dashboard-widget-menu-item" onClick={() => handleMenuAction('refresh')}>Обновить</div>
               <div className="dashboard-widget-menu-item" onClick={() => handleMenuAction('sortByMargin')}>Сортировка по марже</div>
               <div className="dashboard-widget-menu-item" onClick={() => handleMenuAction('export')}>Экспорт CSV</div>
               <div className="dashboard-widget-menu-item" onClick={() => handleMenuAction('hide')}>Скрыть виджет</div>
@@ -94,27 +101,37 @@ export const ProjectsFinanceWidget: React.FC = () => {
       </div>
       <div className="dashboard-widget-content">
         <div className="dashboard-finance-label" style={{ marginBottom: '4px' }}>Топ‑3 по марже</div>
-        {top3.map((project, idx) => (
-          <div key={project.id} className="dashboard-finance-row" onClick={(e) => handleProjectClick(project.id, e)}>
+        {top3.map((p, idx) => (
+          <div 
+            key={p.id} 
+            className="dashboard-finance-row" 
+            onClick={(e) => handleProjectClick(p.id, e)}
+            style={{ cursor: 'pointer' }}
+          >
             <span className="dashboard-finance-label">
               {idx === 0 && <i className="fas fa-crown" style={{ color: '#f5b042', marginRight: '6px' }}></i>}
               {idx === 1 && <i className="fas fa-medal" style={{ color: '#a0a0a0', marginRight: '6px' }}></i>}
               {idx === 2 && <i className="fas fa-medal" style={{ color: '#cd7f32', marginRight: '6px' }}></i>}
-              {project.name}
+              {p.name}
             </span>
-            <span className="dashboard-finance-value">{formatCurrency(project.margin)}</span>
+            <span className="dashboard-finance-value">{formatCurrency(p.margin)}</span>
           </div>
         ))}
         {negativeMarginProjects.length > 0 && (
           <>
             <div className="dashboard-finance-label" style={{ marginTop: '8px', marginBottom: '4px' }}>Отрицательная маржа</div>
-            {negativeMarginProjects.map(project => (
-              <div key={project.id} className="dashboard-finance-row" onClick={(e) => handleProjectClick(project.id, e)}>
+            {negativeMarginProjects.map(p => (
+              <div 
+                key={p.id} 
+                className="dashboard-finance-row" 
+                onClick={(e) => handleProjectClick(p.id, e)}
+                style={{ cursor: 'pointer' }}
+              >
                 <span className="dashboard-finance-label">
                   <i className="fas fa-exclamation-triangle" style={{ color: 'var(--danger)', marginRight: '6px' }}></i>
-                  {project.name}
+                  {p.name}
                 </span>
-                <span className="dashboard-finance-value" style={{ color: 'var(--danger)' }}>{formatCurrency(project.margin)}</span>
+                <span className="dashboard-finance-value" style={{ color: 'var(--danger)' }}>{formatCurrency(p.margin)}</span>
               </div>
             ))}
           </>
