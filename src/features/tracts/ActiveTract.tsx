@@ -9,6 +9,7 @@ import {
   addDeviceToTract,
   removeDeviceFromTract,
   addTract,
+  updateDeviceInTract,
   TractDevice,
 } from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
