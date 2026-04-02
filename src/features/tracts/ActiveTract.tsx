@@ -9,10 +9,10 @@ import {
   addDeviceToTract,
   removeDeviceFromTract,
   addTract,
-  updateDeviceInTract,
+  updateDeviceThunk,
+  recalcTractThunk,
   TractDevice,
 } from '../../store/tractsSlice'
-import { recalcTract } from '../../store/tractsSlice'
 import { AddDeviceModal } from './AddDeviceModal'
 import { DeviceCard } from './DeviceCard'
 import { DeviceEditModal } from './DeviceEditModal'
@@ -28,18 +28,12 @@ export const ActiveTract: React.FC = () => {
   const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
+  // Пересчёт тракта при изменении настроек видео
   useEffect(() => {
     if (activeTract) {
-      const recalculated = recalcTract(activeTract, videoSettings)
-      if (
-        recalculated.totalLatency !== activeTract.totalLatency ||
-        recalculated.totalBitrate !== activeTract.totalBitrate ||
-        recalculated.totalPower !== activeTract.totalPower
-      ) {
-        dispatch(updateTract(recalculated))
-      }
+      dispatch(recalcTractThunk(activeTract.id))
     }
-  }, [activeTract, videoSettings, dispatch])
+  }, [videoSettings, activeTract?.id, dispatch])
 
   const handleNewTract = () => {
     const newId = Date.now().toString()
@@ -94,7 +88,7 @@ export const ActiveTract: React.FC = () => {
     const device = [...activeTract.sourceDevices, ...activeTract.matrixDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId)
     if (device) {
       const newExpanded = !device.expanded
-      dispatch(updateDeviceInTract({ tractId: activeTract.id, deviceId, updates: { expanded: newExpanded } }))
+      dispatch(updateDeviceThunk({ tractId: activeTract.id, deviceId, updates: { expanded: newExpanded } }))
     }
   }
 
