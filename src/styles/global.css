@@ -1501,19 +1501,19 @@ input:focus, select:focus, textarea:focus {
   top: 100%;
   margin-top: 8px;
   background: var(--bg-panel-solid);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--accent);
   border-radius: 16px;
   padding: 8px 0;
   min-width: 180px;
   z-index: 1000;
-  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 15px var(--accent-glow);
   backdrop-filter: blur(8px);
 }
 
 body.dark .dashboard-widget-menu {
   background: #2a2f3f;
-  border-color: #4a5568;
-  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
+  border-color: var(--accent);
+  box-shadow: 0 0 18px var(--accent-glow);
 }
 
 .dashboard-widget-menu-item {
