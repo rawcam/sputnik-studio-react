@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useAppDispatch } from '../../hooks'
 import { TractDevice } from '../../store/tractsSlice'
 import { updateDeviceThunk } from '../../store/tractsSlice'
 
@@ -11,7 +11,7 @@ interface DeviceEditModalProps {
 }
 
 export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, tractId }) => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const [editedDevice, setEditedDevice] = useState<TractDevice>(device)
   const [error, setError] = useState<string | null>(null)
 
@@ -66,8 +66,8 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
         updates: editedDevice
       })).unwrap()
       onClose()
-    } catch (err: any) {
-      setError(err.message || 'Ошибка при сохранении')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка при сохранении')
     }
   }
 
