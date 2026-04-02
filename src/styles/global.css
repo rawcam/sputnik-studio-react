@@ -1573,3 +1573,11 @@ body.dark .dashboard-widget-menu {
 
 .dashboard-trend.up { color: var(--success); }
 .dashboard-trend.down { color: var(--danger); }
+/* ===== ДОБАВИТЬ В КОНЕЦ ФАЙЛА ===== */
+/* Цвета для трендов (рост/падение) */
+.dashboard-trend.up {
+  color: var(--success);
+}
+.dashboard-trend.down {
+  color: var(--danger);
+}
