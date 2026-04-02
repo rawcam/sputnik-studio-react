@@ -36,3 +36,19 @@ body.dark {
   --shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.3);
   --shadow-hover: 0 30px 45px -15px rgba(0, 0, 0, 0.4);
 }
+:root {
+  /* ... existing variables ... */
+  
+  /* Новые переменные для дашборда (компактный дизайн) */
+  --dashboard-gap: 20px;
+  --dashboard-widget-radius: 20px;
+  --dashboard-widget-padding: 14px 18px 18px 18px;
+  --dashboard-font-size: 0.85rem;
+  --dashboard-text-hover: var(--accent);
+  --dashboard-text-hover-weight: 600;
+}
+
+body.dark {
+  /* ... existing dark variables ... */
+  --dashboard-text-hover: var(--accent);
+}
