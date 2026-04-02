@@ -9,7 +9,7 @@ import { ServiceWidget } from '../components/widgets/ServiceWidget'
 import { WorkloadWidget } from '../components/widgets/WorkloadWidget'
 import { RisksWidget } from '../components/widgets/RisksWidget'
 import { ProjectsCarousel } from '../components/widgets/ProjectsCarousel'
-import './DashboardPage.css'
+import './DashboardPage.css'  // если есть
 
 export const DashboardPage: React.FC = () => {
   const { hasRole } = useAuth()
@@ -18,30 +18,28 @@ export const DashboardPage: React.FC = () => {
   const activeProjects = projects.filter(p => p.status !== 'done')
 
   const handleSelectProject = (project: any) => {
-    // Переход на страницу проектов с параметром id
     navigate(`/projects?id=${project.id}`)
   }
+
+  // Фильтрация виджетов по ролям (пример)
+  const showCompanyFinance = hasRole('director') || hasRole('pm')
+  const showProjectsFinance = hasRole('director') || hasRole('pm')
+  const showService = true  // все видят
+  const showWorkload = hasRole('director') || hasRole('pm') || hasRole('engineer')
+  const showRisks = true
 
   return (
     <div className="dashboard-wrapper">
       <h2>ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
       <div className="dashboard-grid">
-        {hasRole('director') ? (
-          <CompanyFinanceWidget />
-        ) : (
-          <div className="project-card">Финансы компании (только директор)</div>
-        )}
-        {(hasRole('director') || hasRole('pm')) ? (
-          <ProjectsFinanceWidget />
-        ) : (
-          <div className="project-card">Финансы проектов (только директор/ГИП)</div>
-        )}
-        <ServiceWidget />
-        <WorkloadWidget />
-        <RisksWidget />
+        {showCompanyFinance && <CompanyFinanceWidget />}
+        {showProjectsFinance && <ProjectsFinanceWidget />}
+        {showService && <ServiceWidget />}
+        {showWorkload && <WorkloadWidget />}
+        {showRisks && <RisksWidget />}
       </div>
 
-      <div className="widget-section">
+      <div className="widget-section" style={{ marginTop: '32px' }}>
         <h3>Активные проекты</h3>
         <ProjectsCarousel projects={activeProjects} onSelectProject={handleSelectProject} />
       </div>
