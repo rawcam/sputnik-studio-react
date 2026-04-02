@@ -1522,3 +1522,12 @@ body.dark .dashboard-widget-menu {
   color: var(--accent);
   font-weight: 500;
 }
+/* Усиление цветов для трендов в финансовых виджетах */
+.dashboard-widget .dashboard-trend.up,
+.dashboard-finance-row .dashboard-trend.up {
+  color: var(--success) !important;
+}
+.dashboard-widget .dashboard-trend.down,
+.dashboard-finance-row .dashboard-trend.down {
+  color: var(--danger) !important;
+}
