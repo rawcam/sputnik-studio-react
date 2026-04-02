@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { TractDevice } from '../../store/tractsSlice'
-import { updateDeviceInTract } from '../../store/tractsSlice'
+import { updateDeviceThunk } from '../../store/tractsSlice'
 
 interface DeviceEditModalProps {
   isOpen: boolean
@@ -13,9 +13,11 @@ interface DeviceEditModalProps {
 export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClose, device, tractId }) => {
   const dispatch = useDispatch()
   const [editedDevice, setEditedDevice] = useState<TractDevice>(device)
+  const [error, setError] = useState<string | null>(null)
 
   const handleChange = (field: keyof TractDevice, value: any) => {
     setEditedDevice(prev => ({ ...prev, [field]: value }))
+    setError(null)
   }
 
   const poeOptions = [
@@ -56,9 +58,17 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
     { value: '3.1', label: 'USB 3.1' },
   ]
 
-  const handleSave = () => {
-    dispatch(updateDeviceInTract({ tractId, deviceId: device.id, updates: editedDevice }))
-    onClose()
+  const handleSave = async () => {
+    try {
+      await dispatch(updateDeviceThunk({
+        tractId,
+        deviceId: device.id,
+        updates: editedDevice
+      })).unwrap()
+      onClose()
+    } catch (err: any) {
+      setError(err.message || 'Ошибка при сохранении')
+    }
   }
 
   if (!isOpen) return null
@@ -68,6 +78,7 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
       <div className="modal-content edit-device-modal" style={{ maxWidth: '500px', padding: '20px' }}>
         <span className="modal-close" onClick={onClose}>×</span>
         <h3 style={{ marginBottom: '20px' }}>Редактировать устройство</h3>
+        {error && <div style={{ color: 'red', marginBottom: '12px' }}>{error}</div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div className="setting" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
             <label style={{ fontWeight: 500, width: '120px' }}>Мощность (Вт):</label>
