@@ -1505,3 +1505,20 @@ body.dark .dashboard-widget-menu {
   color: var(--accent);
   font-weight: 500;
 }
+/* Ховер для строк загрузки сотрудников */
+.dashboard-employee-row {
+  transition: var(--transition);
+  cursor: pointer;
+  padding: 4px 0;
+  border-radius: 12px;
+}
+.dashboard-employee-row:hover {
+  background: var(--accent-light);
+  padding-left: 6px;
+  margin-left: -6px;
+}
+.dashboard-employee-row:hover .dashboard-employee-name,
+.dashboard-employee-row:hover .dashboard-employee-percent {
+  color: var(--accent);
+  font-weight: 500;
+}
