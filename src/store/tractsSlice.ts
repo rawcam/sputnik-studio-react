@@ -22,7 +22,6 @@ export interface TractDevice {
   poe?: boolean
   expanded?: boolean
   shortPrefix?: string
-  // для матриц и коммутаторов
   ports?: number
   usedPorts?: number[]
   poeBudget?: number
@@ -94,7 +93,6 @@ const updateShortNames = (tract: Tract) => {
   }
 }
 
-// Пересчёт тракта
 export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract => {
   const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
   const fps = videoSettings.fps
@@ -104,7 +102,6 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
     (videoSettings.bitDepth / 10) *
     (fps / 60)
 
-  // Задержка
   let totalLatency = 0
   allDevices.forEach(dev => {
     let d = dev.latency || 0
@@ -119,7 +116,6 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
     if (sw.latencyOut) totalLatency += sw.latencyOut
   })
 
-  // Битрейт
   let totalBitrate = calcVideoBitrate(videoSettings)
   allDevices.forEach(dev => {
     if (dev.bitrateFactor !== undefined) totalBitrate *= dev.bitrateFactor
@@ -130,7 +126,6 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
   })
   totalBitrate = Math.round(totalBitrate)
 
-  // Мощность и PoE
   let totalPower = 0
   let usedPoE = 0
   let totalPoEBudget = 0
@@ -143,7 +138,6 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
     if (dev.poe && dev.poeEnabled) usedPoE += dev.poePower || dev.powerW || 0
   })
 
-  // Порты
   let totalPorts = 0, usedPorts = 0
   tract.matrixDevices.forEach(sw => {
     if (sw.ports) {
@@ -164,7 +158,7 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
   }
 }
 
-// Назначение сети (подключение/отключение)
+// Исправленная функция назначения сети
 const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDevice>): { success: boolean; error?: string; updatedTract?: Tract } => {
   // Находим устройство
   const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
@@ -198,7 +192,7 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
     const targetSwitch = tract.matrixDevices.find(sw => {
       if (!sw.ports) return false
       const freePorts = sw.ports - (sw.usedPorts?.length || 0)
-      if (freePorts === 0) return false
+      if (freePorts <= 0) return false
       if (newPoeEnabled && (!sw.poeBudget || (sw.poeBudget - (sw.usedPoE || 0) < (newPoePower || 0)))) return false
       return true
     })
@@ -209,6 +203,7 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
     const swIndex = newTract.matrixDevices.findIndex(sw => sw.id === targetSwitch.id)
     if (swIndex === -1) return { success: false, error: 'Коммутатор не найден' }
     const sw = { ...newTract.matrixDevices[swIndex] }
+    // Находим первый свободный порт
     let newPort = 1
     const used = new Set(sw.usedPorts || [])
     while (used.has(newPort)) newPort++
@@ -269,6 +264,7 @@ const tractsSlice = createSlice({
     addDeviceToTract: (state, action: PayloadAction<{ tractId: string; device: TractDevice; column: 'source' | 'matrix' | 'sink' }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
       if (!tract) return
+      // Инициализация usedPorts и usedPoE для коммутаторов
       if (action.payload.column === 'matrix' && action.payload.device.ports) {
         action.payload.device.usedPorts = []
         action.payload.device.usedPoE = 0
@@ -310,21 +306,20 @@ const tractsSlice = createSlice({
       const newMatrix = updateArray(tract.matrixDevices)
       const newSink = updateArray(tract.sinkDevices)
       if (!found) return
-      const updatedTract = { ...tract, sourceDevices: newSource, matrixDevices: newMatrix, sinkDevices: newSink }
+      let updatedTract = { ...tract, sourceDevices: newSource, matrixDevices: newMatrix, sinkDevices: newSink }
 
       // Если изменился Ethernet или PoE, вызываем assignNetwork
       if (action.payload.updates.ethernet !== undefined || action.payload.updates.poeEnabled !== undefined) {
         const result = assignNetwork(updatedTract, action.payload.deviceId, action.payload.updates)
         if (result.success && result.updatedTract) {
-          const recalculated = recalcTract(result.updatedTract, (state as any).videoSettings || { resolution: '4K', chroma: '422', fps: 60, colorSpace: 'YCbCr', bitDepth: 10 })
-          state.tracts[tractIndex] = recalculated
-          return
+          updatedTract = result.updatedTract
         } else if (result.error) {
           console.warn(result.error)
         }
       }
-      // Просто пересчёт
-      const recalculated = recalcTract(updatedTract, (state as any).videoSettings || { resolution: '4K', chroma: '422', fps: 60, colorSpace: 'YCbCr', bitDepth: 10 })
+      // Пересчитываем статистику
+      const videoSettings = (state as any).videoSettings || { resolution: '4K', chroma: '422', fps: 60, colorSpace: 'YCbCr', bitDepth: 10 }
+      const recalculated = recalcTract(updatedTract, videoSettings)
       state.tracts[tractIndex] = recalculated
     },
   },
