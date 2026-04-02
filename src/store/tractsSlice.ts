@@ -158,27 +158,33 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
   }
 }
 
-// Исправленная функция назначения сети
+// Новая функция assignNetwork, строго по логике v6
 const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDevice>): { success: boolean; error?: string; updatedTract?: Tract } => {
   // Находим устройство
   const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
   const device = allDevices.find(d => d.id === deviceId)
   if (!device) return { success: false, error: 'Устройство не найдено' }
 
+  // Определяем, что изменилось
   const newEthernet = updates.ethernet !== undefined ? updates.ethernet : device.ethernet
   const newPoeEnabled = updates.poeEnabled !== undefined ? updates.poeEnabled : device.poeEnabled
   const newPoePower = updates.poePower !== undefined ? updates.poePower : device.poePower
 
-  // Отключение Ethernet
+  // Если Ethernet выключается
   if (newEthernet === false && device.ethernet === true) {
+    // Создаём копию тракта
     const newTract = { ...tract }
+    // Находим коммутатор, к которому было подключено устройство
     const targetSwitch = newTract.matrixDevices.find(sw => sw.id === device.attachedSwitchId)
     if (targetSwitch && device.attachedPortNumber) {
+      // Освобождаем порт
       targetSwitch.usedPorts = targetSwitch.usedPorts?.filter(p => p !== device.attachedPortNumber) || []
+      // Освобождаем PoE, если было
       if (device.poe && device.poeEnabled) {
         targetSwitch.usedPoE = (targetSwitch.usedPoE || 0) - (device.poePower || 0)
       }
     }
+    // Обновляем устройство
     const deviceCopy = { ...device, attachedSwitchId: undefined, attachedPortNumber: undefined, ethernet: false }
     const updateArray = (arr: TractDevice[]) => arr.map(d => d.id === deviceId ? deviceCopy : d)
     newTract.sourceDevices = updateArray(newTract.sourceDevices)
@@ -187,18 +193,25 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
     return { success: true, updatedTract: newTract }
   }
 
-  // Включение Ethernet
+  // Если Ethernet включается
   if (newEthernet === true && device.ethernet === false) {
+    // Ищем подходящий коммутатор
     const targetSwitch = tract.matrixDevices.find(sw => {
       if (!sw.ports) return false
       const freePorts = sw.ports - (sw.usedPorts?.length || 0)
       if (freePorts <= 0) return false
-      if (newPoeEnabled && (!sw.poeBudget || (sw.poeBudget - (sw.usedPoE || 0) < (newPoePower || 0)))) return false
+      // Если устройство требует PoE, проверяем бюджет
+      if (newPoeEnabled) {
+        if (!sw.poeBudget) return false
+        const availablePoE = sw.poeBudget - (sw.usedPoE || 0)
+        if (availablePoE < (newPoePower || 0)) return false
+      }
       return true
     })
     if (!targetSwitch) {
-      return { success: false, error: 'Нет подходящего коммутатора' }
+      return { success: false, error: 'Нет подходящего коммутатора (нет свободных портов или недостаточно PoE)' }
     }
+    // Создаём копию тракта
     const newTract = { ...tract }
     const swIndex = newTract.matrixDevices.findIndex(sw => sw.id === targetSwitch.id)
     if (swIndex === -1) return { success: false, error: 'Коммутатор не найден' }
@@ -208,10 +221,12 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
     const used = new Set(sw.usedPorts || [])
     while (used.has(newPort)) newPort++
     sw.usedPorts = [...(sw.usedPorts || []), newPort]
+    // Если устройство PoE, занимаем бюджет
     if (newPoeEnabled) {
       sw.usedPoE = (sw.usedPoE || 0) + (newPoePower || 0)
     }
     newTract.matrixDevices[swIndex] = sw
+    // Обновляем устройство
     const deviceCopy = { ...device, attachedSwitchId: sw.id, attachedPortNumber: newPort, ethernet: true, poeEnabled: newPoeEnabled, poePower: newPoePower }
     const updateArray = (arr: TractDevice[]) => arr.map(d => d.id === deviceId ? deviceCopy : d)
     newTract.sourceDevices = updateArray(newTract.sourceDevices)
@@ -220,6 +235,36 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
     return { success: true, updatedTract: newTract }
   }
 
+  // Если Ethernet не меняется, но изменился PoE (включили или выключили)
+  if (device.ethernet === true && (updates.poeEnabled !== undefined || updates.poePower !== undefined)) {
+    const newTract = { ...tract }
+    // Находим коммутатор, к которому подключено устройство
+    const targetSwitch = newTract.matrixDevices.find(sw => sw.id === device.attachedSwitchId)
+    if (targetSwitch && device.attachedPortNumber) {
+      // Сначала освобождаем старый PoE, если был
+      if (device.poe && device.poeEnabled) {
+        targetSwitch.usedPoE = (targetSwitch.usedPoE || 0) - (device.poePower || 0)
+      }
+      // Затем применяем новый PoE
+      if (newPoeEnabled) {
+        // Проверяем, хватает ли бюджета
+        const availablePoE = (targetSwitch.poeBudget || 0) - (targetSwitch.usedPoE || 0)
+        if (availablePoE < (newPoePower || 0)) {
+          return { success: false, error: 'Недостаточно PoE-бюджета' }
+        }
+        targetSwitch.usedPoE = (targetSwitch.usedPoE || 0) + (newPoePower || 0)
+      }
+    }
+    // Обновляем устройство
+    const deviceCopy = { ...device, poeEnabled: newPoeEnabled, poePower: newPoePower }
+    const updateArray = (arr: TractDevice[]) => arr.map(d => d.id === deviceId ? deviceCopy : d)
+    newTract.sourceDevices = updateArray(newTract.sourceDevices)
+    newTract.matrixDevices = updateArray(newTract.matrixDevices)
+    newTract.sinkDevices = updateArray(newTract.sinkDevices)
+    return { success: true, updatedTract: newTract }
+  }
+
+  // Ничего не изменилось
   return { success: true, updatedTract: tract }
 }
 
@@ -264,7 +309,6 @@ const tractsSlice = createSlice({
     addDeviceToTract: (state, action: PayloadAction<{ tractId: string; device: TractDevice; column: 'source' | 'matrix' | 'sink' }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
       if (!tract) return
-      // Инициализация usedPorts и usedPoE для коммутаторов
       if (action.payload.column === 'matrix' && action.payload.device.ports) {
         action.payload.device.usedPorts = []
         action.payload.device.usedPoE = 0
@@ -309,7 +353,7 @@ const tractsSlice = createSlice({
       let updatedTract = { ...tract, sourceDevices: newSource, matrixDevices: newMatrix, sinkDevices: newSink }
 
       // Если изменился Ethernet или PoE, вызываем assignNetwork
-      if (action.payload.updates.ethernet !== undefined || action.payload.updates.poeEnabled !== undefined) {
+      if (action.payload.updates.ethernet !== undefined || action.payload.updates.poeEnabled !== undefined || action.payload.updates.poePower !== undefined) {
         const result = assignNetwork(updatedTract, action.payload.deviceId, action.payload.updates)
         if (result.success && result.updatedTract) {
           updatedTract = result.updatedTract
