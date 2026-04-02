@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAppDispatch } from '../../hooks'
 import { TractDevice } from '../../store/tractsSlice'
 import { updateDeviceThunk } from '../../store/tractsSlice'
@@ -15,39 +15,62 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
   const [editedDevice, setEditedDevice] = useState<TractDevice>(device)
   const [error, setError] = useState<string | null>(null)
 
+  // Синхронизация при изменении device извне
+  useEffect(() => {
+    setEditedDevice(device)
+  }, [device])
+
   const handleChange = (field: keyof TractDevice, value: any) => {
     setEditedDevice(prev => ({ ...prev, [field]: value }))
     setError(null)
   }
 
+  // Опции PoE с указанием стандартов
   const poeOptions = [
     { value: 'false', label: 'Нет' },
-    { value: 'true-af', label: '15.4 Вт' },
-    { value: 'true-at', label: '30 Вт' },
-    { value: 'true-bt', label: '60 Вт' },
+    { value: 'true-af', label: '15.4 Вт (802.3af)' },
+    { value: 'true-at', label: '30 Вт (802.3at)' },
+    { value: 'true-bt-60', label: '60 Вт (802.3bt Type 3)' },
+    { value: 'true-bt-90', label: '90 Вт (802.3bt Type 4)' },
   ]
 
   const getPoeValue = () => {
     if (!editedDevice.poeEnabled) return 'false'
     if (editedDevice.poePower === 15.4) return 'true-af'
     if (editedDevice.poePower === 30) return 'true-at'
-    if (editedDevice.poePower === 60) return 'true-bt'
+    if (editedDevice.poePower === 60) return 'true-bt-60'
+    if (editedDevice.poePower === 90) return 'true-bt-90'
     return 'false'
   }
 
   const handlePoeChange = (val: string) => {
     if (val === 'false') {
       handleChange('poeEnabled', false)
-      handleChange('poePower', undefined)
-    } else if (val === 'true-af') {
+      handleChange('poePower', 0)
+      // При выключении PoE Ethernet не выключаем (оставляем как есть)
+    } else {
+      let power = 0
+      if (val === 'true-af') power = 15.4
+      else if (val === 'true-at') power = 30
+      else if (val === 'true-bt-60') power = 60
+      else if (val === 'true-bt-90') power = 90
       handleChange('poeEnabled', true)
-      handleChange('poePower', 15.4)
-    } else if (val === 'true-at') {
-      handleChange('poeEnabled', true)
-      handleChange('poePower', 30)
-    } else if (val === 'true-bt') {
-      handleChange('poeEnabled', true)
-      handleChange('poePower', 60)
+      handleChange('poePower', power)
+      // Если Ethernet был выключен, включаем его автоматически
+      if (!editedDevice.ethernet) {
+        handleChange('ethernet', true)
+      }
+    }
+  }
+
+  const handleEthernetChange = (checked: boolean) => {
+    if (!checked && editedDevice.poeEnabled) {
+      // Если выключаем Ethernet, то PoE тоже должен выключиться
+      handleChange('ethernet', false)
+      handleChange('poeEnabled', false)
+      handleChange('poePower', 0)
+    } else {
+      handleChange('ethernet', checked)
     }
   }
 
@@ -73,6 +96,8 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
 
   if (!isOpen) return null
 
+  const supportsPoE = device.poe === true
+
   return (
     <div className="modal" style={{ display: 'flex' }}>
       <div className="modal-content edit-device-modal" style={{ maxWidth: '500px', padding: '20px' }}>
@@ -89,16 +114,18 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
               style={{ flex: 1, padding: '6px 10px', borderRadius: '20px', border: '1px solid var(--border-light)', background: 'var(--bg-panel-solid)' }}
             />
           </div>
-          <div className="setting" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-            <label style={{ fontWeight: 500, width: '120px' }}>PoE:</label>
-            <select
-              value={getPoeValue()}
-              onChange={e => handlePoeChange(e.target.value)}
-              style={{ flex: 1, padding: '6px 10px', borderRadius: '20px', border: '1px solid var(--border-light)', background: 'var(--bg-panel-solid)' }}
-            >
-              {poeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
-          </div>
+          {supportsPoE && (
+            <div className="setting" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+              <label style={{ fontWeight: 500, width: '120px' }}>PoE:</label>
+              <select
+                value={getPoeValue()}
+                onChange={e => handlePoeChange(e.target.value)}
+                style={{ flex: 1, padding: '6px 10px', borderRadius: '20px', border: '1px solid var(--border-light)', background: 'var(--bg-panel-solid)' }}
+              >
+                {poeOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+            </div>
+          )}
           <div className="setting" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
             <label style={{ fontWeight: 500, width: '120px' }}>USB:</label>
             <select
@@ -118,7 +145,7 @@ export const DeviceEditModal: React.FC<DeviceEditModalProps> = ({ isOpen, onClos
             <input
               type="checkbox"
               checked={editedDevice.ethernet || false}
-              onChange={e => handleChange('ethernet', e.target.checked)}
+              onChange={e => handleEthernetChange(e.target.checked)}
               style={{ width: 'auto', margin: 0 }}
             />
           </div>
