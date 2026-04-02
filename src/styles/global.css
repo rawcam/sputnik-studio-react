@@ -1425,7 +1425,7 @@ input:focus, select:focus, textarea:focus {
   margin-top: 10px;
 }
 
-/* ========== НОВЫЙ ДИЗАЙН ДАШБОРДА (исправленная версия) ========== */
+/* ========== НОВЫЙ ДИЗАЙН ДАШБОРДА (исправленное меню + тёмная тема) ========== */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -1494,7 +1494,7 @@ input:focus, select:focus, textarea:focus {
   color: var(--accent);
 }
 
-/* Исправленное меню – заметное, с тенью и отрывом от виджета */
+/* Улучшенное меню */
 .dashboard-widget-menu {
   position: absolute;
   right: 0;
@@ -1506,8 +1506,14 @@ input:focus, select:focus, textarea:focus {
   padding: 8px 0;
   min-width: 180px;
   z-index: 1000;
-  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(8px);
+}
+
+body.dark .dashboard-widget-menu {
+  background: #2a2f3f;
+  border-color: #4a5568;
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
 }
 
 .dashboard-widget-menu-item {
@@ -1530,7 +1536,7 @@ input:focus, select:focus, textarea:focus {
   gap: 12px;
 }
 
-/* Финансовые строки с ярким ховером */
+/* Финансовые строки */
 .dashboard-finance-row {
   display: flex;
   justify-content: space-between;
@@ -1562,18 +1568,8 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.7rem;
   margin-left: 8px;
   font-weight: 500;
+  white-space: nowrap;
 }
+
 .dashboard-trend.up { color: var(--success); }
 .dashboard-trend.down { color: var(--danger); }
-
-.dashboard-spark {
-  height: 32px;
-  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 24"><polyline points="0,16 25,20 50,10 75,22 100,8 125,18 150,6 175,14 200,8" stroke="%232c6e9e" fill="none" stroke-width="1.5"/></svg>') no-repeat center;
-  background-size: cover;
-  opacity: 0.5;
-}
-
-.dashboard-widget-menu-item:hover {
-  background: var(--border-light);
-  color: var(--accent);
-}
