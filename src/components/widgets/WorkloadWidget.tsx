@@ -4,6 +4,14 @@ import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import { useAuth } from '../../hooks/useAuth'
 
+interface EmployeeLoad {
+  name: string
+  role: 'engineer' | 'projectManager'
+  loadPercent: number
+  projectsCount: number
+  serviceVisitsCount: number
+}
+
 export const WorkloadWidget: React.FC = () => {
   const navigate = useNavigate()
   const { hasRole } = useAuth()
@@ -23,22 +31,84 @@ export const WorkloadWidget: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Доступно всем (или только определённым ролям? Оставляем как есть)
+  // Доступно директору, ГИП, инженеру (инженер видит только себя? пока всех)
   if (!hasRole('director') && !hasRole('pm') && !hasRole('engineer')) return null
 
-  // Подсчёт загрузки инженеров и руководителей проектов
-  const engineerLoad: Record<string, number> = {}
-  const managerLoad: Record<string, number> = {}
+  // ---- Вспомогательные функции для расчёта загрузки ----
+  const getServiceVisitsCountForEngineer = (engineerName: string): number => {
+    // Собираем все сервисные выезды, где ответственный = engineerName, статус planned, дата в ближайшие 7 дней
+    const today = new Date()
+    const nextWeek = new Date(today.getTime() + 7 * 86400000)
+    let count = 0
+    projects.forEach(p => {
+      p.serviceVisits.forEach(v => {
+        if (v.responsible === engineerName && v.status === 'planned') {
+          const visitDate = new Date(v.date)
+          if (visitDate >= today && visitDate <= nextWeek) {
+            count++
+          }
+        }
+      })
+    })
+    return count
+  }
+
+  const calculateEngineerLoad = (projectsCount: number, serviceVisitsCount: number): number => {
+    let load = projectsCount * 50   // 50% за проект
+    load += serviceVisitsCount * 20  // +20% за выезд
+    return Math.min(load, 150)       // максимум 150%
+  }
+
+  const calculatePMLoad = (projectsCount: number): number => {
+    let load = projectsCount * 30   // 30% за проект
+    return Math.min(load, 150)
+  }
+
+  // ---- Сбор данных по сотрудникам ----
+  const engineerMap = new Map<string, { projectsCount: number; name: string }>()
+  const pmMap = new Map<string, { projectsCount: number; name: string }>()
 
   projects.forEach(p => {
     if (p.status !== 'done') {
-      engineerLoad[p.engineer] = (engineerLoad[p.engineer] || 0) + 1
-      managerLoad[p.projectManager] = (managerLoad[p.projectManager] || 0) + 1
+      // Инженеры
+      const engName = p.engineer
+      if (engName) {
+        const existing = engineerMap.get(engName) || { projectsCount: 0, name: engName }
+        existing.projectsCount++
+        engineerMap.set(engName, existing)
+      }
+      // РП
+      const pmName = p.projectManager
+      if (pmName) {
+        const existing = pmMap.get(pmName) || { projectsCount: 0, name: pmName }
+        existing.projectsCount++
+        pmMap.set(pmName, existing)
+      }
     }
   })
 
-  const maxEngineerLoad = Math.max(...Object.values(engineerLoad), 1)
-  const maxManagerLoad = Math.max(...Object.values(managerLoad), 1)
+  const engineerLoads: EmployeeLoad[] = Array.from(engineerMap.values()).map(eng => {
+    const visits = getServiceVisitsCountForEngineer(eng.name)
+    return {
+      name: eng.name,
+      role: 'engineer',
+      projectsCount: eng.projectsCount,
+      serviceVisitsCount: visits,
+      loadPercent: calculateEngineerLoad(eng.projectsCount, visits)
+    }
+  })
+
+  const pmLoads: EmployeeLoad[] = Array.from(pmMap.values()).map(pm => ({
+    name: pm.name,
+    role: 'projectManager',
+    projectsCount: pm.projectsCount,
+    serviceVisitsCount: 0,
+    loadPercent: calculatePMLoad(pm.projectsCount)
+  }))
+
+  // Сортировка по убыванию загрузки и взятие топ-3
+  const topEngineers = [...engineerLoads].sort((a, b) => b.loadPercent - a.loadPercent).slice(0, 3)
+  const topPMs = [...pmLoads].sort((a, b) => b.loadPercent - a.loadPercent).slice(0, 3)
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase()
@@ -52,7 +122,12 @@ export const WorkloadWidget: React.FC = () => {
 
   const handleWidgetClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.dashboard-widget-actions')) return
-    navigate('/resources')
+    navigate('/employees')   // заглушка – страница со списком сотрудников
+  }
+
+  const handleEmployeeClick = (employeeName: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigate(`/employee?name=${encodeURIComponent(employeeName)}`)  // заглушка – карточка сотрудника
   }
 
   const handleMenuToggle = (e: React.MouseEvent) => {
@@ -97,44 +172,42 @@ export const WorkloadWidget: React.FC = () => {
         </div>
       </div>
       <div className="dashboard-widget-content">
-        <div className="dashboard-finance-label">Инженеры</div>
-        {Object.entries(engineerLoad).length === 0 && <div>Нет данных</div>}
-        {Object.entries(engineerLoad)
-          .sort((a, b) => b[1] - a[1])
-          .map(([name, count]) => {
-            const percent = Math.round((count / maxEngineerLoad) * 100)
-            return (
-              <div key={name} className="dashboard-employee-row">
-                <div className="dashboard-avatar">{getInitials(name)}</div>
-                <div className="dashboard-employee-info">
-                  <div className="dashboard-employee-name">{name}</div>
-                  <div className="dashboard-progress-bg">
-                    <div className={`dashboard-progress-fill ${getProgressClass(percent)}`} style={{ width: `${percent}%` }}></div>
-                  </div>
-                </div>
-                <div className="dashboard-employee-percent">{percent}%</div>
+        <div className="dashboard-finance-label">Топ‑3 инженера</div>
+        {topEngineers.length === 0 && <div>Нет данных</div>}
+        {topEngineers.map(emp => (
+          <div 
+            key={emp.name} 
+            className="dashboard-employee-row" 
+            onClick={(e) => handleEmployeeClick(emp.name, e)}
+          >
+            <div className="dashboard-avatar">{getInitials(emp.name)}</div>
+            <div className="dashboard-employee-info">
+              <div className="dashboard-employee-name">{emp.name}</div>
+              <div className="dashboard-progress-bg">
+                <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${Math.min(emp.loadPercent, 100)}%` }}></div>
               </div>
-            )
-          })}
-        <div className="dashboard-finance-label" style={{ marginTop: '8px' }}>Руководители проектов</div>
-        {Object.entries(managerLoad).length === 0 && <div>Нет данных</div>}
-        {Object.entries(managerLoad)
-          .sort((a, b) => b[1] - a[1])
-          .map(([name, count]) => {
-            const percent = Math.round((count / maxManagerLoad) * 100)
-            return (
-              <div key={name} className="dashboard-employee-row">
-                <div className="dashboard-avatar">{getInitials(name)}</div>
-                <div className="dashboard-employee-info">
-                  <div className="dashboard-employee-name">{name}</div>
-                  <div className="dashboard-progress-bg">
-                    <div className={`dashboard-progress-fill ${getProgressClass(percent)}`} style={{ width: `${percent}%` }}></div>
-                  </div>
-                </div>
-                <div className="dashboard-employee-percent">{percent}%</div>
+            </div>
+            <div className="dashboard-employee-percent">{Math.round(emp.loadPercent)}%</div>
+          </div>
+        ))}
+        <div className="dashboard-finance-label" style={{ marginTop: '8px' }}>Топ‑3 руководителя проектов</div>
+        {topPMs.length === 0 && <div>Нет данных</div>}
+        {topPMs.map(emp => (
+          <div 
+            key={emp.name} 
+            className="dashboard-employee-row" 
+            onClick={(e) => handleEmployeeClick(emp.name, e)}
+          >
+            <div className="dashboard-avatar">{getInitials(emp.name)}</div>
+            <div className="dashboard-employee-info">
+              <div className="dashboard-employee-name">{emp.name}</div>
+              <div className="dashboard-progress-bg">
+                <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${Math.min(emp.loadPercent, 100)}%` }}></div>
               </div>
-            )
-          })}
+            </div>
+            <div className="dashboard-employee-percent">{Math.round(emp.loadPercent)}%</div>
+          </div>
+        ))}
       </div>
     </div>
   )
