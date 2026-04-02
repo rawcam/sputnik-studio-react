@@ -1,7 +1,6 @@
-import React, { useEffect, useRef } from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
+import React, { useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Project } from '../../store/projectsSlice'
-import { ProjectCard } from '../projects/ProjectCard'
 
 interface ProjectsCarouselProps {
   projects: Project[]
@@ -9,59 +8,65 @@ interface ProjectsCarouselProps {
 }
 
 export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, onSelectProject }) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: false,
-    align: 'start',
-    slidesToScroll: 1,
-    breakpoints: {
-      '(min-width: 768px)': { slidesToScroll: 2 },
-      '(min-width: 1024px)': { slidesToScroll: 3 },
-      '(min-width: 1280px)': { slidesToScroll: 4 },
-    },
-  })
+  const navigate = useNavigate()
+  const scrollRef = useRef<HTMLDivElement>(null)
 
-  const prevBtnRef = useRef<HTMLButtonElement>(null)
-  const nextBtnRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    if (!emblaApi) return
-    const prev = prevBtnRef.current
-    const next = nextBtnRef.current
-    if (prev && next) {
-      const onPrev = () => emblaApi.scrollPrev()
-      const onNext = () => emblaApi.scrollNext()
-      prev.addEventListener('click', onPrev)
-      next.addEventListener('click', onNext)
-      return () => {
-        prev.removeEventListener('click', onPrev)
-        next.removeEventListener('click', onNext)
-      }
+  const handleProjectClick = (project: Project) => {
+    if (onSelectProject) {
+      onSelectProject(project)
+    } else {
+      navigate(`/projects?id=${project.id}`)
     }
-  }, [emblaApi])
+  }
 
   if (projects.length === 0) {
-    return <div className="empty-state">Нет активных проектов</div>
+    return <div className="dashboard-empty">Нет активных проектов</div>
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'presale': return '#d97a0c'
+      case 'design': return '#2c6e9e'
+      case 'ready': return '#6aa9d9'
+      case 'construction': return '#2a7f49'
+      case 'done': return '#6c7e9e'
+      default: return 'var(--text-muted)'
+    }
   }
 
   return (
-    <div className="projects-carousel-wrapper">
-      <div className="projects-carousel">
-        <div className="embla" ref={emblaRef}>
-          <div className="embla__container">
-            {projects.map(project => (
-              <div key={project.id} className="embla__slide">
-                <ProjectCard project={project} onClick={onSelectProject} />
-              </div>
-            ))}
+    <div className="dashboard-scroll-container" ref={scrollRef}>
+      {projects.map(project => (
+        <div 
+          key={project.id} 
+          className="dashboard-project-card" 
+          onClick={() => handleProjectClick(project)}
+        >
+          <div className="dashboard-project-title">
+            <span>{project.name}</span>
+            <span className="dashboard-project-status" style={{ background: getStatusColor(project.status), color: 'white', padding: '2px 8px', borderRadius: '20px', fontSize: '0.7rem' }}>
+              {project.status === 'presale' ? 'пресейл' : 
+               project.status === 'design' ? 'проект' :
+               project.status === 'ready' ? 'готов' :
+               project.status === 'construction' ? 'стройка' : 'завершён'}
+            </span>
+          </div>
+          <div className="dashboard-project-stats">
+            <span>{formatCurrency(project.contractAmount)}</span>
+            <span>{project.engineer} / {project.projectManager}</span>
+          </div>
+          <div className="dashboard-project-progress">
+            <div className="dashboard-progress-bg">
+              <div className="dashboard-progress-fill normal" style={{ width: `${project.progress}%` }}></div>
+            </div>
+            <div style={{ fontSize: '0.65rem', marginTop: '4px', textAlign: 'right' }}>прогресс {project.progress}%</div>
           </div>
         </div>
-        <button className="carousel-button carousel-button-prev" ref={prevBtnRef} aria-label="Назад">
-          <i className="fas fa-chevron-left"></i>
-        </button>
-        <button className="carousel-button carousel-button-next" ref={nextBtnRef} aria-label="Вперёд">
-          <i className="fas fa-chevron-right"></i>
-        </button>
-      </div>
+      ))}
     </div>
   )
 }
