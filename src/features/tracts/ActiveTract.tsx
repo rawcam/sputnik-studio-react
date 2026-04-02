@@ -9,6 +9,7 @@ import {
   addDeviceToTract,
   removeDeviceFromTract,
   addTract,
+  updateDeviceInTract,
   TractDevice,
 } from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
@@ -54,37 +55,31 @@ export const ActiveTract: React.FC = () => {
 
   const handleAddDevice = (device: any, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
-    const allDevices = [...activeTract.sourceDevices, ...activeTract.matrixDevices, ...activeTract.sinkDevices]
-    let prefix = device.shortPrefix
-    if (column === 'source') prefix = device.shortPrefix || 'SRC'
-    if (column === 'matrix') prefix = device.shortPrefix || 'SW'
-    if (column === 'sink') prefix = device.shortPrefix || 'SNK'
-    let maxNum = 0
-    const regex = new RegExp(`^${prefix}(\\d+)$`)
-    allDevices.forEach(d => {
-      if (d.shortName && regex.test(d.shortName)) {
-        const num = parseInt(d.shortName.match(regex)![1], 10)
-        if (num > maxNum) maxNum = num
-      }
-    })
-    const shortName = prefix + (maxNum + 1)
-
     const newDevice: TractDevice = {
       id: Date.now().toString(),
       type: device.type,
       modelName: device.name,
       latency: device.latency || 0,
+      poe: device.poe || false,
       poeEnabled: false,
       poePower: device.poePower || 0,
       powerW: device.powerW || 0,
-      shortName,
+      shortName: '',
       ethernet: false,
       bitrateFactor: device.bitrateFactor,
+      hasNetwork: device.hasNetwork !== undefined ? device.hasNetwork : true,
+      shortPrefix: device.shortPrefix,
+      usb: false,
+      usbVersion: undefined,
+      expanded: true,
+      // для коммутаторов
       ports: device.ports,
       poeBudget: device.poeBudget,
       switchingLatency: device.switchingLatency,
-      poc: device.poc || false,
-      usb: device.usb || undefined,
+      inputs: device.inputs,
+      outputs: device.outputs,
+      latencyIn: device.latencyIn,
+      latencyOut: device.latencyOut,
     }
     dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice, column }))
     setShowModal(false)
@@ -93,6 +88,20 @@ export const ActiveTract: React.FC = () => {
   const handleDeleteDevice = (deviceId: string, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
     dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId, column }))
+  }
+
+  const handleUpdateDevice = (updatedDevice: TractDevice) => {
+    if (!activeTract) return
+    dispatch(updateDeviceInTract({ tractId: activeTract.id, deviceId: updatedDevice.id, updates: updatedDevice }))
+  }
+
+  const handleToggleExpand = (deviceId: string) => {
+    if (!activeTract) return
+    const device = [...activeTract.sourceDevices, ...activeTract.matrixDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId)
+    if (device) {
+      const newExpanded = !device.expanded
+      dispatch(updateDeviceInTract({ tractId: activeTract.id, deviceId, updates: { expanded: newExpanded } }))
+    }
   }
 
   const handleBackToAll = () => {
@@ -134,7 +143,7 @@ export const ActiveTract: React.FC = () => {
           />
         </div>
         <div className="tract-stats-summary">
-          <div className="stat-badge">⏱️ {activeTract.totalLatency} мс</div>
+          <div className="stat-badge">⏱️ {activeTract.totalLatency.toFixed(2)} мс</div>
           <div className="stat-badge">📡 {activeTract.totalBitrate} Мбит/с</div>
           <div className="stat-badge">💡 {activeTract.totalPower} Вт</div>
         </div>
@@ -161,6 +170,7 @@ export const ActiveTract: React.FC = () => {
                 device={device}
                 onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
                 onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'source'); }}
+                onToggleExpand={(e) => { e.stopPropagation(); handleToggleExpand(device.id); }}
               />
             ))}
           </div>
@@ -178,6 +188,7 @@ export const ActiveTract: React.FC = () => {
                 device={device}
                 onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
                 onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'matrix'); }}
+                onToggleExpand={(e) => { e.stopPropagation(); handleToggleExpand(device.id); }}
               />
             ))}
           </div>
@@ -195,6 +206,7 @@ export const ActiveTract: React.FC = () => {
                 device={device}
                 onClick={() => { setSelectedDevice(device); setShowEditModal(true); }}
                 onDelete={(e) => { e.stopPropagation(); handleDeleteDevice(device.id, 'sink'); }}
+                onToggleExpand={(e) => { e.stopPropagation(); handleToggleExpand(device.id); }}
               />
             ))}
           </div>
