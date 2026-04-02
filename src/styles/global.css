@@ -1425,25 +1425,152 @@ input:focus, select:focus, textarea:focus {
   margin-top: 10px;
 }
 
-/* Стили для меню виджетов (выпадашка) */
+/* ========== НОВЫЙ ДИЗАЙН ДАШБОРДА (исправленная версия) ========== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-widget {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+  animation: fadeInUp 0.3s ease-out;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.dashboard-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+}
+
+.dashboard-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px 8px 18px;
+  border-bottom: 1px solid var(--border-light);
+  position: relative;
+}
+
+.dashboard-widget-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.dashboard-widget-title i {
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.dashboard-widget-actions {
+  position: relative;
+}
+
+.dashboard-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.dashboard-icon-btn:hover {
+  background: var(--border-light);
+  color: var(--accent);
+}
+
+/* Исправленное меню – заметное, с тенью и отрывом от виджета */
 .dashboard-widget-menu {
   position: absolute;
-  right: 18px;
-  top: 40px;
+  right: 0;
+  top: 100%;
+  margin-top: 8px;
   background: var(--bg-panel-solid);
   border: 1px solid var(--border-light);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 8px 0;
-  min-width: 160px;
-  z-index: 100;
-  box-shadow: var(--shadow-md);
+  min-width: 180px;
+  z-index: 1000;
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
 }
 
 .dashboard-widget-menu-item {
-  padding: 6px 16px;
+  padding: 8px 18px;
   font-size: 0.8rem;
   cursor: pointer;
   transition: var(--transition);
+  color: var(--text-primary);
+}
+
+.dashboard-widget-menu-item:hover {
+  background: var(--border-light);
+  color: var(--accent);
+}
+
+.dashboard-widget-content {
+  padding: 14px 18px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Финансовые строки с ярким ховером */
+.dashboard-finance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.85rem;
+  padding: 6px 0;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.dashboard-finance-row:hover .dashboard-finance-label,
+.dashboard-finance-row:hover .dashboard-finance-value {
+  color: var(--accent);
+  font-weight: 600;
+  transition: color 0.1s ease;
+}
+
+.dashboard-finance-label {
+  color: var(--text-muted);
+  font-weight: 450;
+}
+
+.dashboard-finance-value {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.dashboard-trend {
+  font-size: 0.7rem;
+  margin-left: 8px;
+  font-weight: 500;
+}
+.dashboard-trend.up { color: var(--success); }
+.dashboard-trend.down { color: var(--danger); }
+
+.dashboard-spark {
+  height: 32px;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 24"><polyline points="0,16 25,20 50,10 75,22 100,8 125,18 150,6 175,14 200,8" stroke="%232c6e9e" fill="none" stroke-width="1.5"/></svg>') no-repeat center;
+  background-size: cover;
+  opacity: 0.5;
 }
 
 .dashboard-widget-menu-item:hover {
