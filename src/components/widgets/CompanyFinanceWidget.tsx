@@ -28,8 +28,13 @@ export const CompanyFinanceWidget: React.FC = () => {
     return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
   }
 
-  const revenueChange = +8.2
-  const isPositive = revenueChange >= 0
+  // Демо-тренды (в реальности брать из истории)
+  const trends = {
+    income: { value: 8.2, positive: true },      // +8.2%
+    margin: { value: 5.4, positive: true },       // +5.4%
+    profitability: { value: 1.2, positive: true }, // +1.2 п.п.
+    cashGap: { value: 15.0, positive: false },     // ухудшение на 15%
+  }
 
   const handleWidgetClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.dashboard-widget-actions')) return
@@ -81,29 +86,45 @@ export const CompanyFinanceWidget: React.FC = () => {
         </div>
       </div>
       <div className="dashboard-widget-content">
+        {/* Выручка */}
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Выручка (факт)</span>
           <span className="dashboard-finance-value">
             {formatCurrency(totalIncome)}
-            <span className={`dashboard-trend ${isPositive ? 'up' : 'down'}`}>
-              <i className={`fas fa-arrow-${isPositive ? 'up' : 'down'}`}></i> {Math.abs(revenueChange)}% за мес.
+            <span className={`dashboard-trend ${trends.income.positive ? 'up' : 'down'}`}>
+              <i className={`fas fa-arrow-${trends.income.positive ? 'up' : 'down'}`}></i> {Math.abs(trends.income.value)}% за мес.
             </span>
           </span>
         </div>
+        {/* Маржа */}
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Маржа (факт)</span>
-          <span className="dashboard-finance-value">{formatCurrency(totalMargin)}</span>
+          <span className="dashboard-finance-value">
+            {formatCurrency(totalMargin)}
+            <span className={`dashboard-trend ${trends.margin.positive ? 'up' : 'down'}`}>
+              <i className={`fas fa-arrow-${trends.margin.positive ? 'up' : 'down'}`}></i> {Math.abs(trends.margin.value)}%
+            </span>
+          </span>
         </div>
+        {/* Рентабельность */}
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Рентабельность</span>
-          <span className="dashboard-finance-value">{(totalProfitability * 100).toFixed(1)}%</span>
+          <span className="dashboard-finance-value">
+            {(totalProfitability * 100).toFixed(1)}%
+            <span className={`dashboard-trend ${trends.profitability.positive ? 'up' : 'down'}`}>
+              <i className={`fas fa-arrow-${trends.profitability.positive ? 'up' : 'down'}`}></i> {Math.abs(trends.profitability.value)} п.п.
+            </span>
+          </span>
         </div>
+        {/* Кассовый разрыв (если есть) */}
         {nextCompanyGap && (
           <div className="dashboard-finance-row">
             <span className="dashboard-finance-label">Кассовый разрыв</span>
             <span className="dashboard-finance-value" style={{ color: 'var(--danger)' }}>
-              {formatCurrency(nextCompanyGap.deficit)} 
-              <span className="dashboard-trend down">до {nextCompanyGap.date}</span>
+              {formatCurrency(nextCompanyGap.deficit)}
+              <span className={`dashboard-trend ${trends.cashGap.positive ? 'up' : 'down'}`}>
+                <i className={`fas fa-arrow-${trends.cashGap.positive ? 'up' : 'down'}`}></i> {Math.abs(trends.cashGap.value)}% к мес. ранее
+              </span>
             </span>
           </div>
         )}
