@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { RootState } from '../../store'
+import { useAppDispatch, useAppSelector } from '../../hooks'
 import {
   updateTract,
   deleteTract,
@@ -18,17 +17,16 @@ import { DeviceCard } from './DeviceCard'
 import { DeviceEditModal } from './DeviceEditModal'
 
 export const ActiveTract: React.FC = () => {
-  const dispatch = useDispatch()
-  const tracts = useSelector((state: RootState) => state.tracts.tracts)
-  const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId)
-  const videoSettings = useSelector((state: RootState) => state.video)
+  const dispatch = useAppDispatch()
+  const tracts = useAppSelector(state => state.tracts.tracts)
+  const activeTractId = useAppSelector(state => state.tracts.activeTractId)
+  const videoSettings = useAppSelector(state => state.video)
   const activeTract = tracts.find(t => t.id === activeTractId) || null
   const [showModal, setShowModal] = useState(false)
   const [modalColumn, setModalColumn] = useState<'source' | 'matrix' | 'sink'>('source')
   const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
-  // Пересчёт тракта при изменении настроек видео
   useEffect(() => {
     if (activeTract) {
       dispatch(recalcTractThunk(activeTract.id))
@@ -85,11 +83,7 @@ export const ActiveTract: React.FC = () => {
 
   const handleToggleExpand = (deviceId: string) => {
     if (!activeTract) return
-    const device = [...activeTract.sourceDevices, ...activeTract.matrixDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId)
-    if (device) {
-      const newExpanded = !device.expanded
-      dispatch(updateDeviceThunk({ tractId: activeTract.id, deviceId, updates: { expanded: newExpanded } }))
-    }
+    dispatch(updateDeviceThunk({ tractId: activeTract.id, deviceId, updates: { expanded: !activeTract.sourceDevices.find(d => d.id === deviceId)?.expanded } }))
   }
 
   const handleBackToAll = () => {
