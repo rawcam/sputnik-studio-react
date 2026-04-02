@@ -9,7 +9,6 @@ import {
   addDeviceToTract,
   removeDeviceFromTract,
   addTract,
-  updateDeviceInTract,
   TractDevice,
 } from '../../store/tractsSlice'
 import { recalcTract } from '../../store/tractsSlice'
@@ -72,7 +71,6 @@ export const ActiveTract: React.FC = () => {
       usb: false,
       usbVersion: undefined,
       expanded: true,
-      // для коммутаторов
       ports: device.ports,
       poeBudget: device.poeBudget,
       switchingLatency: device.switchingLatency,
@@ -88,11 +86,6 @@ export const ActiveTract: React.FC = () => {
   const handleDeleteDevice = (deviceId: string, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
     dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId, column }))
-  }
-
-  const handleUpdateDevice = (updatedDevice: TractDevice) => {
-    if (!activeTract) return
-    dispatch(updateDeviceInTract({ tractId: activeTract.id, deviceId: updatedDevice.id, updates: updatedDevice }))
   }
 
   const handleToggleExpand = (deviceId: string) => {
