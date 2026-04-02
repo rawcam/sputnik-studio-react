@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { VideoSettings } from './videoSlice'
-import { calcVideoBitrate } from './videoSlice'
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { RootState } from './index'
+import { VideoSettings, calcVideoBitrate } from './videoSlice'
 
 export interface TractDevice {
   id: string
@@ -158,8 +158,12 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
   }
 }
 
-// Простая функция подключения/отключения, основанная на v6
-const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDevice>): { success: boolean; error?: string; updatedTract?: Tract } => {
+// Вспомогательная функция для управления портами и PoE
+const assignNetworkInternal = (
+  tract: Tract,
+  deviceId: string,
+  updates: Partial<TractDevice>
+): { success: boolean; error?: string; updatedTract?: Tract } => {
   const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
   const device = allDevices.find(d => d.id === deviceId)
   if (!device) return { success: false, error: 'Устройство не найдено' }
@@ -168,17 +172,19 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
   const newPoeEnabled = updates.poeEnabled !== undefined ? updates.poeEnabled : device.poeEnabled
   const newPoePower = updates.poePower !== undefined ? updates.poePower : device.poePower
 
-  // Отключение
+  // Отключение Ethernet
   if (newEthernet === false && device.ethernet === true) {
-    const newTract = JSON.parse(JSON.stringify(tract)) // глубокое копирование
+    const newTract = JSON.parse(JSON.stringify(tract))
     const targetSwitch = newTract.matrixDevices.find((sw: any) => sw.id === device.attachedSwitchId)
     if (targetSwitch && device.attachedPortNumber) {
-      targetSwitch.usedPorts = targetSwitch.usedPorts.filter((p: number) => p !== device.attachedPortNumber)
+      // Освобождаем порт
+      targetSwitch.usedPorts = (targetSwitch.usedPorts || []).filter((p: number) => p !== device.attachedPortNumber)
+      // Возвращаем PoE
       if (device.poe && device.poeEnabled) {
         targetSwitch.usedPoE = (targetSwitch.usedPoE || 0) - (device.poePower || 0)
       }
     }
-    const deviceCopy = { ...device, attachedSwitchId: undefined, attachedPortNumber: undefined, ethernet: false }
+    const deviceCopy = { ...device, attachedSwitchId: undefined, attachedPortNumber: undefined, ethernet: false, poeEnabled: false }
     const updateArray = (arr: any[]) => arr.map((d: any) => d.id === deviceId ? deviceCopy : d)
     newTract.sourceDevices = updateArray(newTract.sourceDevices)
     newTract.matrixDevices = updateArray(newTract.matrixDevices)
@@ -186,7 +192,7 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
     return { success: true, updatedTract: newTract }
   }
 
-  // Включение
+  // Включение Ethernet (поиск подходящего коммутатора)
   if (newEthernet === true && device.ethernet === false) {
     const targetSwitch = tract.matrixDevices.find((sw: any) => {
       if (!sw.ports) return false
@@ -200,18 +206,22 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
       return true
     })
     if (!targetSwitch) {
-      return { success: false, error: 'Нет подходящего коммутатора' }
+      return { success: false, error: 'Нет подходящего коммутатора (свободные порты и/или PoE)' }
     }
     const newTract = JSON.parse(JSON.stringify(tract))
     const swIndex = newTract.matrixDevices.findIndex((sw: any) => sw.id === targetSwitch.id)
     if (swIndex === -1) return { success: false, error: 'Коммутатор не найден' }
     const sw = newTract.matrixDevices[swIndex]
+    // Инициализируем usedPorts и usedPoE, если их нет
+    if (!sw.usedPorts) sw.usedPorts = []
+    if (sw.usedPoE === undefined) sw.usedPoE = 0
+
     let newPort = 1
-    const used = new Set(sw.usedPorts || [])
+    const used = new Set(sw.usedPorts)
     while (used.has(newPort)) newPort++
-    sw.usedPorts = [...(sw.usedPorts || []), newPort]
+    sw.usedPorts.push(newPort)
     if (newPoeEnabled) {
-      sw.usedPoE = (sw.usedPoE || 0) + (newPoePower || 0)
+      sw.usedPoE += (newPoePower || 0)
     }
     const deviceCopy = { ...device, attachedSwitchId: sw.id, attachedPortNumber: newPort, ethernet: true, poeEnabled: newPoeEnabled, poePower: newPoePower }
     const updateArray = (arr: any[]) => arr.map((d: any) => d.id === deviceId ? deviceCopy : d)
@@ -226,9 +236,11 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
     const newTract = JSON.parse(JSON.stringify(tract))
     const targetSwitch = newTract.matrixDevices.find((sw: any) => sw.id === device.attachedSwitchId)
     if (targetSwitch) {
+      // Возвращаем старый PoE
       if (device.poe && device.poeEnabled) {
         targetSwitch.usedPoE = (targetSwitch.usedPoE || 0) - (device.poePower || 0)
       }
+      // Выделяем новый
       if (newPoeEnabled) {
         const availablePoE = (targetSwitch.poeBudget || 0) - (targetSwitch.usedPoE || 0)
         if (availablePoE < (newPoePower || 0)) {
@@ -247,6 +259,47 @@ const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDev
 
   return { success: true, updatedTract: tract }
 }
+
+// Thunk для обновления устройства (с учётом сети и PoE)
+export const updateDeviceThunk = createAsyncThunk<
+  { tractId: string; updatedTract: Tract },
+  { tractId: string; deviceId: string; updates: Partial<TractDevice> },
+  { state: RootState }
+>(
+  'tracts/updateDeviceThunk',
+  async (payload, { getState, dispatch }) => {
+    const { tractId, deviceId, updates } = payload
+    const state = getState()
+    const tract = state.tracts.tracts.find(t => t.id === tractId)
+    if (!tract) throw new Error('Тракт не найден')
+
+    const videoSettings = state.video
+    const result = assignNetworkInternal(tract, deviceId, updates)
+    if (!result.success) {
+      throw new Error(result.error || 'Ошибка при подключении к сети')
+    }
+    let updatedTract = result.updatedTract!
+    updatedTract = recalcTract(updatedTract, videoSettings)
+    return { tractId, updatedTract }
+  }
+)
+
+// Thunk для пересчёта тракта (например, при изменении videoSettings)
+export const recalcTractThunk = createAsyncThunk<
+  { tractId: string; updatedTract: Tract },
+  string,
+  { state: RootState }
+>(
+  'tracts/recalcTractThunk',
+  async (tractId, { getState }) => {
+    const state = getState()
+    const tract = state.tracts.tracts.find(t => t.id === tractId)
+    if (!tract) throw new Error('Тракт не найден')
+    const videoSettings = state.video
+    const updatedTract = recalcTract(tract, videoSettings)
+    return { tractId, updatedTract }
+  }
+)
 
 const tractsSlice = createSlice({
   name: 'tracts',
@@ -289,16 +342,17 @@ const tractsSlice = createSlice({
     addDeviceToTract: (state, action: PayloadAction<{ tractId: string; device: TractDevice; column: 'source' | 'matrix' | 'sink' }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
       if (!tract) return
-      if (action.payload.column === 'matrix' && action.payload.device.ports) {
-        action.payload.device.usedPorts = []
-        action.payload.device.usedPoE = 0
+      const device = action.payload.device
+      if (action.payload.column === 'matrix' && device.ports) {
+        device.usedPorts = device.usedPorts || []
+        device.usedPoE = device.usedPoE || 0
       }
       if (action.payload.column === 'source') {
-        tract.sourceDevices.push(action.payload.device)
+        tract.sourceDevices.push(device)
       } else if (action.payload.column === 'matrix') {
-        tract.matrixDevices.push(action.payload.device)
+        tract.matrixDevices.push(device)
       } else if (action.payload.column === 'sink') {
-        tract.sinkDevices.push(action.payload.device)
+        tract.sinkDevices.push(device)
       }
       updateShortNames(tract)
     },
@@ -314,36 +368,23 @@ const tractsSlice = createSlice({
       }
       updateShortNames(tract)
     },
-    updateDeviceInTract: (state, action: PayloadAction<{ tractId: string; deviceId: string; updates: Partial<TractDevice> }>) => {
-      const tractIndex = state.tracts.findIndex(t => t.id === action.payload.tractId)
-      if (tractIndex === -1) return
-      const tract = state.tracts[tractIndex]
-      let found = false
-      const updateArray = (arr: TractDevice[]): TractDevice[] => arr.map(d => {
-        if (d.id === action.payload.deviceId) {
-          found = true
-          return { ...d, ...action.payload.updates }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(updateDeviceThunk.fulfilled, (state, action) => {
+        const { tractId, updatedTract } = action.payload
+        const index = state.tracts.findIndex(t => t.id === tractId)
+        if (index !== -1) {
+          state.tracts[index] = updatedTract
         }
-        return d
       })
-      const newSource = updateArray(tract.sourceDevices)
-      const newMatrix = updateArray(tract.matrixDevices)
-      const newSink = updateArray(tract.sinkDevices)
-      if (!found) return
-      let updatedTract = { ...tract, sourceDevices: newSource, matrixDevices: newMatrix, sinkDevices: newSink }
-
-      if (action.payload.updates.ethernet !== undefined || action.payload.updates.poeEnabled !== undefined || action.payload.updates.poePower !== undefined) {
-        const result = assignNetwork(updatedTract, action.payload.deviceId, action.payload.updates)
-        if (result.success && result.updatedTract) {
-          updatedTract = result.updatedTract
-        } else if (result.error) {
-          console.warn(result.error)
+      .addCase(recalcTractThunk.fulfilled, (state, action) => {
+        const { tractId, updatedTract } = action.payload
+        const index = state.tracts.findIndex(t => t.id === tractId)
+        if (index !== -1) {
+          state.tracts[index] = updatedTract
         }
-      }
-      const videoSettings = (state as any).videoSettings || { resolution: '4K', chroma: '422', fps: 60, colorSpace: 'YCbCr', bitDepth: 10 }
-      const recalculated = recalcTract(updatedTract, videoSettings)
-      state.tracts[tractIndex] = recalculated
-    },
+      })
   },
 })
 
@@ -357,7 +398,6 @@ export const {
   setActiveCalculator,
   addDeviceToTract,
   removeDeviceFromTract,
-  updateDeviceInTract,
 } = tractsSlice.actions
 
 export default tractsSlice.reducer
