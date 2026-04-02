@@ -125,6 +125,8 @@ export const ActiveTract: React.FC = () => {
     )
   }
 
+  const frames = activeTract.totalLatency / (1000 / videoSettings.fps)
+
   return (
     <div className="active-tract-container">
       <div className="tract-header">
@@ -138,6 +140,7 @@ export const ActiveTract: React.FC = () => {
         </div>
         <div className="tract-stats-summary">
           <div className="stat-badge">⏱️ {activeTract.totalLatency.toFixed(2)} мс</div>
+          <div className="stat-badge">🎬 {frames.toFixed(2)} кадр.</div>
           <div className="stat-badge">📡 {activeTract.totalBitrate} Мбит/с</div>
           <div className="stat-badge">💡 {activeTract.totalPower} Вт</div>
         </div>
