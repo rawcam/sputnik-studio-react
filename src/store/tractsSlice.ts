@@ -267,7 +267,7 @@ export const updateDeviceThunk = createAsyncThunk<
   { state: RootState }
 >(
   'tracts/updateDeviceThunk',
-  async (payload, { getState, dispatch }) => {
+  async (payload, { getState }) => {
     const { tractId, deviceId, updates } = payload
     const state = getState()
     const tract = state.tracts.tracts.find(t => t.id === tractId)
