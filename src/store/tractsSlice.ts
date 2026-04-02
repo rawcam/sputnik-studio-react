@@ -15,13 +15,24 @@ export interface TractDevice {
   attachedPortNumber?: number
   ethernet?: boolean
   bitrateFactor?: number
+  // дополнительные поля из v6
+  usb?: boolean
+  usbVersion?: string
+  audioEmbed?: number
+  hasNetwork?: boolean
+  poe?: boolean          // поддерживает ли устройство PoE
+  expanded?: boolean     // развёрнуто в UI
+  shortPrefix?: string
+  // для матриц и коммутаторов
   ports?: number
   usedPorts?: number[]
   poeBudget?: number
   switchingLatency?: number
   usedPoE?: number
-  poc?: boolean
-  usb?: string
+  inputs?: number
+  outputs?: number
+  latencyIn?: number
+  latencyOut?: number
 }
 
 export interface Tract {
@@ -53,16 +64,75 @@ const initialState: TractsState = {
   activeCalculator: null,
 }
 
+// Функция для генерации короткого имени (как в v6)
+const generateShortName = (prefix: string, existingDevices: TractDevice[]): string => {
+  let maxNum = 0
+  const regex = new RegExp(`^${prefix}(\\d+)$`)
+  for (const d of existingDevices) {
+    if (d.shortName && regex.test(d.shortName)) {
+      const num = parseInt(d.shortName.match(regex)![1], 10)
+      if (num > maxNum) maxNum = num
+    }
+  }
+  return prefix + (maxNum + 1)
+}
+
+// Обновление коротких имён для всех устройств в тракте (как в v6)
+const updateShortNames = (tract: Tract) => {
+  const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
+  for (const dev of allDevices) {
+    if (!dev.shortName) {
+      let prefix = dev.shortPrefix
+      if (!prefix) {
+        if (dev.type === 'source') prefix = 'SRC'
+        else if (dev.type === 'tx') prefix = 'TX'
+        else if (dev.type === 'rx') prefix = 'RX'
+        else if (dev.type === 'matrix') prefix = 'MX'
+        else if (dev.type === 'networkSwitch') prefix = 'SW'
+        else if (dev.type === 'display') prefix = 'DISP'
+        else prefix = 'DEV'
+      }
+      dev.shortName = generateShortName(prefix, allDevices)
+    }
+  }
+}
+
+// Функция для пересчёта параметров тракта (аналог v6, но для одного тракта)
 export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract => {
   const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
+  const codecFactor = (videoSettings.resolution === '1080p' ? 1 : videoSettings.resolution === '4K' ? 1.5 : 2.5) *
+    (videoSettings.chroma === '444' ? 1.2 : videoSettings.chroma === '422' ? 1 : 0.9) *
+    (videoSettings.colorSpace === 'RGB' ? 1.2 : 1) *
+    (videoSettings.bitDepth / 10) *
+    (videoSettings.fps / 60)
+
+  // Задержка
   let totalLatency = 0
-  allDevices.forEach(d => totalLatency += d.latency || 0)
+  allDevices.forEach(dev => {
+    let d = dev.latency || 0
+    if (dev.usb) d += 0.5
+    if (dev.audioEmbed) d += 1.0
+    if (dev.type === 'tx' || dev.type === 'rx' || dev.type === 'ledProc') d *= codecFactor
+    totalLatency += d
+  })
+  tract.matrixDevices.forEach(sw => {
+    if (sw.switchingLatency) totalLatency += sw.switchingLatency
+    if (sw.latencyIn) totalLatency += sw.latencyIn
+    if (sw.latencyOut) totalLatency += sw.latencyOut
+  })
+
+  // Битрейт
   let totalBitrate = calcVideoBitrate(videoSettings)
-  allDevices.forEach(d => {
-    if (d.bitrateFactor !== undefined) totalBitrate *= d.bitrateFactor
+  allDevices.forEach(dev => {
+    if (dev.bitrateFactor !== undefined) totalBitrate *= dev.bitrateFactor
+    if (dev.type === 'rx' && dev.usb) {
+      const usbSpeeds: Record<string, number> = { '2.0': 480, '3.0': 5000, '3.1': 10000 }
+      totalBitrate += usbSpeeds[dev.usbVersion || '2.0'] || 0
+    }
   })
   totalBitrate = Math.round(totalBitrate)
 
+  // Мощность и PoE
   let totalPower = 0
   let usedPoE = 0
   let totalPoEBudget = 0
@@ -70,11 +140,12 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
     totalPoEBudget += sw.poeBudget || 0
     totalPower += sw.powerW || 0
   })
-  allDevices.forEach(d => {
-    totalPower += d.powerW || 0
-    if (d.poeEnabled) usedPoE += d.poePower || d.powerW || 0
+  allDevices.forEach(dev => {
+    totalPower += dev.powerW || 0
+    if (dev.poe && dev.poeEnabled) usedPoE += dev.poePower || dev.powerW || 0
   })
 
+  // Порты
   let totalPorts = 0, usedPorts = 0
   tract.matrixDevices.forEach(sw => {
     if (sw.ports) {
@@ -95,13 +166,8 @@ export const recalcTract = (tract: Tract, videoSettings: VideoSettings): Tract =
   }
 }
 
-// Функция для автоматического назначения порта при включении Ethernet
-// Возвращает новый тракт (не мутирует исходный)
-const assignNetwork = (
-  tract: Tract,
-  deviceId: string,
-  updates: Partial<TractDevice>
-): { success: boolean; error?: string; updatedTract?: Tract } => {
+// Функция для назначения сети (аналог v6)
+const assignNetwork = (tract: Tract, deviceId: string, updates: Partial<TractDevice>): { success: boolean; error?: string; updatedTract?: Tract } => {
   // Находим устройство в тракте
   const allDevices = [...tract.sourceDevices, ...tract.matrixDevices, ...tract.sinkDevices]
   const device = allDevices.find(d => d.id === deviceId)
@@ -117,7 +183,7 @@ const assignNetwork = (
     const targetSwitch = newTract.matrixDevices.find(sw => sw.id === device.attachedSwitchId)
     if (targetSwitch && device.attachedPortNumber) {
       targetSwitch.usedPorts = targetSwitch.usedPorts?.filter(p => p !== device.attachedPortNumber) || []
-      if (device.poeEnabled) {
+      if (device.poe && device.poeEnabled) {
         targetSwitch.usedPoE = (targetSwitch.usedPoE || 0) - (device.poePower || 0)
       }
     }
@@ -162,7 +228,7 @@ const assignNetwork = (
     return { success: true, updatedTract: newTract }
   }
 
-  // Если Ethernet не меняется, просто возвращаем тракт без изменений
+  // Если Ethernet не меняется
   return { success: true, updatedTract: tract }
 }
 
@@ -185,6 +251,8 @@ const tractsSlice = createSlice({
         totalPorts: 0,
       }
       state.tracts.push(newTract)
+      // Обновляем короткие имена
+      updateShortNames(newTract)
     },
     updateTract: (state, action: PayloadAction<Tract>) => {
       const index = state.tracts.findIndex(t => t.id === action.payload.id)
@@ -218,6 +286,7 @@ const tractsSlice = createSlice({
       } else if (action.payload.column === 'sink') {
         tract.sinkDevices.push(action.payload.device)
       }
+      updateShortNames(tract)
     },
     removeDeviceFromTract: (state, action: PayloadAction<{ tractId: string; deviceId: string; column: 'source' | 'matrix' | 'sink' }>) => {
       const tract = state.tracts.find(t => t.id === action.payload.tractId)
@@ -229,6 +298,7 @@ const tractsSlice = createSlice({
       } else if (action.payload.column === 'sink') {
         tract.sinkDevices = tract.sinkDevices.filter(d => d.id !== action.payload.deviceId)
       }
+      updateShortNames(tract)
     },
     updateDeviceInTract: (state, action: PayloadAction<{ tractId: string; deviceId: string; updates: Partial<TractDevice> }>) => {
       const tractIndex = state.tracts.findIndex(t => t.id === action.payload.tractId)
