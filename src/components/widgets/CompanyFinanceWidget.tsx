@@ -96,14 +96,15 @@ export const CompanyFinanceWidget: React.FC = () => {
             </span>
           </span>
         </div>
-        <div className="dashboard-finance-row">
-          <span className="dashboard-finance-label">Маржа (факт)</span>
-          <span className="dashboard-finance-value">{formatCurrency(totalMargin)}</span>
-        </div>
-        <div className="dashboard-finance-row">
-          <span className="dashboard-finance-label">Рентабельность</span>
-          <span className="dashboard-finance-value">{(totalProfitability * 100).toFixed(1)}%</span>
-        </div>
+       <div className="dashboard-finance-row">
+  <span className="dashboard-finance-label">Выручка (факт)</span>
+  <span className="dashboard-finance-value">
+    {formatCurrency(totalIncome)}
+    <span className={`dashboard-trend ${isPositive ? 'up' : 'down'}`}>
+      <i className={`fas fa-arrow-${isPositive ? 'up' : 'down'}`}></i> {Math.abs(revenueChange)}% за мес.
+    </span>
+  </span>
+</div>
         {nextCompanyGap && (
           <div className="dashboard-finance-row">
             <span className="dashboard-finance-label">Кассовый разрыв</span>
