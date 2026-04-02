@@ -11,7 +11,6 @@ export const CompanyFinanceWidget: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
-  // Закрытие при клике вне
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node) &&
@@ -29,8 +28,7 @@ export const CompanyFinanceWidget: React.FC = () => {
     return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
   }
 
-  // Имитация изменения выручки за месяц (в реальности брать из истории)
-  const revenueChange = +8.2 // процент роста
+  const revenueChange = +8.2
   const isPositive = revenueChange >= 0
 
   const handleWidgetClick = (e: React.MouseEvent) => {
@@ -69,11 +67,7 @@ export const CompanyFinanceWidget: React.FC = () => {
           <i className="fas fa-chart-line"></i> Финансы компании
         </div>
         <div className="dashboard-widget-actions">
-          <button 
-            ref={buttonRef}
-            className="dashboard-icon-btn" 
-            onClick={handleMenuToggle}
-          >
+          <button ref={buttonRef} className="dashboard-icon-btn" onClick={handleMenuToggle}>
             <i className="fas fa-ellipsis-h"></i>
           </button>
           {menuOpen && (
@@ -96,15 +90,14 @@ export const CompanyFinanceWidget: React.FC = () => {
             </span>
           </span>
         </div>
-       <div className="dashboard-finance-row">
-  <span className="dashboard-finance-label">Выручка (факт)</span>
-  <span className="dashboard-finance-value">
-    {formatCurrency(totalIncome)}
-    <span className={`dashboard-trend ${isPositive ? 'up' : 'down'}`}>
-      <i className={`fas fa-arrow-${isPositive ? 'up' : 'down'}`}></i> {Math.abs(revenueChange)}% за мес.
-    </span>
-  </span>
-</div>
+        <div className="dashboard-finance-row">
+          <span className="dashboard-finance-label">Маржа (факт)</span>
+          <span className="dashboard-finance-value">{formatCurrency(totalMargin)}</span>
+        </div>
+        <div className="dashboard-finance-row">
+          <span className="dashboard-finance-label">Рентабельность</span>
+          <span className="dashboard-finance-value">{(totalProfitability * 100).toFixed(1)}%</span>
+        </div>
         {nextCompanyGap && (
           <div className="dashboard-finance-row">
             <span className="dashboard-finance-label">Кассовый разрыв</span>
