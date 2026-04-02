@@ -31,12 +31,9 @@ export const WorkloadWidget: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Доступно директору, ГИП, инженеру (инженер видит только себя? пока всех)
   if (!hasRole('director') && !hasRole('pm') && !hasRole('engineer')) return null
 
-  // ---- Вспомогательные функции для расчёта загрузки ----
   const getServiceVisitsCountForEngineer = (engineerName: string): number => {
-    // Собираем все сервисные выезды, где ответственный = engineerName, статус planned, дата в ближайшие 7 дней
     const today = new Date()
     const nextWeek = new Date(today.getTime() + 7 * 86400000)
     let count = 0
@@ -54,30 +51,25 @@ export const WorkloadWidget: React.FC = () => {
   }
 
   const calculateEngineerLoad = (projectsCount: number, serviceVisitsCount: number): number => {
-    let load = projectsCount * 50   // 50% за проект
-    load += serviceVisitsCount * 20  // +20% за выезд
-    return Math.min(load, 150)       // максимум 150%
+    // Без ограничения сверху
+    return projectsCount * 50 + serviceVisitsCount * 20
   }
 
   const calculatePMLoad = (projectsCount: number): number => {
-    let load = projectsCount * 30   // 30% за проект
-    return Math.min(load, 150)
+    return projectsCount * 30
   }
 
-  // ---- Сбор данных по сотрудникам ----
   const engineerMap = new Map<string, { projectsCount: number; name: string }>()
   const pmMap = new Map<string, { projectsCount: number; name: string }>()
 
   projects.forEach(p => {
     if (p.status !== 'done') {
-      // Инженеры
       const engName = p.engineer
       if (engName) {
         const existing = engineerMap.get(engName) || { projectsCount: 0, name: engName }
         existing.projectsCount++
         engineerMap.set(engName, existing)
       }
-      // РП
       const pmName = p.projectManager
       if (pmName) {
         const existing = pmMap.get(pmName) || { projectsCount: 0, name: pmName }
@@ -106,7 +98,6 @@ export const WorkloadWidget: React.FC = () => {
     loadPercent: calculatePMLoad(pm.projectsCount)
   }))
 
-  // Сортировка по убыванию загрузки и взятие топ-3
   const topEngineers = [...engineerLoads].sort((a, b) => b.loadPercent - a.loadPercent).slice(0, 3)
   const topPMs = [...pmLoads].sort((a, b) => b.loadPercent - a.loadPercent).slice(0, 3)
 
@@ -120,14 +111,17 @@ export const WorkloadWidget: React.FC = () => {
     return 'normal'
   }
 
+  // Для прогресс-бара показываем до 100% (если больше 100 – полная шкала)
+  const getBarWidth = (percent: number) => Math.min(percent, 100)
+
   const handleWidgetClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.dashboard-widget-actions')) return
-    navigate('/employees')   // заглушка – страница со списком сотрудников
+    navigate('/employees')
   }
 
   const handleEmployeeClick = (employeeName: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    navigate(`/employee?name=${encodeURIComponent(employeeName)}`)  // заглушка – карточка сотрудника
+    navigate(`/employee?name=${encodeURIComponent(employeeName)}`)
   }
 
   const handleMenuToggle = (e: React.MouseEvent) => {
@@ -175,16 +169,12 @@ export const WorkloadWidget: React.FC = () => {
         <div className="dashboard-finance-label">Топ‑3 инженера</div>
         {topEngineers.length === 0 && <div>Нет данных</div>}
         {topEngineers.map(emp => (
-          <div 
-            key={emp.name} 
-            className="dashboard-employee-row" 
-            onClick={(e) => handleEmployeeClick(emp.name, e)}
-          >
+          <div key={emp.name} className="dashboard-employee-row" onClick={(e) => handleEmployeeClick(emp.name, e)}>
             <div className="dashboard-avatar">{getInitials(emp.name)}</div>
             <div className="dashboard-employee-info">
               <div className="dashboard-employee-name">{emp.name}</div>
               <div className="dashboard-progress-bg">
-                <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${Math.min(emp.loadPercent, 100)}%` }}></div>
+                <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${getBarWidth(emp.loadPercent)}%` }}></div>
               </div>
             </div>
             <div className="dashboard-employee-percent">{Math.round(emp.loadPercent)}%</div>
@@ -193,16 +183,12 @@ export const WorkloadWidget: React.FC = () => {
         <div className="dashboard-finance-label" style={{ marginTop: '8px' }}>Топ‑3 руководителя проектов</div>
         {topPMs.length === 0 && <div>Нет данных</div>}
         {topPMs.map(emp => (
-          <div 
-            key={emp.name} 
-            className="dashboard-employee-row" 
-            onClick={(e) => handleEmployeeClick(emp.name, e)}
-          >
+          <div key={emp.name} className="dashboard-employee-row" onClick={(e) => handleEmployeeClick(emp.name, e)}>
             <div className="dashboard-avatar">{getInitials(emp.name)}</div>
             <div className="dashboard-employee-info">
               <div className="dashboard-employee-name">{emp.name}</div>
               <div className="dashboard-progress-bg">
-                <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${Math.min(emp.loadPercent, 100)}%` }}></div>
+                <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${getBarWidth(emp.loadPercent)}%` }}></div>
               </div>
             </div>
             <div className="dashboard-employee-percent">{Math.round(emp.loadPercent)}%</div>
