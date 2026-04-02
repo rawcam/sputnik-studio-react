@@ -6,10 +6,10 @@ import {
   setActiveTract,
   setViewMode,
   addDeviceToTract,
-  removeDeviceFromTract,
   addTract,
   updateDeviceThunk,
   recalcTractThunk,
+  removeDeviceThunk,
   TractDevice,
 } from '../../store/tractsSlice'
 import { AddDeviceModal } from './AddDeviceModal'
@@ -21,17 +21,19 @@ export const ActiveTract: React.FC = () => {
   const tracts = useAppSelector(state => state.tracts.tracts)
   const activeTractId = useAppSelector(state => state.tracts.activeTractId)
   const videoSettings = useAppSelector(state => state.video)
+  const networkSettings = useAppSelector(state => state.network)
   const activeTract = tracts.find(t => t.id === activeTractId) || null
   const [showModal, setShowModal] = useState(false)
   const [modalColumn, setModalColumn] = useState<'source' | 'matrix' | 'sink'>('source')
   const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
+  // Пересчёт при изменении видео или сетевых параметров
   useEffect(() => {
     if (activeTract) {
       dispatch(recalcTractThunk(activeTract.id))
     }
-  }, [videoSettings, activeTract?.id, dispatch])
+  }, [videoSettings, networkSettings, activeTract?.id, dispatch])
 
   const handleNewTract = () => {
     const newId = Date.now().toString()
@@ -54,7 +56,7 @@ export const ActiveTract: React.FC = () => {
       latency: device.latency || 0,
       poe: device.poe || false,
       poeEnabled: false,
-      poePower: device.poePower || 0,
+      poePower: 0,
       powerW: device.powerW || 0,
       shortName: '',
       ethernet: false,
@@ -71,6 +73,7 @@ export const ActiveTract: React.FC = () => {
       outputs: device.outputs,
       latencyIn: device.latencyIn,
       latencyOut: device.latencyOut,
+      speed: device.speed,
     }
     dispatch(addDeviceToTract({ tractId: activeTract.id, device: newDevice, column }))
     setShowModal(false)
@@ -78,12 +81,15 @@ export const ActiveTract: React.FC = () => {
 
   const handleDeleteDevice = (deviceId: string, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
-    dispatch(removeDeviceFromTract({ tractId: activeTract.id, deviceId, column }))
+    dispatch(removeDeviceThunk({ tractId: activeTract.id, deviceId, column }))
   }
 
   const handleToggleExpand = (deviceId: string) => {
     if (!activeTract) return
-    dispatch(updateDeviceThunk({ tractId: activeTract.id, deviceId, updates: { expanded: !activeTract.sourceDevices.find(d => d.id === deviceId)?.expanded } }))
+    const device = [...activeTract.sourceDevices, ...activeTract.matrixDevices, ...activeTract.sinkDevices].find(d => d.id === deviceId)
+    if (device) {
+      dispatch(updateDeviceThunk({ tractId: activeTract.id, deviceId, updates: { expanded: !device.expanded } }))
+    }
   }
 
   const handleBackToAll = () => {
