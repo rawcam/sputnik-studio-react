@@ -1581,3 +1581,47 @@ body.dark .dashboard-widget-menu {
 .dashboard-trend.down {
   color: var(--danger);
 }
+/* ===== ДОБАВИТЬ В КОНЕЦ ФАЙЛА ===== */
+.dashboard-service-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.dashboard-service-item:hover {
+  background: var(--accent-light);
+  margin-left: -6px;
+  padding-left: 6px;
+  border-radius: 12px;
+}
+
+.dashboard-service-item:hover .dashboard-service-date,
+.dashboard-service-item:hover .dashboard-service-info,
+.dashboard-service-item:hover .dashboard-service-responsible {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.dashboard-service-date {
+  font-weight: 500;
+  background: var(--bg-panel-solid);
+  padding: 2px 8px;
+  border-radius: 40px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.dashboard-service-info {
+  flex: 1;
+}
+
+.dashboard-service-responsible {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
