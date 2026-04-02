@@ -1531,3 +1531,69 @@ body.dark .dashboard-widget-menu {
 .dashboard-finance-row .dashboard-trend.down {
   color: var(--danger) !important;
 }
+/* ===== ДОБАВИТЬ В КОНЕЦ ФАЙЛА: стили для новой карусели (горизонтальный скролл) ===== */
+.dashboard-scroll-container {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  display: flex;
+  gap: 20px;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+}
+
+.dashboard-scroll-container::-webkit-scrollbar {
+  height: 5px;
+}
+
+.dashboard-scroll-container::-webkit-scrollbar-track {
+  background: var(--border-light);
+  border-radius: 10px;
+}
+
+.dashboard-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 10px;
+}
+
+.dashboard-project-card {
+  flex: 0 0 280px;
+  background: var(--bg-panel-solid);
+  border-radius: 18px;
+  padding: 16px;
+  scroll-snap-align: start;
+  transition: var(--transition);
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+}
+
+.dashboard-project-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-hover);
+}
+
+.dashboard-project-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.dashboard-project-stats {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.dashboard-project-progress {
+  margin-top: 10px;
+}
+
+.dashboard-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+}
