@@ -9,7 +9,7 @@ import {
   WidgetId,
   DisplayMode 
 } from '../../store/widgetsSlice'
-import { setRole } from '../../store/authSlice' // предполагаем, что есть экшен setRole
+import { setRole } from '../../store/authSlice'
 
 export const WidgetConfigDrawer: React.FC = () => {
   const dispatch = useDispatch()
@@ -54,8 +54,9 @@ export const WidgetConfigDrawer: React.FC = () => {
   }
 
   const handleRolePreset = (role: string) => {
+    // Приводим тип, так как значения из select соответствуют типу User['role']
     dispatch(resetToRolePreset(role))
-    dispatch(setRole(role))  // обновляем роль в authSlice
+    dispatch(setRole(role as 'director' | 'pm' | 'engineer' | 'designer' | 'logist'))
   }
 
   if (!isOpen) return null
