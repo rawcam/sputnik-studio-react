@@ -10,7 +10,6 @@ interface ProjectsCarouselProps {
 export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, onSelectProject }) => {
   const navigate = useNavigate()
   const carouselRef = useRef<HTMLDivElement>(null)
-  
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>(() => {
     const saved = localStorage.getItem('projectsViewMode')
     return saved === 'list' ? 'list' : 'carousel'
@@ -20,7 +19,6 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
     localStorage.setItem('projectsViewMode', viewMode)
   }, [viewMode])
 
-  // Сортировка: сначала приоритетные (priority === true), затем остальные
   const sortedProjects = [...projects].sort((a, b) => {
     if (a.priority === b.priority) return 0
     return a.priority ? -1 : 1
@@ -73,19 +71,23 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
   return (
     <div>
-      <div className="projects-view-toggle">
-        <button 
-          className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
-          onClick={() => setViewMode('carousel')}
-        >
-          <i className="fas fa-images"></i> Карусель
-        </button>
-        <button 
-          className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-          onClick={() => setViewMode('list')}
-        >
-          <i className="fas fa-list"></i> Список
-        </button>
+      {/* Заголовок и переключатели в одной строке */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h3 style={{ margin: 0 }}>Активные проекты</h3>
+        <div className="projects-view-toggle">
+          <button 
+            className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
+            onClick={() => setViewMode('carousel')}
+          >
+            <i className="fas fa-images"></i> Карусель
+          </button>
+          <button 
+            className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            <i className="fas fa-list"></i> Список
+          </button>
+        </div>
       </div>
 
       {viewMode === 'carousel' && (
@@ -135,10 +137,13 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
               onClick={() => handleProjectClick(project)}
             >
               <div className="list-info">
-                <span className="list-name">
+                <div className="list-name">
                   {project.priority && <i className="fas fa-star" style={{ color: '#f5b042', marginRight: '8px' }}></i>}
                   {project.name}
-                </span>
+                  <span className="list-status" style={{ background: getStatusColor(project.status), marginLeft: '10px' }}>
+                    {getStatusLabel(project.status)}
+                  </span>
+                </div>
                 <div className="list-stats">
                   <span>{formatCurrency(project.contractAmount)}</span>
                   <span>{project.engineer} / {project.projectManager}</span>
