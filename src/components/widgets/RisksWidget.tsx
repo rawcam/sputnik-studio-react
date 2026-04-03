@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store'
-import { useAuth } from '../../hooks/useAuth'
 
 interface Risk {
   id: string
@@ -15,7 +14,6 @@ interface Risk {
 
 export const RisksWidget: React.FC = () => {
   const navigate = useNavigate()
-  const { hasRole } = useAuth()
   const projects = useSelector((state: RootState) => state.projects.list)
   const [menuOpen, setMenuOpen] = useState(false)
   const [hiddenRisks, setHiddenRisks] = useState<string[]>(() => {
