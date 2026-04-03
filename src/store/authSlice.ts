@@ -1,11 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-export type UserRole = 'director' | 'pm' | 'engineer' | 'designer' | 'logist'
-
 export interface User {
-  id: string
   name: string
-  role: UserRole
+  role: 'director' | 'pm' | 'engineer' | 'designer' | 'logist'
 }
 
 interface AuthState {
@@ -13,13 +10,19 @@ interface AuthState {
   isAuthenticated: boolean
 }
 
+const loadUserFromStorage = (): User | null => {
+  const savedRole = localStorage.getItem('userRole') as User['role'] | null
+  if (savedRole) {
+    // Имя пользователя можно загрузить из localStorage или задать по умолчанию
+    const savedName = localStorage.getItem('userName') || 'Пользователь'
+    return { name: savedName, role: savedRole }
+  }
+  return null
+}
+
 const initialState: AuthState = {
-  user: (() => {
-    const saved = localStorage.getItem('user')
-    if (saved) return JSON.parse(saved)
-    return { id: '1', name: 'ГИП', role: 'pm' }
-  })(),
-  isAuthenticated: true,
+  user: loadUserFromStorage(),
+  isAuthenticated: !!loadUserFromStorage(),
 }
 
 const authSlice = createSlice({
@@ -29,17 +32,25 @@ const authSlice = createSlice({
     login: (state, action: PayloadAction<User>) => {
       state.user = action.payload
       state.isAuthenticated = true
-      localStorage.setItem('user', JSON.stringify(action.payload))
+      localStorage.setItem('userRole', action.payload.role)
+      localStorage.setItem('userName', action.payload.name)
     },
     logout: (state) => {
       state.user = null
       state.isAuthenticated = false
-      localStorage.removeItem('user')
+      localStorage.removeItem('userRole')
+      localStorage.removeItem('userName')
     },
-    setRole: (state, action: PayloadAction<UserRole>) => {
+    setRole: (state, action: PayloadAction<User['role']>) => {
       if (state.user) {
         state.user.role = action.payload
-        localStorage.setItem('user', JSON.stringify(state.user))
+        localStorage.setItem('userRole', action.payload)
+      } else {
+        // Если пользователь не залогинен, создаём минимального пользователя
+        state.user = { name: 'Пользователь', role: action.payload }
+        state.isAuthenticated = true
+        localStorage.setItem('userRole', action.payload)
+        localStorage.setItem('userName', 'Пользователь')
       }
     },
   },
