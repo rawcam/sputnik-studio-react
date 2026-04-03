@@ -34,7 +34,6 @@ const loadInitialState = (): WidgetsState => {
     } catch { /* ignore */ }
   }
   if (!visible.length) {
-    // fallback – по умолчанию для директора
     visible = [...defaultVisibleForRole.director]
   }
 
