@@ -29,15 +29,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
     else navigate(`/projects?id=${project.id}`)
   }
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (carouselRef.current) {
-      const scrollAmount = 360
-      carouselRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      })
-    }
-  }
+  // Функция scroll удалена, так как не используется. Если нужны стрелки, добавьте их позже.
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
@@ -71,98 +63,93 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
   return (
     <div>
-      {/* Заголовок по центру, кнопки справа (сетка 3 колонки) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', marginBottom: '20px' }}>
-        <div></div> {/* левая пустая колонка для баланса */}
-        <h3 style={{ margin: 0, textAlign: 'center' }}>Активные проекты</h3>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <div className="projects-view-toggle">
-            <button 
-              className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
-              onClick={() => setViewMode('carousel')}
-            >
-              <i className="fas fa-images"></i> Карусель
-            </button>
-            <button 
-              className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              <i className="fas fa-list"></i> Список
-            </button>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h3 style={{ margin: 0 }}>Активные проекты</h3>
+        <div className="projects-view-toggle">
+          <button 
+            className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
+            onClick={() => setViewMode('carousel')}
+          >
+            <i className="fas fa-images"></i> Карусель
+          </button>
+          <button 
+            className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            <i className="fas fa-list"></i> Список
+          </button>
         </div>
       </div>
 
-      {viewMode === 'list' && (
-  <div className="projects-list">
-    {sortedProjects.map(project => (
-      <div 
-        key={project.id} 
-        className={`project-row ${project.priority ? 'priority-row' : ''}`} 
-        onClick={() => handleProjectClick(project)}
-      >
-        <div className="project-row-grid">
-          <div className="row-cell row-icon">
-            {project.priority && <i className="fas fa-star" style={{ color: '#f5b042' }}></i>}
-          </div>
-          <div className="row-cell row-id">
-            <span className="project-shortid">{project.shortId}</span>
-          </div>
-          <div className="row-cell row-name">{project.name}</div>
-          <div className="row-cell row-budget">{formatCurrency(project.contractAmount)}</div>
-          <div className="row-cell row-responsible">{project.engineer} / {project.projectManager}</div>
-          <div className="row-cell row-progress">
-            <div className="row-progress-wrapper">
-              <div className="dashboard-progress-bg">
-                <div className="dashboard-progress-fill normal" style={{ width: `${project.progress}%` }}></div>
-              </div>
-              <span className="row-percent">{project.progress}%</span>
+      {viewMode === 'carousel' && (
+        <div className="carousel-wrapper">
+          <div className="carousel-container" ref={carouselRef}>
+            <div className="carousel-track">
+              {sortedProjects.map(project => (
+                <div 
+                  key={project.id} 
+                  className={`carousel-card ${project.priority ? 'priority-card' : ''}`} 
+                  onClick={() => handleProjectClick(project)}
+                >
+                  <div className="carousel-card-title">
+                    <span>
+                      {project.priority && <i className="fas fa-star" style={{ color: '#f5b042', marginRight: '6px' }}></i>}
+                      {project.name}
+                    </span>
+                    <span className="carousel-card-status" style={{ background: getStatusColor(project.status) }}>
+                      {getStatusLabel(project.status)}
+                    </span>
+                  </div>
+                  <div className="carousel-card-stats">
+                    <span>{formatCurrency(project.contractAmount)}</span>
+                    <span>{project.engineer} / {project.projectManager}</span>
+                  </div>
+                  <div className="carousel-card-progress">
+                    <div className="dashboard-progress-bg">
+                      <div className="dashboard-progress-fill normal" style={{ width: `${project.progress}%` }}></div>
+                    </div>
+                    <div className="carousel-card-percent">{project.progress}%</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="row-cell row-status">
-            <span className="project-row-status" style={{ background: getStatusColor(project.status) }}>
-              {getStatusLabel(project.status)}
-            </span>
-          </div>
+          {/* Стрелки удалены, так как не использовались. При необходимости можно добавить позже */}
         </div>
-      </div>
-    ))}
-  </div>
-)}
+      )}
 
       {viewMode === 'list' && (
-        <div className="projects-list-vertical">
+        <div className="projects-list">
           {sortedProjects.map(project => (
             <div 
               key={project.id} 
-              className={`list-row ${project.priority ? 'priority-list-row' : ''}`} 
+              className={`project-row ${project.priority ? 'priority-row' : ''}`} 
               onClick={() => handleProjectClick(project)}
             >
-              <div className="list-info">
-                <div className="list-name">
-                  {project.priority && <i className="fas fa-star" style={{ color: '#f5b042', marginRight: '8px' }}></i>}
-                  {project.name}
-                  <span className="list-status" style={{ background: getStatusColor(project.status), marginLeft: '10px' }}>
+              <div className="project-row-grid">
+                <div className="row-cell row-icon">
+                  {project.priority && <i className="fas fa-star" style={{ color: '#f5b042' }}></i>}
+                </div>
+                <div className="row-cell row-id">
+                  <span className="project-shortid">{project.shortId}</span>
+                </div>
+                <div className="row-cell row-name">{project.name}</div>
+                <div className="row-cell row-budget">{formatCurrency(project.contractAmount)}</div>
+                <div className="row-cell row-responsible">{project.engineer} / {project.projectManager}</div>
+                <div className="row-cell row-progress">
+                  <div className="row-progress-wrapper">
+                    <div className="dashboard-progress-bg">
+                      <div className="dashboard-progress-fill normal" style={{ width: `${project.progress}%` }}></div>
+                    </div>
+                    <span className="row-percent">{project.progress}%</span>
+                  </div>
+                </div>
+                <div className="row-cell row-status">
+                  <span className="project-row-status" style={{ background: getStatusColor(project.status) }}>
                     {getStatusLabel(project.status)}
                   </span>
                 </div>
-                <div className="list-stats">
-                  <span>{formatCurrency(project.contractAmount)}</span>
-                  <span>{project.engineer} / {project.projectManager}</span>
-                </div>
-                <div className="list-progress">
-                  <div className="dashboard-progress-bg">
-                    <div className="dashboard-progress-fill normal" style={{ width: `${project.progress}%` }}></div>
-                  </div>
-                </div>
-                <span className="list-percent">{project.progress}%</span>
               </div>
-              <button 
-                className="list-detail-btn" 
-                onClick={(e) => { e.stopPropagation(); handleProjectClick(project); }}
-              >
-                Подробнее →
-              </button>
             </div>
           ))}
         </div>
