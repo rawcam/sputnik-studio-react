@@ -1637,3 +1637,28 @@ body.dark .dashboard-widget-menu {
   width: 16px;
   height: 16px;
 }
+/* Единая высота для всех виджетов дашборда */
+.dashboard-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* чтобы растягивались внутри grid */
+  min-height: 320px; /* фиксированная минимальная высота */
+}
+
+.dashboard-widget-content {
+  flex: 1;
+  overflow-y: auto; /* скролл внутри, если контента больше */
+  scrollbar-width: thin;
+}
+
+/* Карусель (третий ряд) – оставляем auto, но можно ограничить max-height */
+.dashboard-scroll-container {
+  max-height: 320px;
+  overflow-y: hidden; /* горизонтальный скролл уже есть, вертикальный не нужен */
+}
+
+/* На случай, если карусель станет выше – скролл по вертикали не появится */
+.widget-section {
+  margin-top: 32px;
+  overflow-x: auto;
+}
