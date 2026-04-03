@@ -13,6 +13,7 @@ import soundReducer from './soundSlice'
 import vcReducer from './vcSlice'
 import ergoReducer from './ergoSlice'
 import powerReducer from './powerSlice'
+import widgetsReducer from './widgetsSlice'
 
 export const store = configureStore({
   reducer: {
