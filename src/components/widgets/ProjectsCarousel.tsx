@@ -11,16 +11,20 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
   const navigate = useNavigate()
   const carouselRef = useRef<HTMLDivElement>(null)
   
-  // Режим отображения: 'carousel' или 'list'
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>(() => {
     const saved = localStorage.getItem('projectsViewMode')
     return saved === 'list' ? 'list' : 'carousel'
   })
 
-  // Сохраняем выбранный режим
   useEffect(() => {
     localStorage.setItem('projectsViewMode', viewMode)
   }, [viewMode])
+
+  // Сортировка: сначала приоритетные (priority === true), затем остальные
+  const sortedProjects = [...projects].sort((a, b) => {
+    if (a.priority === b.priority) return 0
+    return a.priority ? -1 : 1
+  })
 
   const handleProjectClick = (project: Project) => {
     if (onSelectProject) onSelectProject(project)
@@ -29,7 +33,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
   const scroll = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
-      const scrollAmount = 360 // ширина карточки + gap
+      const scrollAmount = 360
       carouselRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -69,7 +73,6 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
   return (
     <div>
-      {/* Переключатель режимов */}
       <div className="projects-view-toggle">
         <button 
           className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
@@ -85,16 +88,22 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
         </button>
       </div>
 
-      {/* Режим карусели (вариант Б) */}
       {viewMode === 'carousel' && (
         <div className="carousel-wrapper">
-          <button className="carousel-arrow prev" onClick={() => scroll('left')} aria-label="Назад">‹</button>
+          <button className="carousel-arrow prev" onClick={() => scroll('left')}>‹</button>
           <div className="carousel-container" ref={carouselRef}>
             <div className="carousel-track">
-              {projects.map(project => (
-                <div key={project.id} className="carousel-card" onClick={() => handleProjectClick(project)}>
+              {sortedProjects.map(project => (
+                <div 
+                  key={project.id} 
+                  className={`carousel-card ${project.priority ? 'priority-card' : ''}`} 
+                  onClick={() => handleProjectClick(project)}
+                >
                   <div className="carousel-card-title">
-                    <span>{project.name}</span>
+                    <span>
+                      {project.priority && <i className="fas fa-star" style={{ color: '#f5b042', marginRight: '6px' }}></i>}
+                      {project.name}
+                    </span>
                     <span className="carousel-card-status" style={{ background: getStatusColor(project.status) }}>
                       {getStatusLabel(project.status)}
                     </span>
@@ -113,17 +122,23 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
               ))}
             </div>
           </div>
-          <button className="carousel-arrow next" onClick={() => scroll('right')} aria-label="Вперёд">›</button>
+          <button className="carousel-arrow next" onClick={() => scroll('right')}>›</button>
         </div>
       )}
 
-      {/* Режим вертикального списка (вариант В) */}
       {viewMode === 'list' && (
         <div className="projects-list-vertical">
-          {projects.map(project => (
-            <div key={project.id} className="list-row" onClick={() => handleProjectClick(project)}>
+          {sortedProjects.map(project => (
+            <div 
+              key={project.id} 
+              className={`list-row ${project.priority ? 'priority-list-row' : ''}`} 
+              onClick={() => handleProjectClick(project)}
+            >
               <div className="list-info">
-                <span className="list-name">{project.name}</span>
+                <span className="list-name">
+                  {project.priority && <i className="fas fa-star" style={{ color: '#f5b042', marginRight: '8px' }}></i>}
+                  {project.name}
+                </span>
                 <div className="list-stats">
                   <span>{formatCurrency(project.contractAmount)}</span>
                   <span>{project.engineer} / {project.projectManager}</span>
