@@ -9,6 +9,7 @@ interface EmployeeLoad {
   role: 'engineer' | 'projectManager'
   roleLabel: string
   roleColor: string
+  roleShort: string   // короткий символ для кружка (И, РП)
   loadPercent: number
   projectsCount: number
   serviceVisitsCount: number
@@ -84,6 +85,7 @@ export const WorkloadWidget: React.FC = () => {
       name: eng.name,
       role: 'engineer',
       roleLabel: 'Инженер',
+      roleShort: 'И',
       roleColor: '#2c6e9e',
       loadPercent: calculateEngineerLoad(eng.projectsCount, visits),
       projectsCount: eng.projectsCount,
@@ -96,6 +98,7 @@ export const WorkloadWidget: React.FC = () => {
       name: pm.name,
       role: 'projectManager',
       roleLabel: 'РП',
+      roleShort: 'РП',
       roleColor: '#2a7f49',
       loadPercent: calculatePMLoad(pm.projectsCount),
       projectsCount: pm.projectsCount,
@@ -106,10 +109,6 @@ export const WorkloadWidget: React.FC = () => {
   const topEmployees = [...allEmployees]
     .sort((a, b) => b.loadPercent - a.loadPercent)
     .slice(0, 4)
-
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase()
-  }
 
   const getProgressClass = (percent: number) => {
     if (percent >= 100) return 'danger'
@@ -169,11 +168,15 @@ export const WorkloadWidget: React.FC = () => {
       <div className="dashboard-widget-content">
         {topEmployees.map(emp => (
           <div key={emp.name} className="dashboard-employee-row" onClick={(e) => handleEmployeeClick(emp.name, e)}>
-            <div className="dashboard-avatar">{getInitials(emp.name)}</div>
+            <div className="dashboard-avatar" style={{ backgroundColor: emp.roleColor }}>
+              {emp.roleShort}
+            </div>
             <div className="dashboard-employee-info">
               <div className="dashboard-employee-name">
                 {emp.name}
-                <span className="employee-role-badge" style={{ backgroundColor: emp.roleColor }}>{emp.roleLabel}</span>
+                <span className="employee-role-badge" style={{ backgroundColor: emp.roleColor }}>
+                  {emp.roleLabel}
+                </span>
               </div>
               <div className="dashboard-progress-bg">
                 <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${getBarWidth(emp.loadPercent)}%` }}></div>
