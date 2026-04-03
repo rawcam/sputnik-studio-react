@@ -1,35 +1,23 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+// uiSlice.ts
+import { createSlice } from '@reduxjs/toolkit'
 
 interface UIState {
-  sidebarCollapsed: boolean
-  activeModal: string | null
+  widgetConfigOpen: boolean
 }
 
 const initialState: UIState = {
-  sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
-  activeModal: null,
+  widgetConfigOpen: false,
 }
 
 const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    toggleSidebar: (state) => {
-      state.sidebarCollapsed = !state.sidebarCollapsed
-      localStorage.setItem('sidebarCollapsed', String(state.sidebarCollapsed))
-    },
-    setSidebarCollapsed: (state, action: PayloadAction<boolean>) => {
-      state.sidebarCollapsed = action.payload
-      localStorage.setItem('sidebarCollapsed', String(action.payload))
-    },
-    openModal: (state, action: PayloadAction<string>) => {
-      state.activeModal = action.payload
-    },
-    closeModal: (state) => {
-      state.activeModal = null
-    },
+    openWidgetConfig: (state) => { state.widgetConfigOpen = true },
+    closeWidgetConfig: (state) => { state.widgetConfigOpen = false },
+    toggleWidgetConfig: (state) => { state.widgetConfigOpen = !state.widgetConfigOpen },
   },
 })
 
-export const { toggleSidebar, setSidebarCollapsed, openModal, closeModal } = uiSlice.actions
+export const { openWidgetConfig, closeWidgetConfig, toggleWidgetConfig } = uiSlice.actions
 export default uiSlice.reducer
