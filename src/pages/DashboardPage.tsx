@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
@@ -16,7 +16,6 @@ export const DashboardPage: React.FC = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
   const visibleWidgets = useSelector((state: RootState) => state.widgets.visibleWidgets)
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   const activeProjects = projects.filter(p => p.status !== 'done')
 
@@ -28,9 +27,7 @@ export const DashboardPage: React.FC = () => {
     <div className="dashboard-wrapper">
       <div className="dashboard-header">
         <h2>ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
-        <button className="settings-icon-btn" onClick={() => setIsDrawerOpen(true)}>
-          <i className="fas fa-sliders-h"></i>
-        </button>
+        {/* Кнопка вызова панели перенесена в Topbar, но можно оставить и здесь для удобства */}
       </div>
 
       <div className={`dashboard-grid ${displayMode === 'compact' ? 'compact-mode' : ''}`}>
@@ -48,7 +45,7 @@ export const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      <WidgetConfigDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
+      <WidgetConfigDrawer />
     </div>
   )
 }
