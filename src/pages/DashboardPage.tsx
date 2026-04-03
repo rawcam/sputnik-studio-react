@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
@@ -9,40 +9,51 @@ import { ServiceWidget } from '../components/widgets/ServiceWidget'
 import { WorkloadWidget } from '../components/widgets/WorkloadWidget'
 import { RisksWidget } from '../components/widgets/RisksWidget'
 import { ProjectsCarousel } from '../components/widgets/ProjectsCarousel'
-import './DashboardPage.css'  // если есть
+import { WidgetConfigDrawer } from '../components/common/WidgetConfigDrawer'
+import './DashboardPage.css'
 
 export const DashboardPage: React.FC = () => {
-  const { hasRole } = useAuth()
   const navigate = useNavigate()
+  const { hasRole } = useAuth()
   const projects = useSelector((state: RootState) => state.projects.list)
+  const visibleWidgets = useSelector((state: RootState) => state.widgets.visibleWidgets)
+  const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+
   const activeProjects = projects.filter(p => p.status !== 'done')
 
   const handleSelectProject = (project: any) => {
     navigate(`/projects?id=${project.id}`)
   }
 
-  // Фильтрация виджетов по ролям (пример)
-  const showCompanyFinance = hasRole('director') || hasRole('pm')
-  const showProjectsFinance = hasRole('director') || hasRole('pm')
-  const showService = true  // все видят
-  const showWorkload = hasRole('director') || hasRole('pm') || hasRole('engineer')
-  const showRisks = true
+  // Роль для пресетов (можно передать в Drawer, но там уже есть resetToRolePreset)
+  // Сама панель открывается по кнопке в топбаре (добавим позже)
 
   return (
     <div className="dashboard-wrapper">
-      <h2>ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
-      <div className="dashboard-grid">
-        {showCompanyFinance && <CompanyFinanceWidget />}
-        {showProjectsFinance && <ProjectsFinanceWidget />}
-        {showService && <ServiceWidget />}
-        {showWorkload && <WorkloadWidget />}
-        {showRisks && <RisksWidget />}
+      <div className="dashboard-header">
+        <h2>ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
+        <button className="settings-icon-btn" onClick={() => setIsDrawerOpen(true)}>
+          <i className="fas fa-sliders-h"></i>
+        </button>
       </div>
 
-      <div className="widget-section" style={{ marginTop: '32px' }}>
-        <h3>Активные проекты</h3>
-        <ProjectsCarousel projects={activeProjects} onSelectProject={handleSelectProject} />
+      <div className={`dashboard-grid ${displayMode === 'compact' ? 'compact-mode' : ''}`}>
+        {visibleWidgets.includes('companyFinance') && <CompanyFinanceWidget />}
+        {visibleWidgets.includes('projectsFinance') && <ProjectsFinanceWidget />}
+        {visibleWidgets.includes('service') && <ServiceWidget />}
+        {visibleWidgets.includes('workload') && <WorkloadWidget />}
+        {visibleWidgets.includes('risks') && <RisksWidget />}
       </div>
+
+      {visibleWidgets.includes('carousel') && (
+        <div className="widget-section">
+          <h3>Активные проекты</h3>
+          <ProjectsCarousel projects={activeProjects} onSelectProject={handleSelectProject} />
+        </div>
+      )}
+
+      <WidgetConfigDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
     </div>
   )
 }
