@@ -9,7 +9,7 @@ interface EmployeeLoad {
   role: 'engineer' | 'projectManager'
   roleLabel: string
   roleColor: string
-  roleShort: string   // короткий символ для кружка (И, РП)
+  roleShort: string
   loadPercent: number
   projectsCount: number
   serviceVisitsCount: number
@@ -174,9 +174,7 @@ export const WorkloadWidget: React.FC = () => {
             <div className="dashboard-employee-info">
               <div className="dashboard-employee-name">
                 {emp.name}
-                <span className="employee-role-badge" style={{ backgroundColor: emp.roleColor }}>
-                  {emp.roleLabel}
-                </span>
+                <span className="employee-role-text">{emp.roleLabel}</span>
               </div>
               <div className="dashboard-progress-bg">
                 <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${getBarWidth(emp.loadPercent)}%` }}></div>
