@@ -19,7 +19,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProj
   }
 
   return (
-    <div className="projects-list">
+    <div className="projects-grid">
       {projects.map(project => (
         <ProjectCard key={project.id} project={project} onClick={onSelectProject} />
       ))}
