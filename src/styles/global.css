@@ -1452,3 +1452,48 @@ input:checked + .slider:before {
   color: var(--accent);
   font-weight: 500;
 }
+/* Активная кнопка в топбаре */
+.nav-buttons button.active {
+  color: var(--accent);
+  background: var(--accent-light);
+  font-weight: 600;
+}
+
+/* Центрирование кнопок режима (обычный/компактный) */
+.mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Выпадающий список для ролей */
+.role-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 40px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.role-select:hover {
+  border-color: var(--accent);
+}
+.role-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+/* Статус проекта в режиме списка */
+.list-status {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  color: white;
+  margin-left: 10px;
+}
