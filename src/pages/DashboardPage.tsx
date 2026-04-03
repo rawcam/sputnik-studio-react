@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
-import { useAuth } from '../hooks/useAuth'
 import { CompanyFinanceWidget } from '../components/widgets/CompanyFinanceWidget'
 import { ProjectsFinanceWidget } from '../components/widgets/ProjectsFinanceWidget'
 import { ServiceWidget } from '../components/widgets/ServiceWidget'
@@ -14,7 +13,6 @@ import './DashboardPage.css'
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
-  const { hasRole } = useAuth()
   const projects = useSelector((state: RootState) => state.projects.list)
   const visibleWidgets = useSelector((state: RootState) => state.widgets.visibleWidgets)
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
@@ -25,9 +23,6 @@ export const DashboardPage: React.FC = () => {
   const handleSelectProject = (project: any) => {
     navigate(`/projects?id=${project.id}`)
   }
-
-  // Роль для пресетов (можно передать в Drawer, но там уже есть resetToRolePreset)
-  // Сама панель открывается по кнопке в топбаре (добавим позже)
 
   return (
     <div className="dashboard-wrapper">
