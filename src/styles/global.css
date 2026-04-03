@@ -1718,3 +1718,117 @@ input:checked + .slider:before {
     width: 100%;
   }
 }
+/* Верхняя панель: фильтры и кнопки в одной строке */
+.projects-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  padding: 12px 20px;
+  border: 1px solid var(--border-light);
+}
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-group label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.filter-group select, .reset-btn {
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.reset-btn {
+  background: transparent;
+}
+.reset-btn:hover {
+  background: var(--accent-light);
+}
+
+/* Строчный режим: фиксированная сетка 7 колонок */
+.project-row-grid {
+  display: grid;
+  grid-template-columns: 32px 70px 1fr 130px 1fr 120px 100px;
+  align-items: center;
+  gap: 12px;
+}
+.row-cell {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.row-icon {
+  text-align: center;
+}
+.row-id {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+.row-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.row-budget {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.row-responsible {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.row-progress {
+  min-width: 100px;
+}
+.row-progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.row-percent {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-width: 40px;
+}
+.project-row-status {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  color: white;
+  display: inline-block;
+}
+
+/* Адаптивность для строчного режима (на узких экранах переходим в вертикальный список) */
+@media (max-width: 1000px) {
+  .project-row-grid {
+    grid-template-columns: 32px 70px 1fr 1fr;
+    gap: 8px;
+  }
+  .row-budget, .row-responsible, .row-progress, .row-status {
+    grid-column: span 2;
+  }
+  .project-row-grid .row-budget,
+  .project-row-grid .row-responsible,
+  .project-row-grid .row-progress,
+  .project-row-grid .row-status {
+    white-space: normal;
+  }
+}
