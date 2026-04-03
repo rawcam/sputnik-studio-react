@@ -34,17 +34,17 @@ export const ProjectsPage = () => {
     init()
   }, [])
 
+  // При загрузке проектов проверяем, есть ли id в URL
   useEffect(() => {
     if (loading) return
     const projectId = getProjectIdFromHash()
     if (projectId && projects.length > 0) {
       const project = projects.find(p => p.id === projectId)
       setSelectedProject(project || null)
-    } else {
-      setSelectedProject(null)
     }
   }, [projects, loading])
 
+  // Слушаем изменения хеша (для синхронизации при прямых переходах или кнопке "Назад")
   useEffect(() => {
     const handleHashChange = () => {
       if (loading) return
@@ -60,7 +60,9 @@ export const ProjectsPage = () => {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [projects, loading])
 
+  // Основное исправление: сразу устанавливаем проект, а не ждём hashchange
   const handleSelectProject = (project: any) => {
+    setSelectedProject(project)
     navigate(`/projects?id=${project.id}`, { replace: true })
   }
 
