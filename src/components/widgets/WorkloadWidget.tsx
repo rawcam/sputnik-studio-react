@@ -7,6 +7,8 @@ import { useAuth } from '../../hooks/useAuth'
 interface EmployeeLoad {
   name: string
   role: 'engineer' | 'projectManager'
+  roleLabel: string
+  roleColor: string
   loadPercent: number
   projectsCount: number
   serviceVisitsCount: number
@@ -41,9 +43,7 @@ export const WorkloadWidget: React.FC = () => {
       p.serviceVisits.forEach(v => {
         if (v.responsible === engineerName && v.status === 'planned') {
           const visitDate = new Date(v.date)
-          if (visitDate >= today && visitDate <= nextWeek) {
-            count++
-          }
+          if (visitDate >= today && visitDate <= nextWeek) count++
         }
       })
     })
@@ -51,7 +51,6 @@ export const WorkloadWidget: React.FC = () => {
   }
 
   const calculateEngineerLoad = (projectsCount: number, serviceVisitsCount: number): number => {
-    // Без ограничения сверху
     return projectsCount * 50 + serviceVisitsCount * 20
   }
 
@@ -64,42 +63,49 @@ export const WorkloadWidget: React.FC = () => {
 
   projects.forEach(p => {
     if (p.status !== 'done') {
-      const engName = p.engineer
-      if (engName) {
-        const existing = engineerMap.get(engName) || { projectsCount: 0, name: engName }
+      if (p.engineer) {
+        const existing = engineerMap.get(p.engineer) || { projectsCount: 0, name: p.engineer }
         existing.projectsCount++
-        engineerMap.set(engName, existing)
+        engineerMap.set(p.engineer, existing)
       }
-      const pmName = p.projectManager
-      if (pmName) {
-        const existing = pmMap.get(pmName) || { projectsCount: 0, name: pmName }
+      if (p.projectManager) {
+        const existing = pmMap.get(p.projectManager) || { projectsCount: 0, name: p.projectManager }
         existing.projectsCount++
-        pmMap.set(pmName, existing)
+        pmMap.set(p.projectManager, existing)
       }
     }
   })
 
-  const engineerLoads: EmployeeLoad[] = Array.from(engineerMap.values()).map(eng => {
+  const allEmployees: EmployeeLoad[] = []
+
+  engineerMap.forEach(eng => {
     const visits = getServiceVisitsCountForEngineer(eng.name)
-    return {
+    allEmployees.push({
       name: eng.name,
       role: 'engineer',
+      roleLabel: 'Инженер',
+      roleColor: '#2c6e9e',
+      loadPercent: calculateEngineerLoad(eng.projectsCount, visits),
       projectsCount: eng.projectsCount,
-      serviceVisitsCount: visits,
-      loadPercent: calculateEngineerLoad(eng.projectsCount, visits)
-    }
+      serviceVisitsCount: visits
+    })
   })
 
-  const pmLoads: EmployeeLoad[] = Array.from(pmMap.values()).map(pm => ({
-    name: pm.name,
-    role: 'projectManager',
-    projectsCount: pm.projectsCount,
-    serviceVisitsCount: 0,
-    loadPercent: calculatePMLoad(pm.projectsCount)
-  }))
+  pmMap.forEach(pm => {
+    allEmployees.push({
+      name: pm.name,
+      role: 'projectManager',
+      roleLabel: 'РП',
+      roleColor: '#2a7f49',
+      loadPercent: calculatePMLoad(pm.projectsCount),
+      projectsCount: pm.projectsCount,
+      serviceVisitsCount: 0
+    })
+  })
 
-  const topEngineers = [...engineerLoads].sort((a, b) => b.loadPercent - a.loadPercent).slice(0, 3)
-  const topPMs = [...pmLoads].sort((a, b) => b.loadPercent - a.loadPercent).slice(0, 3)
+  const topEmployees = [...allEmployees]
+    .sort((a, b) => b.loadPercent - a.loadPercent)
+    .slice(0, 4)
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase()
@@ -111,7 +117,6 @@ export const WorkloadWidget: React.FC = () => {
     return 'normal'
   }
 
-  // Для прогресс-бара показываем до 100% (если больше 100 – полная шкала)
   const getBarWidth = (percent: number) => Math.min(percent, 100)
 
   const handleWidgetClick = (e: React.MouseEvent) => {
@@ -131,11 +136,8 @@ export const WorkloadWidget: React.FC = () => {
 
   const handleMenuAction = (action: string) => {
     setMenuOpen(false)
-    if (action === 'refresh') {
-      alert('Обновление данных (демо)')
-    } else if (action === 'sortByLoad') {
-      alert('Сортировка по загрузке (демо)')
-    } else if (action === 'hide') {
+    if (action === 'refresh') alert('Обновление данных (демо)')
+    else if (action === 'hide') {
       const hidden = JSON.parse(localStorage.getItem('hiddenWidgets') || '[]')
       if (!hidden.includes('workload')) {
         hidden.push('workload')
@@ -159,34 +161,20 @@ export const WorkloadWidget: React.FC = () => {
           {menuOpen && (
             <div className="dashboard-widget-menu" ref={menuRef}>
               <div className="dashboard-widget-menu-item" onClick={() => handleMenuAction('refresh')}>Обновить</div>
-              <div className="dashboard-widget-menu-item" onClick={() => handleMenuAction('sortByLoad')}>Сортировка по загрузке</div>
               <div className="dashboard-widget-menu-item" onClick={() => handleMenuAction('hide')}>Скрыть виджет</div>
             </div>
           )}
         </div>
       </div>
       <div className="dashboard-widget-content">
-        <div className="dashboard-finance-label">Топ‑3 инженера</div>
-        {topEngineers.length === 0 && <div>Нет данных</div>}
-        {topEngineers.map(emp => (
+        {topEmployees.map(emp => (
           <div key={emp.name} className="dashboard-employee-row" onClick={(e) => handleEmployeeClick(emp.name, e)}>
             <div className="dashboard-avatar">{getInitials(emp.name)}</div>
             <div className="dashboard-employee-info">
-              <div className="dashboard-employee-name">{emp.name}</div>
-              <div className="dashboard-progress-bg">
-                <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${getBarWidth(emp.loadPercent)}%` }}></div>
+              <div className="dashboard-employee-name">
+                {emp.name}
+                <span className="employee-role-badge" style={{ backgroundColor: emp.roleColor }}>{emp.roleLabel}</span>
               </div>
-            </div>
-            <div className="dashboard-employee-percent">{Math.round(emp.loadPercent)}%</div>
-          </div>
-        ))}
-        <div className="dashboard-finance-label" style={{ marginTop: '8px' }}>Топ‑3 руководителя проектов</div>
-        {topPMs.length === 0 && <div>Нет данных</div>}
-        {topPMs.map(emp => (
-          <div key={emp.name} className="dashboard-employee-row" onClick={(e) => handleEmployeeClick(emp.name, e)}>
-            <div className="dashboard-avatar">{getInitials(emp.name)}</div>
-            <div className="dashboard-employee-info">
-              <div className="dashboard-employee-name">{emp.name}</div>
               <div className="dashboard-progress-bg">
                 <div className={`dashboard-progress-fill ${getProgressClass(emp.loadPercent)}`} style={{ width: `${getBarWidth(emp.loadPercent)}%` }}></div>
               </div>
