@@ -1014,3 +1014,166 @@ body.dark .dashboard-widget-menu {
   .list-row { flex-direction: column; align-items: stretch; }
   .list-detail-btn { align-self: flex-end; }
 }
+/* ===== ВЫЕЗЖАЮЩАЯ ПАНЕЛЬ НАСТРОЕК ===== */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+.drawer-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+.widget-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  height: 100%;
+  background: var(--bg-panel-solid);
+  backdrop-filter: blur(16px);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 28px;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+.widget-drawer {
+  transform: translateX(0);
+}
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+.drawer-header h3 {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drawer-close {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.drawer-section h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.drawer-toggle-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+.drawer-toggle-item span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.2s;
+  border-radius: 22px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: var(--accent);
+}
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+.mode-buttons, .preset-buttons {
+  display: flex;
+  gap: 12px;
+}
+.mode-btn, .preset-btn {
+  flex: 1;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.8rem;
+}
+.mode-btn.active, .preset-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.settings-icon-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+.settings-icon-btn:hover {
+  color: var(--accent);
+}
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+/* Компактный режим для сетки виджетов */
+.dashboard-grid.compact-mode {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 200px));
+  justify-content: center;
+}
+/* В компактном режиме сами виджеты будут переключать внутреннее отображение через CSS-класс */
