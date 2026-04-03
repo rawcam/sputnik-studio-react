@@ -1,11 +1,12 @@
-// uiSlice.ts
 import { createSlice } from '@reduxjs/toolkit'
 
-interface UIState {
+export interface UIState {
+  sidebarCollapsed: boolean
   widgetConfigOpen: boolean
 }
 
 const initialState: UIState = {
+  sidebarCollapsed: false,
   widgetConfigOpen: false,
 }
 
@@ -13,11 +14,17 @@ const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    openWidgetConfig: (state) => { state.widgetConfigOpen = true },
-    closeWidgetConfig: (state) => { state.widgetConfigOpen = false },
-    toggleWidgetConfig: (state) => { state.widgetConfigOpen = !state.widgetConfigOpen },
+    toggleSidebar: (state) => {
+      state.sidebarCollapsed = !state.sidebarCollapsed
+    },
+    openWidgetConfig: (state) => {
+      state.widgetConfigOpen = true
+    },
+    closeWidgetConfig: (state) => {
+      state.widgetConfigOpen = false
+    },
   },
 })
 
-export const { openWidgetConfig, closeWidgetConfig, toggleWidgetConfig } = uiSlice.actions
+export const { toggleSidebar, openWidgetConfig, closeWidgetConfig } = uiSlice.actions
 export default uiSlice.reducer
