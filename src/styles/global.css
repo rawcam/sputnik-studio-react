@@ -1662,3 +1662,29 @@ body.dark .dashboard-widget-menu {
   margin-top: 32px;
   overflow-x: auto;
 }
+/* ===== ПРИНУДИТЕЛЬНЫЕ СТИЛИ ДЛЯ ВЫСОТЫ И СКРОЛЛА ВИДЖЕТОВ ===== */
+.dashboard-widget {
+  height: 360px !important;
+  min-height: 360px !important;
+  max-height: 360px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.dashboard-widget-content {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  padding-right: 4px !important;
+}
+
+/* Отключаем вертикальный скролл для карусели */
+.dashboard-scroll-container {
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+
+/* Для виджета рисков, чтобы чекбоксы не ломали скролл */
+.dashboard-risk-item {
+  flex-wrap: wrap;
+}
