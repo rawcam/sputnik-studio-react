@@ -53,8 +53,8 @@ export const CompanyFinanceWidget: React.FC = () => {
     else if (action === 'export') alert('Экспорт CSV (демо)')
     else if (action === 'settings') alert('Настройки виджета (демо)')
     else if (action === 'hide') {
-      // TODO: скрытие виджета через Redux (dispatch toggleWidget)
-      alert('Скрытие виджета будет работать через панель настроек')
+      // Скрытие через Redux будет реализовано отдельно, пока просто уведомление
+      alert('Используйте панель настроек для скрытия виджета')
     }
   }
 
