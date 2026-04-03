@@ -9,6 +9,7 @@ import {
   WidgetId,
   DisplayMode 
 } from '../../store/widgetsSlice'
+import { setRole } from '../../store/authSlice' // предполагаем, что есть экшен setRole
 
 export const WidgetConfigDrawer: React.FC = () => {
   const dispatch = useDispatch()
@@ -52,8 +53,9 @@ export const WidgetConfigDrawer: React.FC = () => {
     dispatch(setDisplayMode(mode))
   }
 
-  const handlePreset = (role: string) => {
+  const handleRolePreset = (role: string) => {
     dispatch(resetToRolePreset(role))
+    dispatch(setRole(role))  // обновляем роль в authSlice
   }
 
   if (!isOpen) return null
@@ -104,11 +106,16 @@ export const WidgetConfigDrawer: React.FC = () => {
 
         <div className="drawer-section">
           <h4>Быстрые настройки (по ролям)</h4>
-          <div className="preset-buttons">
-            <button className="preset-btn" onClick={() => handlePreset('engineer')}>🔧 Инженер</button>
-            <button className="preset-btn" onClick={() => handlePreset('pm')}>📋 Руководитель</button>
-            <button className="preset-btn" onClick={() => handlePreset('director')}>👑 Директор</button>
-          </div>
+          <select 
+            className="role-select"
+            onChange={(e) => handleRolePreset(e.target.value)}
+            defaultValue=""
+          >
+            <option value="" disabled>Выберите роль</option>
+            <option value="engineer">🔧 Инженер</option>
+            <option value="pm">📋 Руководитель (ГИП)</option>
+            <option value="director">👑 Директор</option>
+          </select>
         </div>
       </div>
     </>
