@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
+import { closeWidgetConfig } from '../../store/uiSlice'
 import { 
   toggleWidget, 
   setDisplayMode, 
@@ -9,34 +10,30 @@ import {
   DisplayMode 
 } from '../../store/widgetsSlice'
 
-interface WidgetConfigDrawerProps {
-  isOpen: boolean
-  onClose: () => void
-}
-
-export const WidgetConfigDrawer: React.FC<WidgetConfigDrawerProps> = ({ isOpen, onClose }) => {
+export const WidgetConfigDrawer: React.FC = () => {
   const dispatch = useDispatch()
+  const isOpen = useSelector((state: RootState) => state.ui.widgetConfigOpen)
   const visibleWidgets = useSelector((state: RootState) => state.widgets.visibleWidgets)
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
   const drawerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose()
+      if (e.key === 'Escape' && isOpen) dispatch(closeWidgetConfig())
     }
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
-  }, [isOpen, onClose])
+  }, [isOpen, dispatch])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (drawerRef.current && !drawerRef.current.contains(e.target as Node) && isOpen) {
-        onClose()
+        dispatch(closeWidgetConfig())
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen, onClose])
+  }, [isOpen, dispatch])
 
   const widgetsList: { id: WidgetId; label: string; icon: string }[] = [
     { id: 'companyFinance', label: 'Финансы компании', icon: 'fa-chart-line' },
@@ -63,11 +60,11 @@ export const WidgetConfigDrawer: React.FC<WidgetConfigDrawerProps> = ({ isOpen, 
 
   return (
     <>
-      <div className="drawer-overlay visible" onClick={onClose}></div>
+      <div className="drawer-overlay visible" onClick={() => dispatch(closeWidgetConfig())}></div>
       <div className="widget-drawer" ref={drawerRef}>
         <div className="drawer-header">
           <h3><i className="fas fa-sliders-h"></i> Настройка виджетов</h3>
-          <button className="drawer-close" onClick={onClose}>×</button>
+          <button className="drawer-close" onClick={() => dispatch(closeWidgetConfig())}>×</button>
         </div>
 
         <div className="drawer-section">
