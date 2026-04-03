@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import { 
@@ -20,7 +20,6 @@ export const WidgetConfigDrawer: React.FC<WidgetConfigDrawerProps> = ({ isOpen, 
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
   const drawerRef = useRef<HTMLDivElement>(null)
 
-  // Закрытие по Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) onClose()
@@ -29,7 +28,6 @@ export const WidgetConfigDrawer: React.FC<WidgetConfigDrawerProps> = ({ isOpen, 
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
 
-  // Закрытие по клику вне
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (drawerRef.current && !drawerRef.current.contains(e.target as Node) && isOpen) {
@@ -65,10 +63,7 @@ export const WidgetConfigDrawer: React.FC<WidgetConfigDrawerProps> = ({ isOpen, 
 
   return (
     <>
-      {/* Оверлей */}
       <div className="drawer-overlay visible" onClick={onClose}></div>
-      
-      {/* Боковая панель */}
       <div className="widget-drawer" ref={drawerRef}>
         <div className="drawer-header">
           <h3><i className="fas fa-sliders-h"></i> Настройка виджетов</h3>
