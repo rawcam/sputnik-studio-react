@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { RootState } from '../../store'
 import { useFinance } from '../../hooks/useFinance'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -7,6 +9,7 @@ export const CompanyFinanceWidget: React.FC = () => {
   const navigate = useNavigate()
   const { totalIncome, totalMargin, totalProfitability, nextCompanyGap } = useFinance()
   const { hasRole } = useAuth()
+  const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -28,12 +31,10 @@ export const CompanyFinanceWidget: React.FC = () => {
     return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
   }
 
-  // Демо-тренды (в реальности брать из истории)
   const trends = {
-    income: { value: 8.2, positive: true },      // +8.2%
-    margin: { value: 5.4, positive: true },       // +5.4%
-    profitability: { value: 1.2, positive: true }, // +1.2 п.п.
-    cashGap: { value: 15.0, positive: false },     // ухудшение на 15%
+    income: { value: 8.2, positive: true },
+    margin: { value: 5.4, positive: true },
+    profitability: { value: 1.2, positive: true },
   }
 
   const handleWidgetClick = (e: React.MouseEvent) => {
@@ -48,23 +49,29 @@ export const CompanyFinanceWidget: React.FC = () => {
 
   const handleMenuAction = (action: string) => {
     setMenuOpen(false)
-    if (action === 'refresh') {
-      alert('Обновление данных (демо)')
-    } else if (action === 'export') {
-      alert('Экспорт в CSV (демо)')
-    } else if (action === 'settings') {
-      alert('Настройки виджета (демо)')
-    } else if (action === 'hide') {
-      const hidden = JSON.parse(localStorage.getItem('hiddenWidgets') || '[]')
-      if (!hidden.includes('companyFinance')) {
-        hidden.push('companyFinance')
-        localStorage.setItem('hiddenWidgets', JSON.stringify(hidden))
-        alert('Виджет скрыт. Обновите страницу.')
-        window.location.reload()
-      }
+    if (action === 'refresh') alert('Обновление данных (демо)')
+    else if (action === 'export') alert('Экспорт CSV (демо)')
+    else if (action === 'settings') alert('Настройки виджета (демо)')
+    else if (action === 'hide') {
+      // TODO: скрытие виджета через Redux (dispatch toggleWidget)
+      alert('Скрытие виджета будет работать через панель настроек')
     }
   }
 
+  // Компактный режим
+  if (displayMode === 'compact') {
+    return (
+      <div className="dashboard-widget compact-widget" onClick={handleWidgetClick}>
+        <div className="compact-widget-content">
+          <i className="fas fa-chart-line"></i>
+          <div className="compact-value">{formatCurrency(totalIncome)}</div>
+          <div className="compact-label">Выручка</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Обычный режим
   return (
     <div className="dashboard-widget" onClick={handleWidgetClick}>
       <div className="dashboard-widget-header">
@@ -86,7 +93,6 @@ export const CompanyFinanceWidget: React.FC = () => {
         </div>
       </div>
       <div className="dashboard-widget-content">
-        {/* Выручка */}
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Выручка (факт)</span>
           <span className="dashboard-finance-value">
@@ -96,7 +102,6 @@ export const CompanyFinanceWidget: React.FC = () => {
             </span>
           </span>
         </div>
-        {/* Маржа */}
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Маржа (факт)</span>
           <span className="dashboard-finance-value">
@@ -106,7 +111,6 @@ export const CompanyFinanceWidget: React.FC = () => {
             </span>
           </span>
         </div>
-        {/* Рентабельность */}
         <div className="dashboard-finance-row">
           <span className="dashboard-finance-label">Рентабельность</span>
           <span className="dashboard-finance-value">
@@ -116,15 +120,12 @@ export const CompanyFinanceWidget: React.FC = () => {
             </span>
           </span>
         </div>
-        {/* Кассовый разрыв (если есть) */}
         {nextCompanyGap && (
           <div className="dashboard-finance-row">
             <span className="dashboard-finance-label">Кассовый разрыв</span>
             <span className="dashboard-finance-value" style={{ color: 'var(--danger)' }}>
               {formatCurrency(nextCompanyGap.deficit)}
-              <span className={`dashboard-trend ${trends.cashGap.positive ? 'up' : 'down'}`}>
-                <i className={`fas fa-arrow-${trends.cashGap.positive ? 'up' : 'down'}`}></i> {Math.abs(trends.cashGap.value)}% к мес. ранее
-              </span>
+              <span className="dashboard-trend down">до {nextCompanyGap.date}</span>
             </span>
           </div>
         )}
