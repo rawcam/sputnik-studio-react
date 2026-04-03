@@ -1865,3 +1865,12 @@ body.dark .dashboard-widget-menu {
     align-self: flex-end;
   }
 }
+/* Приоритетные проекты (срочные) */
+.carousel-card.priority-card {
+  border-left: 4px solid #f5b042;
+  background: linear-gradient(90deg, rgba(245,176,66,0.05) 0%, var(--bg-panel-solid) 100%);
+}
+.list-row.priority-list-row {
+  border-left: 4px solid #f5b042;
+  background: linear-gradient(90deg, rgba(245,176,66,0.05) 0%, var(--bg-panel-solid) 100%);
+}
