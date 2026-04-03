@@ -11,14 +11,13 @@ interface EmployeeLoad {
   roleColor: string
   roleShort: string
   loadPercent: number
-  projectsCount: number
-  serviceVisitsCount: number
 }
 
 export const WorkloadWidget: React.FC = () => {
   const navigate = useNavigate()
   const { hasRole } = useAuth()
   const projects = useSelector((state: RootState) => state.projects.list)
+  const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -88,8 +87,6 @@ export const WorkloadWidget: React.FC = () => {
       roleShort: 'И',
       roleColor: '#2c6e9e',
       loadPercent: calculateEngineerLoad(eng.projectsCount, visits),
-      projectsCount: eng.projectsCount,
-      serviceVisitsCount: visits
     })
   })
 
@@ -101,8 +98,6 @@ export const WorkloadWidget: React.FC = () => {
       roleShort: 'РП',
       roleColor: '#2a7f49',
       loadPercent: calculatePMLoad(pm.projectsCount),
-      projectsCount: pm.projectsCount,
-      serviceVisitsCount: 0
     })
   })
 
@@ -136,17 +131,24 @@ export const WorkloadWidget: React.FC = () => {
   const handleMenuAction = (action: string) => {
     setMenuOpen(false)
     if (action === 'refresh') alert('Обновление данных (демо)')
-    else if (action === 'hide') {
-      const hidden = JSON.parse(localStorage.getItem('hiddenWidgets') || '[]')
-      if (!hidden.includes('workload')) {
-        hidden.push('workload')
-        localStorage.setItem('hiddenWidgets', JSON.stringify(hidden))
-        alert('Виджет скрыт. Обновите страницу.')
-        window.location.reload()
-      }
-    }
+    else if (action === 'hide') alert('Используйте панель настроек для скрытия виджета')
   }
 
+  // Компактный режим
+  if (displayMode === 'compact') {
+    const maxLoad = topEmployees.length ? Math.max(...topEmployees.map(e => e.loadPercent)) : 0
+    return (
+      <div className="dashboard-widget compact-widget" onClick={handleWidgetClick}>
+        <div className="compact-widget-content">
+          <i className="fas fa-users"></i>
+          <div className="compact-value">{Math.round(maxLoad)}%</div>
+          <div className="compact-label">макс. загрузка</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Обычный режим
   return (
     <div className="dashboard-widget" onClick={handleWidgetClick}>
       <div className="dashboard-widget-header">
@@ -168,9 +170,7 @@ export const WorkloadWidget: React.FC = () => {
       <div className="dashboard-widget-content">
         {topEmployees.map(emp => (
           <div key={emp.name} className="dashboard-employee-row" onClick={(e) => handleEmployeeClick(emp.name, e)}>
-            <div className="dashboard-avatar" style={{ backgroundColor: emp.roleColor }}>
-              {emp.roleShort}
-            </div>
+            <div className="dashboard-avatar" style={{ backgroundColor: emp.roleColor }}>{emp.roleShort}</div>
             <div className="dashboard-employee-info">
               <div className="dashboard-employee-name">
                 {emp.name}
