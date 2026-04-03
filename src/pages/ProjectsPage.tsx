@@ -15,6 +15,7 @@ export const ProjectsPage = () => {
   const projects = useSelector((state: RootState) => state.projects.list)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   const getProjectIdFromHash = () => {
@@ -25,14 +26,28 @@ export const ProjectsPage = () => {
 
   useEffect(() => {
     const init = async () => {
+      setLoading(true)
       await initDemoData()
       await loadProjects()
+      setLoading(false)
     }
     init()
   }, [])
 
   useEffect(() => {
+    if (loading) return
+    const projectId = getProjectIdFromHash()
+    if (projectId && projects.length > 0) {
+      const project = projects.find(p => p.id === projectId)
+      setSelectedProject(project || null)
+    } else {
+      setSelectedProject(null)
+    }
+  }, [projects, loading])
+
+  useEffect(() => {
     const handleHashChange = () => {
+      if (loading) return
       const projectId = getProjectIdFromHash()
       if (projectId && projects.length > 0) {
         const project = projects.find(p => p.id === projectId)
@@ -41,10 +56,9 @@ export const ProjectsPage = () => {
         setSelectedProject(null)
       }
     }
-    handleHashChange()
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [projects])
+  }, [projects, loading])
 
   const handleSelectProject = (project: any) => {
     navigate(`/projects?id=${project.id}`, { replace: true })
@@ -58,6 +72,17 @@ export const ProjectsPage = () => {
   const handleCreate = async (projectData: any) => {
     await addProject(projectData)
     setShowCreateModal(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="projects-page">
+        <div className="dashboard-wrapper" style={{ textAlign: 'center', padding: '40px' }}>
+          <i className="fas fa-spinner fa-pulse" style={{ fontSize: '2rem' }}></i>
+          <p>Загрузка проектов...</p>
+        </div>
+      </div>
+    )
   }
 
   if (selectedProject) {
