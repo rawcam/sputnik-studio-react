@@ -1,48 +1,41 @@
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { Link, useLocation } from 'react-router-dom'
-import { toggleTheme } from '../../store/themeSlice'
-import { setRole, UserRole } from '../../store/authSlice'
 import { RootState } from '../../store'
-import './Topbar.css'
+import { toggleTheme } from '../../store/themeSlice'
+import { useAuth } from '../../hooks/useAuth'
 
-export const Topbar = () => {
+interface TopbarProps {
+  onOpenWidgetConfig?: () => void
+}
+
+export const Topbar: React.FC<TopbarProps> = ({ onOpenWidgetConfig }) => {
+  const navigate = useNavigate()
   const dispatch = useDispatch()
-  const location = useLocation()
   const theme = useSelector((state: RootState) => state.theme.mode)
-  const user = useSelector((state: RootState) => state.auth.user)
-
-  const getActiveClass = (path: string) => {
-    return location.pathname === path ? 'active' : ''
-  }
-
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setRole(e.target.value as UserRole))
-  }
+  const { user } = useAuth()
 
   return (
     <div className="topbar">
-      <div className="topbar-logo">
-        <i className="fas fa-satellite-dish"></i> Sputnik Studio
+      <div className="logo" onClick={() => navigate('/dashboard')}>
+        Sputnik Studio
       </div>
-      <div className="topbar-nav">
-        <Link to="/dashboard" className={`topbar-btn ${getActiveClass('/dashboard')}`}>Главная</Link>
-        <Link to="/projects" className={`topbar-btn ${getActiveClass('/projects')}`}>Проекты</Link>
-        <Link to="/calculations" className={`topbar-btn ${getActiveClass('/calculations')}`}>Расчёты</Link>
-        <Link to="/templates" className={`topbar-btn ${getActiveClass('/templates')}`}>Шаблоны</Link>
+      <div className="nav-buttons">
+        <button onClick={() => navigate('/dashboard')}>Главная</button>
+        <button onClick={() => navigate('/projects')}>Проекты</button>
+        <button onClick={() => navigate('/calculations')}>Расчёты</button>
+        <button onClick={() => navigate('/templates')}>Шаблоны</button>
       </div>
       <div className="topbar-actions">
-        <select value={user?.role || 'pm'} onChange={handleRoleChange} className="role-select">
-          <option value="director">Директор</option>
-          <option value="pm">ГИП</option>
-          <option value="engineer">Инженер</option>
-          <option value="designer">Проектировщик</option>
-          <option value="logist">Логист</option>
-        </select>
-        <button onClick={() => dispatch(toggleTheme())} title="Тема">
-          <i className={`fas fa-${theme === 'dark' ? 'moon' : 'sun'}`}></i>
+        <button onClick={() => dispatch(toggleTheme())}>
+          <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
         </button>
-        <button id="topbarSave" title="Сохранить"><i className="fas fa-save"></i></button>
-        <button id="topbarExport" title="Экспорт"><i className="fas fa-file-export"></i></button>
+        {onOpenWidgetConfig && (
+          <button onClick={onOpenWidgetConfig} className="widget-config-btn">
+            <i className="fas fa-sliders-h"></i>
+          </button>
+        )}
+        <span className="role-badge">{user?.role === 'director' ? 'Директор' : user?.role === 'pm' ? 'ГИП' : user?.role}</span>
       </div>
     </div>
   )
