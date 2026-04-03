@@ -71,22 +71,25 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
   return (
     <div>
-      {/* Заголовок и переключатели в одной строке */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ margin: 0 }}>Активные проекты</h3>
-        <div className="projects-view-toggle">
-          <button 
-            className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
-            onClick={() => setViewMode('carousel')}
-          >
-            <i className="fas fa-images"></i> Карусель
-          </button>
-          <button 
-            className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >
-            <i className="fas fa-list"></i> Список
-          </button>
+      {/* Заголовок по центру, кнопки справа (сетка 3 колонки) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', marginBottom: '20px' }}>
+        <div></div> {/* левая пустая колонка для баланса */}
+        <h3 style={{ margin: 0, textAlign: 'center' }}>Активные проекты</h3>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="projects-view-toggle">
+            <button 
+              className={`toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
+              onClick={() => setViewMode('carousel')}
+            >
+              <i className="fas fa-images"></i> Карусель
+            </button>
+            <button 
+              className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+            >
+              <i className="fas fa-list"></i> Список
+            </button>
+          </div>
         </div>
       </div>
 
