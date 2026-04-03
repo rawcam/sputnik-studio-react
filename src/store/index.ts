@@ -31,6 +31,7 @@ export const store = configureStore({
     vc: vcReducer,
     ergo: ergoReducer,
     power: powerReducer,
+    widgets: widgetsReducer,
   },
 })
 
