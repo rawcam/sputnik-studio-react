@@ -15,6 +15,7 @@ interface Risk {
 export const RisksWidget: React.FC = () => {
   const navigate = useNavigate()
   const projects = useSelector((state: RootState) => state.projects.list)
+  const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
   const [menuOpen, setMenuOpen] = useState(false)
   const [hiddenRisks, setHiddenRisks] = useState<string[]>(() => {
     const saved = localStorage.getItem('hiddenRisks')
@@ -34,11 +35,9 @@ export const RisksWidget: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Формирование списка рисков на основе данных проектов
   const allRisks: Risk[] = []
 
   projects.forEach(p => {
-    // Финансовый риск: отрицательная маржа
     const actualMargin = p.actualIncome - p.actualExpenses
     if (actualMargin < 0) {
       allRisks.push({
@@ -49,7 +48,6 @@ export const RisksWidget: React.FC = () => {
         type: 'finance',
       })
     }
-    // Риск сдвига сроков: если плановая дата следующего этапа просрочена
     if (p.nextStatusDate && new Date(p.nextStatusDate) < new Date() && p.status !== 'done') {
       allRisks.push({
         id: `deadline-${p.id}`,
@@ -62,7 +60,6 @@ export const RisksWidget: React.FC = () => {
     }
   })
 
-  // Демо-риск по сети (можно позже получать из трактов)
   if (allRisks.length < 3) {
     allRisks.push({
       id: 'network-1',
@@ -82,11 +79,8 @@ export const RisksWidget: React.FC = () => {
 
   const handleRiskClick = (risk: Risk, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (risk.projectId) {
-      navigate(`/projects?id=${risk.projectId}`)
-    } else {
-      navigate('/network') // если риск сети, ведём на страницу сети
-    }
+    if (risk.projectId) navigate(`/projects?id=${risk.projectId}`)
+    else navigate('/network')
   }
 
   const handleWidgetClick = (e: React.MouseEvent) => {
@@ -101,21 +95,12 @@ export const RisksWidget: React.FC = () => {
 
   const handleMenuAction = (action: string) => {
     setMenuOpen(false)
-    if (action === 'refresh') {
-      alert('Обновление данных (демо)')
-    } else if (action === 'reset') {
+    if (action === 'refresh') alert('Обновление данных (демо)')
+    else if (action === 'reset') {
       localStorage.removeItem('hiddenRisks')
       setHiddenRisks([])
       alert('Скрытые риски восстановлены')
-    } else if (action === 'hide') {
-      const hiddenWidgets = JSON.parse(localStorage.getItem('hiddenWidgets') || '[]')
-      if (!hiddenWidgets.includes('risks')) {
-        hiddenWidgets.push('risks')
-        localStorage.setItem('hiddenWidgets', JSON.stringify(hiddenWidgets))
-        alert('Виджет скрыт. Обновите страницу.')
-        window.location.reload()
-      }
-    }
+    } else if (action === 'hide') alert('Используйте панель настроек для скрытия виджета')
   }
 
   const getRiskIcon = (type: string) => {
@@ -127,6 +112,21 @@ export const RisksWidget: React.FC = () => {
     }
   }
 
+  // Компактный режим
+  if (displayMode === 'compact') {
+    const activeCount = visibleRisks.length
+    return (
+      <div className="dashboard-widget compact-widget" onClick={handleWidgetClick}>
+        <div className="compact-widget-content">
+          <i className="fas fa-exclamation-triangle"></i>
+          <div className="compact-value">{activeCount}</div>
+          <div className="compact-label">риска</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Обычный режим
   return (
     <div className="dashboard-widget" onClick={handleWidgetClick}>
       <div className="dashboard-widget-header">
@@ -147,25 +147,15 @@ export const RisksWidget: React.FC = () => {
         </div>
       </div>
       <div className="dashboard-widget-content">
-        {visibleRisks.length === 0 && (
-          <div className="dashboard-service-item">Нет активных рисков</div>
-        )}
+        {visibleRisks.length === 0 && <div className="dashboard-service-item">Нет активных рисков</div>}
         {visibleRisks.map(risk => (
-          <div 
-            key={risk.id} 
-            className="dashboard-risk-item" 
-            onClick={(e) => handleRiskClick(risk, e)}
-          >
+          <div key={risk.id} className="dashboard-risk-item" onClick={(e) => handleRiskClick(risk, e)}>
             <div className="dashboard-risk-icon">{getRiskIcon(risk.type)}</div>
             <div className="dashboard-risk-text">
               {risk.projectName && <strong>{risk.projectName}</strong>} {risk.message}
             </div>
             {risk.date && <div className="dashboard-risk-date">{risk.date}</div>}
-            <input 
-              type="checkbox" 
-              className="dashboard-risk-check" 
-              onClick={(e) => handleRiskCheck(risk.id, e)}
-            />
+            <input type="checkbox" className="dashboard-risk-check" onClick={(e) => handleRiskCheck(risk.id, e)} />
           </div>
         ))}
       </div>
