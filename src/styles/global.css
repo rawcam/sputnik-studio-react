@@ -1597,3 +1597,43 @@ body.dark .dashboard-widget-menu {
   padding: 20px;
   color: var(--text-muted);
 }
+/* Риски – единый стиль с другими виджетами */
+.dashboard-risk-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.dashboard-risk-item:hover {
+  background: var(--accent-light);
+  margin-left: -6px;
+  padding-left: 6px;
+  border-radius: 12px;
+}
+.dashboard-risk-item:hover .dashboard-risk-text,
+.dashboard-risk-item:hover .dashboard-risk-date {
+  color: var(--accent);
+  font-weight: 500;
+}
+.dashboard-risk-icon {
+  width: 24px;
+  color: var(--warning);
+}
+.dashboard-risk-text {
+  flex: 1;
+}
+.dashboard-risk-date {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.dashboard-risk-check {
+  accent-color: var(--accent);
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
