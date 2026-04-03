@@ -3,13 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../../store'
 import { toggleTheme } from '../../store/themeSlice'
+import { openWidgetConfig } from '../../store/uiSlice'
 import { useAuth } from '../../hooks/useAuth'
 
-interface TopbarProps {
-  onOpenWidgetConfig?: () => void
-}
-
-export const Topbar: React.FC<TopbarProps> = ({ onOpenWidgetConfig }) => {
+export const Topbar: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const theme = useSelector((state: RootState) => state.theme.mode)
@@ -30,11 +27,9 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenWidgetConfig }) => {
         <button onClick={() => dispatch(toggleTheme())}>
           <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
         </button>
-        {onOpenWidgetConfig && (
-          <button onClick={onOpenWidgetConfig} className="widget-config-btn">
-            <i className="fas fa-sliders-h"></i>
-          </button>
-        )}
+        <button onClick={() => dispatch(openWidgetConfig())} className="widget-config-btn">
+          <i className="fas fa-sliders-h"></i>
+        </button>
         <span className="role-badge">{user?.role === 'director' ? 'Директор' : user?.role === 'pm' ? 'ГИП' : user?.role}</span>
       </div>
     </div>
