@@ -18,6 +18,12 @@ export const ProjectsPage = () => {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
+  // Режим отображения (grid/list) с сохранением в localStorage
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    const saved = localStorage.getItem('projectsViewMode')
+    return saved === 'list' ? 'list' : 'grid'
+  })
+
   // Фильтры и сортировка
   const [sortBy, setSortBy] = useState<'name' | 'budget' | 'margin' | 'date' | 'progress'>('name')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -63,27 +69,28 @@ export const ProjectsPage = () => {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [projects, loading])
 
+  // Сохраняем режим отображения
+  useEffect(() => {
+    localStorage.setItem('projectsViewMode', viewMode)
+  }, [viewMode])
+
   const filteredAndSortedProjects = useMemo(() => {
     let filtered = [...projects]
 
-    // Фильтр по статусу
     if (statusFilter !== 'all') {
       filtered = filtered.filter(p => p.status === statusFilter)
     }
-    // Фильтр по приоритету
     if (priorityFilter === 'priority') {
       filtered = filtered.filter(p => p.priority === true)
     } else if (priorityFilter === 'normal') {
       filtered = filtered.filter(p => p.priority === false)
     }
 
-    // Сортировка
     if (sortBy === 'name') {
       filtered.sort((a, b) => a.name.localeCompare(b.name))
     } else if (sortBy === 'budget') {
       filtered.sort((a, b) => b.contractAmount - a.contractAmount)
     } else if (sortBy === 'margin') {
-      // Для сортировки по марже нужно вычислить фактическую маржу
       filtered.sort((a, b) => (b.actualIncome - b.actualExpenses) - (a.actualIncome - a.actualExpenses))
     } else if (sortBy === 'date') {
       filtered.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
@@ -135,11 +142,27 @@ export const ProjectsPage = () => {
       <div className="dashboard-wrapper">
         <div className="projects-header">
           <h2>УПРАВЛЕНИЕ ПРОЕКТАМИ</h2>
-          {(hasRole('director') || hasRole('pm')) && (
-            <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
-              <i className="fas fa-plus"></i> Новый проект
-            </button>
-          )}
+          <div className="header-actions">
+            <div className="view-toggle">
+              <button 
+                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+              >
+                <i className="fas fa-th"></i> Сетка
+              </button>
+              <button 
+                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+              >
+                <i className="fas fa-list"></i> Список
+              </button>
+            </div>
+            {(hasRole('director') || hasRole('pm')) && (
+              <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+                <i className="fas fa-plus"></i> Новый проект
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Панель фильтров и сортировки */}
@@ -176,7 +199,11 @@ export const ProjectsPage = () => {
           <button className="reset-btn" onClick={resetFilters}>Сбросить</button>
         </div>
 
-        <ProjectList projects={filteredAndSortedProjects} onSelectProject={handleSelectProject} />
+        <ProjectList 
+          projects={filteredAndSortedProjects} 
+          onSelectProject={handleSelectProject}
+          viewMode={viewMode}
+        />
       </div>
       <CreateProjectModal
         isOpen={showCreateModal}
