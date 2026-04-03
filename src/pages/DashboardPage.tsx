@@ -25,10 +25,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="dashboard-wrapper">
-      <div className="dashboard-header">
-        <h2>ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
-        {/* Кнопка вызова панели перенесена в Topbar, но можно оставить и здесь для удобства */}
-      </div>
+      {/* Заголовок "Панель управления" удалён по согласованию */}
 
       <div className={`dashboard-grid ${displayMode === 'compact' ? 'compact-mode' : ''}`}>
         {visibleWidgets.includes('companyFinance') && <CompanyFinanceWidget />}
@@ -39,8 +36,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {visibleWidgets.includes('carousel') && (
-        <div className="widget-section">
-          <h3>Активные проекты</h3>
+        <div className="widget-section" style={{ marginTop: '32px' }}>
           <ProjectsCarousel projects={activeProjects} onSelectProject={handleSelectProject} />
         </div>
       )}
