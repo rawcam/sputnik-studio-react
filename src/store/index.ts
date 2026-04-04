@@ -10,6 +10,12 @@ import companyExpensesReducer from './companyExpensesSlice'
 import serviceVisitsReducer from './serviceVisitsSlice'
 import widgetsReducer from './widgetsSlice'
 import specificationReducer from './specificationSlice'
+// Импорты слайсов калькуляторов
+import ledReducer from './ledSlice'
+import soundReducer from './soundSlice'
+import vcReducer from './vcSlice'
+import ergoReducer from './ergoSlice'
+import powerReducer from './powerSlice'
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +30,11 @@ export const store = configureStore({
     serviceVisits: serviceVisitsReducer,
     widgets: widgetsReducer,
     specification: specificationReducer,
+    led: ledReducer,
+    sound: soundReducer,
+    vc: vcReducer,
+    ergo: ergoReducer,
+    power: powerReducer,
   },
 })
 
