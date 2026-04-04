@@ -37,43 +37,29 @@ export const CalculationsPage: React.FC = () => {
 
   // Режим просмотра всех трактов
   if (viewMode === 'all') {
-    return (
-      <div className="main-content">
-        <AllTractsView />
-      </div>
-    )
+    return <AllTractsView />
   }
 
   // Режим калькулятора
   if (viewMode === 'calculator' && activeCalculator) {
-    return (
-      <div className="main-content">
-        {renderCalculator()}
-      </div>
-    )
+    return <>{renderCalculator()}</>
   }
 
   // Режим одного тракта
   if (viewMode === 'single' && activeTract) {
-    return (
-      <div className="main-content">
-        <ActiveTract />
-      </div>
-    )
+    return <ActiveTract />
   }
 
-  // Пустое состояние (информационное сообщение)
+  // Пустое состояние
   return (
-    <div className="main-content">
-      <div className="empty-calculations">
-        <i className="fas fa-calculator"></i>
-        <h3>Начните работу</h3>
-        <p>
-          Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
-          или создайте тракт для построения AV‑цепочки.
-        </p>
-        <small>Все расчёты сохраняются автоматически.</small>
-      </div>
+    <div className="empty-calculations">
+      <i className="fas fa-calculator"></i>
+      <h3>Начните работу</h3>
+      <p>
+        Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
+        или создайте тракт для построения AV‑цепочки.
+      </p>
+      <small>Все расчёты сохраняются автоматически.</small>
     </div>
   )
 }
