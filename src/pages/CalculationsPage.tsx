@@ -2,7 +2,6 @@ import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '../store'
 import { setViewMode, setActiveCalculator } from '../store/tractsSlice'
-import { Sidebar } from '../components/layout/Sidebar'
 import { ActiveTract } from '../features/tracts/ActiveTract'
 import { LedCalculator } from '../features/led/LedCalculator'
 import { SoundCalculator } from '../features/sound/SoundCalculator'
@@ -37,39 +36,31 @@ export const CalculationsPage: React.FC = () => {
 
   if (viewMode === 'calculator' && activeCalculator) {
     return (
-      <div className="calculations-layout">
-        <Sidebar />
-        <div className="main-content">
-          {renderCalculator()}
-        </div>
+      <div className="main-content">
+        {renderCalculator()}
       </div>
     )
   }
 
   if (viewMode === 'single' && activeTract) {
     return (
-      <div className="calculations-layout">
-        <Sidebar />
-        <div className="main-content">
-          <ActiveTract />
-        </div>
+      <div className="main-content">
+        <ActiveTract />
       </div>
     )
   }
 
+  // Пустое состояние (исправленный текст)
   return (
-    <div className="calculations-layout">
-      <Sidebar />
-      <div className="main-content">
-        <div className="empty-calculations">
-          <i className="fas fa-calculator"></i>
-          <h3>Начните работу</h3>
-          <p>
-            Выберите калькулятор из раздела <strong>«КАЛЬКУЛЯТОРЫ»</strong> в сайдбаре,<br />
-            или создайте тракт для построения AV‑цепочки.
-          </p>
-          <small>Все расчёты сохраняются автоматически.</small>
-        </div>
+    <div className="main-content">
+      <div className="empty-calculations">
+        <i className="fas fa-calculator"></i>
+        <h3>Начните работу</h3>
+        <p>
+          Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
+          или создайте тракт для построения AV‑цепочки.
+        </p>
+        <small>Все расчёты сохраняются автоматически.</small>
       </div>
     </div>
   )
