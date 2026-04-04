@@ -1717,3 +1717,18 @@ input:checked + .slider:before {
   max-width: 500px;
   margin: 0 auto;
 }
+/* ===== ИСПРАВЛЕНИЕ ОТСТУПА ВИДЖЕТОВ НА ГЛАВНОЙ ===== */
+.dashboard-grid {
+  margin-top: 20px;
+}
+
+/* ===== ЦЕНТРИРОВАНИЕ ПУСТОГО СОСТОЯНИЯ В РАСЧЁТАХ ===== */
+.main-content {
+  display: flex;
+  flex-direction: column;
+}
+.empty-calculations {
+  margin: auto;
+  max-width: 600px;
+  width: 100%;
+}
