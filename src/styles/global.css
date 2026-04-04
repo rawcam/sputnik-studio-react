@@ -1732,3 +1732,18 @@ input:checked + .slider:before {
   max-width: 600px;
   width: 100%;
 }
+/* Убираем двойной скролл в расчётах */
+.calculations-layout {
+  overflow-y: auto;
+  height: calc(100vh - 64px); /* 64px – высота топбара */
+}
+.main-content {
+  overflow-y: visible;
+  min-height: auto;
+}
+/* Центрируем пустое состояние */
+.empty-calculations {
+  margin: auto;
+  max-width: 600px;
+  width: 100%;
+}
