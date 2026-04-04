@@ -1719,7 +1719,7 @@ input:checked + .slider:before {
   align-items: center;
 }
 .empty-calculations {
-  margin: 0 auto;
+ margin: auto 0 !important;
   max-width: 600px;
   width: 100%;
 }
