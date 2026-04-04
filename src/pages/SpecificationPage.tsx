@@ -4,7 +4,6 @@ import { RootState } from '../store'
 import { SpecificationTable } from '../components/specification/SpecificationTable'
 import { resetSpecification } from '../store/specificationSlice'
 import * as XLSX from 'xlsx'
-import './SpecificationPage.css'
 
 export const SpecificationPage: React.FC = () => {
   const dispatch = useDispatch()
