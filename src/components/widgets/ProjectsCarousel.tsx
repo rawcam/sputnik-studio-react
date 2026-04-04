@@ -29,7 +29,15 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
     else navigate(`/projects?id=${project.id}`)
   }
 
-  // Функция scroll удалена, так как не используется. Если нужны стрелки, добавьте их позже.
+  const scroll = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = 360
+      carouselRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
@@ -83,6 +91,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
 
       {viewMode === 'carousel' && (
         <div className="carousel-wrapper">
+          <button className="carousel-arrow prev" onClick={() => scroll('left')}>‹</button>
           <div className="carousel-container" ref={carouselRef}>
             <div className="carousel-track">
               {sortedProjects.map(project => (
@@ -114,7 +123,7 @@ export const ProjectsCarousel: React.FC<ProjectsCarouselProps> = ({ projects, on
               ))}
             </div>
           </div>
-          {/* Стрелки удалены, так как не использовались. При необходимости можно добавить позже */}
+          <button className="carousel-arrow next" onClick={() => scroll('right')}>›</button>
         </div>
       )}
 
