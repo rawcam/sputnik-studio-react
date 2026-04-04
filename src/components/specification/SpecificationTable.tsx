@@ -5,7 +5,6 @@ import {
   updateRow,
   addRow,
   deleteRow,
-  addSection,
   toggleSectionCollapse,
   updateSectionName,
   SpecRow
@@ -40,7 +39,6 @@ export const SpecificationTable: React.FC = () => {
         <tbody>
           {sections.map((section, secIdx) => {
             const sectionRows = []
-            // Строка раздела
             sectionRows.push(
               <tr key={`section-${secIdx}`} className="section-row">
                 <td colSpan={16} onClick={() => dispatch(toggleSectionCollapse({ sectionIdx: secIdx }))}>
@@ -57,7 +55,6 @@ export const SpecificationTable: React.FC = () => {
               </tr>
             )
             if (!section.collapsed) {
-              // Строки товаров
               section.rows.forEach(row => {
                 const rowNumber = globalRowNumber++
                 sectionRows.push(
@@ -81,7 +78,6 @@ export const SpecificationTable: React.FC = () => {
                   </tr>
                 )
               })
-              // Кнопка добавления строки
               sectionRows.push(
                 <tr key={`add-${secIdx}`}>
                   <td colSpan={16}>
@@ -101,7 +97,6 @@ export const SpecificationTable: React.FC = () => {
   )
 }
 
-// Компонент редактируемой ячейки
 const EditableCell: React.FC<{ value: string | number; onChange: (val: string) => void; type?: 'text' | 'number' }> = ({ value, onChange, type = 'text' }) => {
   return (
     <input
