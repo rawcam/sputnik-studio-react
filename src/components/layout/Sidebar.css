@@ -2,6 +2,9 @@
   --sidebar-width: 300px;
   --sidebar-collapsed-width: 80px;
 }
+html, body, #root, .app, .app-layout {
+  height: 100%;
+}
 
 .sidebar {
   width: var(--sidebar-width);
@@ -11,7 +14,7 @@
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
   z-index: 10;
   transition: width 0.2s ease;
