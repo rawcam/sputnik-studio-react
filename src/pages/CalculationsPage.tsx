@@ -16,6 +16,7 @@ export const CalculationsPage: React.FC = () => {
   const activeCalculator = useSelector((state: RootState) => state.tracts.activeCalculator)
   const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId)
   const tracts = useSelector((state: RootState) => state.tracts.tracts)
+  const sidebarCollapsed = useSelector((state: RootState) => state.ui.sidebarCollapsed)
 
   const activeTract = tracts.find(t => t.id === activeTractId)
 
@@ -39,16 +40,32 @@ export const CalculationsPage: React.FC = () => {
   if (viewMode === 'calculator' && activeCalculator) return <>{renderCalculator()}</>
   if (viewMode === 'single' && activeTract) return <ActiveTract />
 
-  // Пустое состояние – только блок с текстом, без внешних обёрток
+  // Пустое состояние – центрирование с учётом ширины сайдбара
+  const sidebarWidth = sidebarCollapsed ? 80 : 300
+
   return (
-    <div className="empty-calculations">
-      <i className="fas fa-calculator"></i>
-      <h3>Начните работу</h3>
-      <p>
-        Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
-        или создайте тракт для построения AV‑цепочки.
-      </p>
-      <small>Все расчёты сохраняются автоматически.</small>
+    <div
+      style={{
+        position: 'fixed',
+        top: '64px',          // высота топбара (если другая – подберите)
+        left: `${sidebarWidth}px`,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'auto',
+      }}
+    >
+      <div className="empty-calculations">
+        <i className="fas fa-calculator"></i>
+        <h3>Начните работу</h3>
+        <p>
+          Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
+          или создайте тракт для построения AV‑цепочки.
+        </p>
+        <small>Все расчёты сохраняются автоматически.</small>
+      </div>
     </div>
   )
 }
