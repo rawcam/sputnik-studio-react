@@ -1,25 +1,14 @@
+import React from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Topbar } from './components/layout/Topbar'
 import { Sidebar } from './components/layout/Sidebar'
 import { DashboardPage } from './pages/DashboardPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CalculationsPage } from './pages/CalculationsPage'
-import { TemplatesPage } from './pages/TemplatesPage'
-import { useProjectsDb } from './hooks/useProjectsDb'
-import { useEffect } from 'react'
-import './styles/App.css'
+import { SpecificationPage } from './pages/SpecificationPage'
+import './styles/global.css'
 
 function App() {
-  const { initDemoData, loadProjects } = useProjectsDb()
-
-  useEffect(() => {
-    const init = async () => {
-      await initDemoData()
-      await loadProjects()
-    }
-    init()
-  }, [])
-
   return (
     <HashRouter>
       <div className="app">
@@ -32,7 +21,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/calculations" element={<CalculationsPage />} />
-              <Route path="/templates" element={<TemplatesPage />} />
+              <Route path="/templates" element={<SpecificationPage />} />
             </Routes>
           </main>
         </div>
