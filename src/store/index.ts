@@ -9,7 +9,6 @@ import authReducer from './authSlice'
 import companyExpensesReducer from './companyExpensesSlice'
 import serviceVisitsReducer from './serviceVisitsSlice'
 import widgetsReducer from './widgetsSlice'
-import specificationReducer from './specificationSlice'
 import ledReducer from './ledSlice'
 import soundReducer from './soundSlice'
 import vcReducer from './vcSlice'
@@ -28,7 +27,6 @@ export const store = configureStore({
     companyExpenses: companyExpensesReducer,
     serviceVisits: serviceVisitsReducer,
     widgets: widgetsReducer,
-    specification: specificationReducer,
     led: ledReducer,
     sound: soundReducer,
     vc: vcReducer,
