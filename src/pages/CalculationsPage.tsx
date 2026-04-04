@@ -19,18 +19,22 @@ export const CalculationsPage: React.FC = () => {
 
   const activeTract = tracts.find(t => t.id === activeTractId)
 
+  const handleBackFromCalculator = () => {
+    dispatch(setViewMode('single'))
+    dispatch(setActiveCalculator(null))
+  }
+
   const renderCalculator = () => {
     switch (activeCalculator) {
-      case 'led': return <LedCalculator />
-      case 'sound': return <SoundCalculator />
-      case 'vc': return <VcCalculator />
-      case 'ergo': return <ErgoCalculator />
-      case 'power': return <PowerCalculator />
+      case 'led': return <LedCalculator onBack={handleBackFromCalculator} />
+      case 'sound': return <SoundCalculator onBack={handleBackFromCalculator} />
+      case 'vc': return <VcCalculator onBack={handleBackFromCalculator} />
+      case 'ergo': return <ErgoCalculator onBack={handleBackFromCalculator} />
+      case 'power': return <PowerCalculator onBack={handleBackFromCalculator} />
       default: return null
     }
   }
 
-  // Если выбран калькулятор – показываем его
   if (viewMode === 'calculator' && activeCalculator) {
     return (
       <div className="calculations-layout">
@@ -42,7 +46,6 @@ export const CalculationsPage: React.FC = () => {
     )
   }
 
-  // Если режим одного тракта и есть активный тракт
   if (viewMode === 'single' && activeTract) {
     return (
       <div className="calculations-layout">
@@ -54,7 +57,6 @@ export const CalculationsPage: React.FC = () => {
     )
   }
 
-  // Ничего не выбрано – показываем информационное сообщение
   return (
     <div className="calculations-layout">
       <Sidebar />
