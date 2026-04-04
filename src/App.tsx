@@ -1,4 +1,3 @@
-import React from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Topbar } from './components/layout/Topbar'
 import { Sidebar } from './components/layout/Sidebar'
