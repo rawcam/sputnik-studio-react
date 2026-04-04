@@ -16,7 +16,6 @@ export const CalculationsPage: React.FC = () => {
   const activeCalculator = useSelector((state: RootState) => state.tracts.activeCalculator)
   const activeTractId = useSelector((state: RootState) => state.tracts.activeTractId)
   const tracts = useSelector((state: RootState) => state.tracts.tracts)
-  const sidebarCollapsed = useSelector((state: RootState) => state.ui.sidebarCollapsed)
 
   const activeTract = tracts.find(t => t.id === activeTractId)
 
@@ -40,23 +39,17 @@ export const CalculationsPage: React.FC = () => {
   if (viewMode === 'calculator' && activeCalculator) return <>{renderCalculator()}</>
   if (viewMode === 'single' && activeTract) return <ActiveTract />
 
-  // Пустое состояние – центрирование с учётом ширины сайдбара
-  const sidebarWidth = sidebarCollapsed ? 80 : 300
-
+  // Пустое состояние – простой центрирующий блок
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '64px',          // высота топбара (если другая – подберите)
-        left: `${sidebarWidth}px`,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'auto',
-      }}
-    >
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 'calc(100vh - 64px)', // если топбар выше/ниже – измените 64
+      width: '100%',
+      padding: '20px',
+      boxSizing: 'border-box',
+    }}>
       <div className="empty-calculations">
         <i className="fas fa-calculator"></i>
         <h3>Начните работу</h3>
