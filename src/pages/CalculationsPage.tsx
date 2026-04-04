@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '../store'
 import { setViewMode, setActiveCalculator } from '../store/tractsSlice'
 import { ActiveTract } from '../features/tracts/ActiveTract'
+import { AllTractsView } from '../features/tracts/AllTractsView'
 import { LedCalculator } from '../features/led/LedCalculator'
 import { SoundCalculator } from '../features/sound/SoundCalculator'
 import { VcCalculator } from '../features/vc/VcCalculator'
@@ -34,6 +35,16 @@ export const CalculationsPage: React.FC = () => {
     }
   }
 
+  // Режим просмотра всех трактов
+  if (viewMode === 'all') {
+    return (
+      <div className="main-content">
+        <AllTractsView />
+      </div>
+    )
+  }
+
+  // Режим калькулятора
   if (viewMode === 'calculator' && activeCalculator) {
     return (
       <div className="main-content">
@@ -42,6 +53,7 @@ export const CalculationsPage: React.FC = () => {
     )
   }
 
+  // Режим одного тракта
   if (viewMode === 'single' && activeTract) {
     return (
       <div className="main-content">
@@ -50,7 +62,7 @@ export const CalculationsPage: React.FC = () => {
     )
   }
 
-  // Пустое состояние (исправленный текст)
+  // Пустое состояние
   return (
     <div className="main-content">
       <div className="empty-calculations">
