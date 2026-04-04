@@ -1651,99 +1651,19 @@ input:checked + .slider:before {
     white-space: normal;
   }
 }
-.calculations-layout {
-  display: flex;
-  min-height: calc(100vh - 64px);
-}
-.sidebar {
-  width: 300px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-right: 1px solid var(--border-light);
-  padding: 20px 16px;
-  overflow-y: auto;
-}
-.sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.sidebar-header h3 {
-  font-size: 1rem;
-  font-weight: 500;
-}
-.accordion {
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border-light);
-}
-.accordion-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-}
-.accordion-content {
-  padding-bottom: 16px;
+/* ========== РАЗДЕЛ «РАСЧЁТЫ» (пустое состояние центрировано) ========== */
+.main-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: center;
+  align-items: center;
 }
 .empty-calculations {
-  text-align: center;
-  padding: 60px 20px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-radius: 32px;
-  border: 1px solid var(--border-light);
-  margin-top: 20px;
-}
-.empty-calculations i {
-  font-size: 3rem;
-  color: var(--accent);
-  margin-bottom: 16px;
-}
-.empty-calculations h3 {
-  margin-bottom: 12px;
-}
-.empty-calculations p {
-  color: var(--text-secondary);
-  max-width: 500px;
+  max-width: 600px;
+  width: 100%;
   margin: 0 auto;
 }
 /* ===== ИСПРАВЛЕНИЕ ОТСТУПА ВИДЖЕТОВ НА ГЛАВНОЙ ===== */
 .dashboard-grid {
   margin-top: 20px;
-}
-
-/* ===== ЦЕНТРИРОВАНИЕ ПУСТОГО СОСТОЯНИЯ В РАСЧЁТАХ ===== */
-.main-content {
-  display: flex;
-  flex-direction: column;
-}
-.empty-calculations {
-  margin: auto;
-  max-width: 600px;
-  width: 100%;
-}
-/* Убираем двойной скролл в расчётах */
-.calculations-layout {
-  overflow-y: auto;
-  height: calc(100vh - 64px); /* 64px – высота топбара */
-}
-.main-content {
-  overflow-y: visible;
-  min-height: auto;
-}
-/* Центрируем пустое состояние */
-.empty-calculations {
-  margin: auto;
-  max-width: 600px;
-  width: 100%;
 }
