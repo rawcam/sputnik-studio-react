@@ -39,26 +39,16 @@ export const CalculationsPage: React.FC = () => {
   if (viewMode === 'calculator' && activeCalculator) return <>{renderCalculator()}</>
   if (viewMode === 'single' && activeTract) return <ActiveTract />
 
-  // Пустое состояние – простой центрирующий блок
+  // Пустое состояние – без лишних обёрток
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 'calc(100vh - 64px)', // если топбар выше/ниже – измените 64
-      width: '100%',
-      padding: '20px',
-      boxSizing: 'border-box',
-    }}>
-      <div className="empty-calculations">
-        <i className="fas fa-calculator"></i>
-        <h3>Начните работу</h3>
-        <p>
-          Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
-          или создайте тракт для построения AV‑цепочки.
-        </p>
-        <small>Все расчёты сохраняются автоматически.</small>
-      </div>
+    <div className="empty-calculations">
+      <i className="fas fa-calculator"></i>
+      <h3>Начните работу</h3>
+      <p>
+        Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
+        или создайте тракт для построения AV‑цепочки.
+      </p>
+      <small>Все расчёты сохраняются автоматически.</small>
     </div>
   )
 }
