@@ -1,10 +1,11 @@
+import React from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Topbar } from './components/layout/Topbar'
 import { Sidebar } from './components/layout/Sidebar'
 import { DashboardPage } from './pages/DashboardPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CalculationsPage } from './pages/CalculationsPage'
-import { SpecificationPage } from './pages/SpecificationPage'
+import { TemplatesPage } from './pages/TemplatesPage'
 import './styles/global.css'
 
 function App() {
@@ -20,7 +21,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/calculations" element={<CalculationsPage />} />
-              <Route path="/templates" element={<SpecificationPage />} />
+              <Route path="/templates" element={<TemplatesPage />} />
             </Routes>
           </main>
         </div>
