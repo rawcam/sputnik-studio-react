@@ -565,7 +565,7 @@ input:focus, select:focus, textarea:focus {
 }
 .device-card .collapse-device:hover { color: var(--accent); }
 
-/* ========== НОВЫЙ ДИЗАЙН ДАШБОРДА (компактный, без дублей) ========== */
+/* ========== НОВЫЙ ДИЗАЙН ДАШБОРДА ========== */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -1212,171 +1212,7 @@ input:checked + .slider:before {
   color: var(--text-muted);
   margin-top: 4px;
 }
-
-/* Сетка в компактном режиме */
-.dashboard-grid.compact-mode {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 200px));
-  justify-content: center;
-}
-
-/* Стили выдвижной панели (если ещё нет) */
-.drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 999;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
-}
-.drawer-overlay.visible {
-  opacity: 1;
-  visibility: visible;
-}
-.widget-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 380px;
-  height: 100%;
-  background: var(--bg-panel-solid);
-  backdrop-filter: blur(16px);
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-  gap: 28px;
-  overflow-y: auto;
-  transform: translateX(100%);
-  transition: transform 0.25s ease;
-}
-.widget-drawer {
-  transform: translateX(0);
-}
-.drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-light);
-}
-.drawer-header h3 {
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.drawer-close {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  cursor: pointer;
-  color: var(--text-muted);
-}
-.drawer-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.drawer-section h4 {
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-.drawer-toggle-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-}
-.drawer-toggle-item span {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
-}
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 22px;
-}
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: 0.2s;
-  border-radius: 22px;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.2s;
-  border-radius: 50%;
-}
-input:checked + .slider {
-  background-color: var(--accent);
-}
-input:checked + .slider:before {
-  transform: translateX(22px);
-}
-.mode-buttons, .preset-buttons {
-  display: flex;
-  gap: 12px;
-}
-.mode-btn, .preset-btn {
-  flex: 1;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-light);
-  border-radius: 40px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 0.8rem;
-}
-.mode-btn.active, .preset-btn:hover {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-.settings-icon-btn {
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: var(--transition);
-}
-.settings-icon-btn:hover {
-  color: var(--accent);
-}
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-/* ========== ТОПБАР (восстановление стилей) ========== */
+/* ========== ТОПБАР ========== */
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -1389,7 +1225,6 @@ input:checked + .slider:before {
   top: 0;
   z-index: 100;
 }
-
 .logo {
   font-weight: 700;
   font-size: 1.2rem;
@@ -1399,12 +1234,10 @@ input:checked + .slider:before {
   -webkit-background-clip: text;
   color: transparent;
 }
-
 .nav-buttons {
   display: flex;
   gap: 20px;
 }
-
 .nav-buttons button {
   background: none;
   border: none;
@@ -1416,18 +1249,15 @@ input:checked + .slider:before {
   padding: 6px 12px;
   border-radius: 40px;
 }
-
 .nav-buttons button:hover {
   color: var(--accent);
   background: var(--accent-light);
 }
-
 .topbar-actions {
   display: flex;
   align-items: center;
   gap: 16px;
 }
-
 .topbar-actions button {
   background: none;
   border: none;
@@ -1438,12 +1268,10 @@ input:checked + .slider:before {
   padding: 6px;
   border-radius: 40px;
 }
-
 .topbar-actions button:hover {
   color: var(--accent);
   background: var(--accent-light);
 }
-
 .role-badge {
   font-size: 0.75rem;
   padding: 4px 12px;
@@ -1452,385 +1280,10 @@ input:checked + .slider:before {
   color: var(--accent);
   font-weight: 500;
 }
-/* Активная кнопка в топбаре */
 .nav-buttons button.active {
   color: var(--accent);
   background: var(--accent-light);
   font-weight: 600;
-}
-
-/* Центрирование кнопок режима (обычный/компактный) */
-.mode-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* Выпадающий список для ролей */
-.role-select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 40px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-panel);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: var(--transition);
-}
-.role-select:hover {
-  border-color: var(--accent);
-}
-.role-select:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-glow);
-}
-
-/* Статус проекта в режиме списка */
-.list-status {
-  display: inline-block;
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  color: white;
-  margin-left: 10px;
-}
-/* ===== СЕТКА ПРОЕКТОВ ===== */
-.projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 24px;
-  margin-top: 20px;
-}
-
-/* Стиль для shortId в карточке проекта (мелкий серый) */
-.project-shortid {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  margin-right: 6px;
-}
-
-/* Заголовок страницы проектов (если хотите сохранить, но стилизовать как на дашборде) */
-.projects-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.projects-header h2 {
-  font-size: 1.4rem;
-  font-weight: 500;
-  background: linear-gradient(135deg, var(--text-primary), var(--accent));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-/* ===== СТИЛИ ДЛЯ СТРАНИЦЫ ПРОЕКТОВ (фильтры, сетка) ===== */
-.projects-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.projects-header h2 {
-  font-size: 1.4rem;
-  font-weight: 500;
-  background: linear-gradient(135deg, var(--text-primary), var(--accent));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-
-.filter-bar {
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  border: 1px solid var(--border-light);
-  padding: 16px 24px;
-  margin-bottom: 28px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 20px;
-}
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.filter-group label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
-}
-.filter-group select, .reset-btn {
-  background: var(--bg-panel-solid);
-  border: 1px solid var(--border-light);
-  border-radius: 40px;
-  padding: 6px 14px;
-  font-size: 0.8rem;
-  color: var(--text-primary);
-  font-family: inherit;
-  cursor: pointer;
-}
-.reset-btn {
-  background: transparent;
-}
-.reset-btn:hover {
-  background: var(--accent-light);
-  border-color: var(--accent);
-}
-
-.projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 24px;
-  margin-top: 20px;
-}
-
-.project-shortid {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  margin-right: 4px;
-}
-/* Центрирование заголовка и переключатель */
-.projects-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-.projects-header h2 {
-  font-size: 1.8rem;
-  font-weight: 500;
-  background: linear-gradient(135deg, var(--text-primary), var(--accent));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  margin-bottom: 16px;
-}
-.header-actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-.view-toggle {
-  display: flex;
-  background: var(--bg-panel-solid);
-  border-radius: 40px;
-  padding: 4px;
-  border: 1px solid var(--border-light);
-}
-.view-btn {
-  background: transparent;
-  border: none;
-  padding: 6px 18px;
-  border-radius: 40px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: var(--transition);
-  color: var(--text-secondary);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.view-btn.active {
-  background: var(--accent);
-  color: white;
-}
-
-/* Стили для списка (ProjectRow) */
-.projects-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.project-row {
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-radius: 20px;
-  padding: 12px 18px;
-  cursor: pointer;
-  transition: var(--transition);
-  border: 1px solid var(--border-light);
-}
-.project-row:hover {
-  background: var(--accent-light);
-  transform: translateX(4px);
-  border-color: var(--accent);
-}
-.priority-row {
-  border-left: 4px solid #f5b042;
-}
-.project-row-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.project-row-name {
-  font-weight: 500;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 200px;
-}
-.project-row-status {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  color: white;
-}
-.project-row-stats {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  display: flex;
-  gap: 16px;
-}
-.project-row-progress {
-  width: 140px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.project-row-percent {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  min-width: 40px;
-  text-align: right;
-}
-
-/* Адаптивность для списка */
-@media (max-width: 768px) {
-  .project-row-info {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .project-row-progress {
-    width: 100%;
-  }
-}
-/* Верхняя панель: фильтры и кнопки в одной строке */
-.projects-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 28px;
-  background: var(--bg-panel);
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  padding: 12px 20px;
-  border: 1px solid var(--border-light);
-}
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.filter-group label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.filter-group select, .reset-btn {
-  background: var(--bg-panel-solid);
-  border: 1px solid var(--border-light);
-  border-radius: 40px;
-  padding: 4px 12px;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-.reset-btn {
-  background: transparent;
-}
-.reset-btn:hover {
-  background: var(--accent-light);
-}
-
-/* Строчный режим: фиксированная сетка 7 колонок */
-.project-row-grid {
-  display: grid;
-  grid-template-columns: 32px 70px 1fr 130px 1fr 120px 100px;
-  align-items: center;
-  gap: 12px;
-}
-.row-cell {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.row-icon {
-  text-align: center;
-}
-.row-id {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-family: monospace;
-}
-.row-name {
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-.row-budget {
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-.row-responsible {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-.row-progress {
-  min-width: 100px;
-}
-.row-progress-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.row-percent {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  min-width: 40px;
-}
-.project-row-status {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  color: white;
-  display: inline-block;
-}
-
-/* Адаптивность для строчного режима (на узких экранах переходим в вертикальный список) */
-@media (max-width: 1000px) {
-  .project-row-grid {
-    grid-template-columns: 32px 70px 1fr 1fr;
-    gap: 8px;
-  }
-  .row-budget, .row-responsible, .row-progress, .row-status {
-    grid-column: span 2;
-  }
-  .project-row-grid .row-budget,
-  .project-row-grid .row-responsible,
-  .project-row-grid .row-progress,
-  .project-row-grid .row-status {
-    white-space: normal;
-  }
 }
 /* ===== РАЗДЕЛ «РАСЧЁТЫ» ===== */
 .calculations-layout {
