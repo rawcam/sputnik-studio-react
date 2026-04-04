@@ -2,6 +2,7 @@ import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '../store'
 import { setViewMode, setActiveCalculator } from '../store/tractsSlice'
+import { Sidebar } from '../components/layout/Sidebar'
 import { ActiveTract } from '../features/tracts/ActiveTract'
 import { AllTractsView } from '../features/tracts/AllTractsView'
 import { LedCalculator } from '../features/led/LedCalculator'
@@ -35,11 +36,14 @@ export const CalculationsPage: React.FC = () => {
     }
   }
 
-  // Режим просмотра всех трактов
+  // Режим всех трактов
   if (viewMode === 'all') {
     return (
-      <div className="main-content">
-        <AllTractsView />
+      <div className="calculations-layout">
+        <Sidebar />
+        <div className="main-content">
+          <AllTractsView />
+        </div>
       </div>
     )
   }
@@ -47,8 +51,11 @@ export const CalculationsPage: React.FC = () => {
   // Режим калькулятора
   if (viewMode === 'calculator' && activeCalculator) {
     return (
-      <div className="main-content">
-        {renderCalculator()}
+      <div className="calculations-layout">
+        <Sidebar />
+        <div className="main-content">
+          {renderCalculator()}
+        </div>
       </div>
     )
   }
@@ -56,23 +63,29 @@ export const CalculationsPage: React.FC = () => {
   // Режим одного тракта
   if (viewMode === 'single' && activeTract) {
     return (
-      <div className="main-content">
-        <ActiveTract />
+      <div className="calculations-layout">
+        <Sidebar />
+        <div className="main-content">
+          <ActiveTract />
+        </div>
       </div>
     )
   }
 
   // Пустое состояние
   return (
-    <div className="main-content">
-      <div className="empty-calculations">
-        <i className="fas fa-calculator"></i>
-        <h3>Начните работу</h3>
-        <p>
-          Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
-          или создайте тракт для построения AV‑цепочки.
-        </p>
-        <small>Все расчёты сохраняются автоматически.</small>
+    <div className="calculations-layout">
+      <Sidebar />
+      <div className="main-content">
+        <div className="empty-calculations">
+          <i className="fas fa-calculator"></i>
+          <h3>Начните работу</h3>
+          <p>
+            Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
+            или создайте тракт для построения AV‑цепочки.
+          </p>
+          <small>Все расчёты сохраняются автоматически.</small>
+        </div>
       </div>
     </div>
   )
