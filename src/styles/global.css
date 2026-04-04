@@ -1940,3 +1940,156 @@ input:checked + .slider:before {
   background: var(--accent-light);
   border-color: var(--accent);
 }
+/* ===== СТИЛИ ДЛЯ СПЕЦИФИКАЦИИ ===== */
+.specification-page {
+  padding: 20px;
+}
+.spec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.spec-header h1 {
+  font-size: 1.8rem;
+  font-weight: 500;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.actions {
+  display: flex;
+  gap: 12px;
+}
+.btn {
+  background: var(--bg-panel-solid);
+  border: 1px solid var(--border-light);
+  border-radius: 40px;
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+}
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.spec-card {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-light);
+  overflow-x: auto;
+  padding: 0;
+}
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  min-width: 1200px;
+}
+.spec-table th {
+  background: var(--bg-panel-solid);
+  padding: 12px 8px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  text-align: left;
+}
+.spec-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+.section-row td {
+  background: var(--accent-light);
+  font-weight: 600;
+  cursor: pointer;
+}
+.section-row td:first-child {
+  border-radius: 16px 0 0 16px;
+}
+.section-row td:last-child {
+  border-radius: 0 16px 16px 0;
+}
+.section-icon {
+  margin-right: 8px;
+}
+.item-row td {
+  background: var(--bg-panel-solid);
+}
+.editable {
+  background: transparent;
+  border: none;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 4px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+.editable:focus {
+  outline: none;
+  background: var(--bg-panel);
+  border: 1px solid var(--accent);
+}
+.editable[type="number"] {
+  text-align: right;
+}
+.sum-cell {
+  font-weight: 600;
+  text-align: right;
+}
+.delete-btn {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 1rem;
+}
+.delete-btn:hover {
+  color: #b91c1c;
+}
+.add-row-btn {
+  margin: 16px;
+  background: var(--bg-panel-solid);
+  border: 1px dashed var(--border-light);
+  border-radius: 40px;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+.add-row-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+.footer-total {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-light);
+  font-weight: 600;
+  font-size: 1rem;
+}
