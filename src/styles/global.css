@@ -1899,3 +1899,16 @@ input:checked + .slider:before {
   max-width: 500px;
   margin: 0 auto;
 }
+/* Статистика тракта в строку */
+.tract-stats-summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.stat-badge {
+  background: var(--bg-panel-solid);
+  border-radius: 40px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
