@@ -1690,3 +1690,22 @@ main.main-content {
   color: var(--text-muted);
   font-size: 0.75rem;
 }
+/* Принудительное центрирование для страницы расчётов */
+html, body, #root, .app, .app-layout {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+main.main-content {
+  flex: 1;
+  min-height: 0; /* убираем старый min-height */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.empty-calculations {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 600px;
+}
