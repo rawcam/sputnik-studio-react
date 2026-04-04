@@ -10,7 +10,6 @@ import companyExpensesReducer from './companyExpensesSlice'
 import serviceVisitsReducer from './serviceVisitsSlice'
 import widgetsReducer from './widgetsSlice'
 import specificationReducer from './specificationSlice'
-// Импорты слайсов калькуляторов
 import ledReducer from './ledSlice'
 import soundReducer from './soundSlice'
 import vcReducer from './vcSlice'
