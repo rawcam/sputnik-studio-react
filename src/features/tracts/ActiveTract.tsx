@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import { useAppDispatch, useAppSelector } from '../../hooks'
 import {
   updateTract,
@@ -7,7 +6,6 @@ import {
   setActiveTract,
   setViewMode,
   addDeviceToTract,
-  addTract,
   updateDeviceThunk,
   recalcTractThunk,
   removeDeviceThunk,
@@ -34,18 +32,6 @@ export const ActiveTract: React.FC = () => {
       dispatch(recalcTractThunk(activeTract.id))
     }
   }, [videoSettings, networkSettings, activeTract?.id, dispatch])
-
-  const handleNewTract = () => {
-    const newId = Date.now().toString()
-    dispatch(addTract({
-      id: newId,
-      name: `Тракт ${tracts.length + 1}`,
-      sourceDevices: [],
-      matrixDevices: [],
-      sinkDevices: [],
-    }))
-    dispatch(setActiveTract(newId))
-  }
 
   const handleAddDevice = (device: any, column: 'source' | 'matrix' | 'sink') => {
     if (!activeTract) return
@@ -102,7 +88,6 @@ export const ActiveTract: React.FC = () => {
   }
 
   if (!activeTract) {
-    // Тракта нет – показываем сообщение (без кнопки создания, она в сайдбаре)
     return (
       <div className="empty-calculations">
         <i className="fas fa-road"></i>
