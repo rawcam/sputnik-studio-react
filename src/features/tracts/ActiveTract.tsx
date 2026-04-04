@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { useAppDispatch, useAppSelector } from '../../hooks'
 import {
   updateTract,
@@ -28,7 +29,6 @@ export const ActiveTract: React.FC = () => {
   const [selectedDevice, setSelectedDevice] = useState<TractDevice | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
-  // Пересчёт при изменении видео или сетевых параметров
   useEffect(() => {
     if (activeTract) {
       dispatch(recalcTractThunk(activeTract.id))
@@ -102,19 +102,13 @@ export const ActiveTract: React.FC = () => {
   }
 
   if (!activeTract) {
+    // Тракта нет – показываем сообщение (без кнопки создания, она в сайдбаре)
     return (
-      <div className="active-tract-container">
-        <button className="btn-primary" onClick={handleNewTract}>
-          <i className="fas fa-plus"></i> Новый тракт
-        </button>
-        <div className="empty-state">
-          <i className="fas fa-road"></i>
-          <h3>Нет активного тракта</h3>
-          <p>Создайте новый тракт, чтобы начать работу</p>
-          <button className="btn-primary" onClick={handleNewTract}>
-            <i className="fas fa-plus"></i> Новый тракт
-          </button>
-        </div>
+      <div className="empty-calculations">
+        <i className="fas fa-road"></i>
+        <h3>Нет активного тракта</h3>
+        <p>Выберите существующий тракт в сайдбаре или создайте новый.<br />
+        Кнопка создания находится в разделе <strong>«ТРАКТЫ»</strong>.</p>
       </div>
     )
   }
