@@ -48,5 +48,14 @@ export const CalculationsPage: React.FC = () => {
   }
 
   // Пустое состояние – временно для теста
-  return <div>Текст</div>
-}
+ return (
+  <div className="empty-calculations">
+    <i className="fas fa-calculator"></i>
+    <h3>Начните работу</h3>
+    <p>
+      Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
+      или создайте тракт для построения AV‑цепочки.
+    </p>
+    <small>Все расчёты сохраняются автоматически.</small>
+  </div>
+)
