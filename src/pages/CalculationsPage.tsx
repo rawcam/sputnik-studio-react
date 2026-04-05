@@ -45,12 +45,7 @@ export const CalculationsPage: React.FC = () => {
         {viewMode === 'calculator' && activeCalculator && renderCalculator()}
         {viewMode === 'single' && activeTract && <ActiveTract />}
         {viewMode !== 'all' && viewMode !== 'calculator' && !activeTract && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            minHeight: 'calc(100vh - 64px)',
+          <div Текст</div>
           }}>
             <div className="empty-calculations">
               <i className="fas fa-calculator"></i>
