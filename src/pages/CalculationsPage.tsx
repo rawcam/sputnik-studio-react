@@ -47,17 +47,19 @@ export const CalculationsPage: React.FC = () => {
     return <ActiveTract />
   }
 
-  // Пустое состояние
   return (
-     <div className="calculations-page">
-    <div className="empty-calculations">
-      <i className="fas fa-calculator"></i>
-      <h3>Начните работу</h3>
-      <p>
-        Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
-        или создайте тракт для построения AV‑цепочки.
-      </p>
-      <small>Все расчёты сохраняются автоматически.</small>
+    <div className="calculations-layout">
+      <div className="main-content">
+        <div className="empty-calculations">
+          <i className="fas fa-calculator"></i>
+          <h3>Начните работу</h3>
+          <p>
+            Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
+            или создайте тракт для построения AV‑цепочки.
+          </p>
+          <small>Все расчёты сохраняются автоматически.</small>
+        </div>
+      </div>
     </div>
   )
 }
