@@ -36,9 +36,10 @@ export const CalculationsPage: React.FC = () => {
     }
   }
 
+  // Режим "Все тракты"
   if (viewMode === 'all') {
     return (
-      <div className="calculations-layout">
+      <div className="calculations-layout normal-mode">
         <Sidebar />
         <div className="main-content">
           <AllTractsView />
@@ -47,9 +48,10 @@ export const CalculationsPage: React.FC = () => {
     )
   }
 
+  // Режим калькулятора
   if (viewMode === 'calculator' && activeCalculator) {
     return (
-      <div className="calculations-layout">
+      <div className="calculations-layout normal-mode">
         <Sidebar />
         <div className="main-content">
           {renderCalculator()}
@@ -58,9 +60,10 @@ export const CalculationsPage: React.FC = () => {
     )
   }
 
+  // Режим одного тракта
   if (viewMode === 'single' && activeTract) {
     return (
-      <div className="calculations-layout">
+      <div className="calculations-layout normal-mode">
         <Sidebar />
         <div className="main-content">
           <ActiveTract />
@@ -69,9 +72,9 @@ export const CalculationsPage: React.FC = () => {
     )
   }
 
-  // Пустое состояние
+  // Пустое состояние (центрируем)
   return (
-    <div className="calculations-layout">
+    <div className="calculations-layout empty-mode">
       <Sidebar />
       <div className="main-content">
         <div className="empty-calculations">
