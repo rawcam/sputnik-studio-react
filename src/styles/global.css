@@ -1735,3 +1735,15 @@ input:checked + .slider:before {
   color: var(--text-muted);
   font-size: 0.75rem;
 }
+.calculations-layout {
+  display: flex;
+  min-height: calc(100vh - 64px); /* высота окна минус топбар */
+}
+.calculations-layout .main-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 0; /* убираем лишнюю высоту */
+  flex: 1;
+}
