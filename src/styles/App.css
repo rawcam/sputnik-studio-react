@@ -16,9 +16,9 @@ html, body, #root {
 }
 
 .main-content {
-  /* убираем все свойства: flex, padding, overflow, display */
-  /* оставляем только базовое */
-  padding: 0;
-  overflow: visible;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
