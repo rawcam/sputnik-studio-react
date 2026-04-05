@@ -261,5 +261,113 @@ text
 - Ассистент сможет быстро восстановить контекст и продолжить работу с того места, где остановились.
 
 ---
+## 8. Исправленные проблемы (центрирование и дублирование сайдбара)
 
-*Дата последнего обновления: 02.04.2026*
+### Проблема
+- Двойной сайдбар на странице «Расчёты» (рендерился и в `App.tsx`, и в `CalculationsPage.tsx`).
+- Пустое состояние «Начните работу» не центрировалось по вертикали, находилось внизу.
+- Калькуляторы «уезжали» вниз при открытии.
+- Двойная прокрутка страницы.
+
+### Причина
+- Сайдбар был добавлен глобально в `App.tsx` и повторно внутри `CalculationsPage.tsx`.
+- Родительские контейнеры (`html, body, #root, .app, .app-layout`) не имели `height: 100%`, а `.main-content` не был flex-контейнером с `justify-content: center`.
+- Стили центрирования применялись также к калькуляторам, что приводило к их смещению.
+
+### Решение
+1. Удалён `<Sidebar />` из `App.tsx` (оставлен только в `CalculationsPage.tsx`).
+2. В `App.css` добавлено:
+   ```css
+   html, body, #root { height: 100%; margin: 0; padding: 0; }
+   .app { min-height: 100%; display: flex; flex-direction: column; }
+   .app-layout { display: flex; flex: 1; min-height: 0; }
+   .main-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+   В global.css добавлен класс .calculations-layout для страницы расчётов:
+
+css
+.calculations-layout { display: flex; flex: 1; min-height: calc(100vh - 64px); }
+.calculations-layout .main-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+Стили центрирования ограничены только пустым состоянием, для режимов calculator, single, all используется обычный поток.
+
+Результат
+Сайдбар один, отображается только на странице расчётов.
+
+Пустое состояние центрировано по вертикали и горизонтали.
+
+Калькуляторы (LED, звук, ВКС, эргономика, питание) открываются и не уезжают.
+
+Нет двойной прокрутки.
+
+text
+
+---
+
+### 2. `common-errors.md`
+
+**Раздел:** добавьте новый пункт (например, «Центрирование пустого состояния в разделе «Расчёты»»).  
+**Вставьте в конец файла:**
+
+```markdown
+## Центрирование пустого состояния в разделе «Расчёты» и дублирование сайдбара
+
+### Симптомы
+- На странице `/calculations` видно два сайдбара (один поверх другого).
+- Блок «Начните работу» находится внизу страницы (или прилипает к верху).
+- При открытии калькулятора (LED, звук и т.д.) он уезжает вниз, появляется лишняя прокрутка.
+
+### Причина
+1. Сайдбар рендерится одновременно в `App.tsx` (глобально) и в `CalculationsPage.tsx`.
+2. Отсутствует `height: 100%` у цепочки `html, body, #root, .app, .app-layout`.
+3. У `.main-content` нет `display: flex; justify-content: center; align-items: center;` или эти стили применяются также к калькуляторам.
+
+### Решение
+- Удалите `<Sidebar />` из `App.tsx` (оставьте только в `CalculationsPage.tsx`).
+- Добавьте в `src/styles/App.css`:
+  ```css
+  html, body, #root { height: 100%; margin: 0; padding: 0; }
+  .app { min-height: 100%; display: flex; flex-direction: column; }
+  .app-layout { display: flex; flex: 1; min-height: 0; }
+  .main-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+В src/styles/global.css добавьте:
+
+css
+.calculations-layout { display: flex; flex: 1; min-height: calc(100vh - 64px); }
+.calculations-layout .main-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+Убедитесь, что стили центрирования не применяются к калькуляторам (они рендерятся в тех же контейнерах, но без пустого состояния – это нормально).
+
+Результат
+Сайдбар один, пустое состояние по центру, калькуляторы работают без смещения.
+
+text
+
+---
+
+### 3. `wiki.html`
+
+Это HTML-страница. Нужно добавить блок в соответствующее место (например, в раздел «Расчёты» или «Известные проблемы»). Проще всего вставить в конец `<body>` или в специальный раздел с описанием.
+
+**Вставьте следующий HTML-код в конец файла (перед закрывающим `</body>`) или в раздел, где перечислены особенности страниц:**
+
+```html
+<!-- ===== ИНФОРМАЦИЯ О СТРАНИЦЕ РАСЧЁТЫ (ЦЕНТРИРОВАНИЕ И САЙДБАР) ===== -->
+<section id="calculations-layout">
+    <h3>Страница «Расчёты»</h3>
+    <p><strong>Особенности вёрстки и центрирования</strong></p>
+    <ul>
+        <li>Сайдбар рендерится только внутри <code>CalculationsPage.tsx</code> (не глобально).</li>
+        <li>Пустое состояние «Начните работу» центрировано по вертикали и горизонтали.</li>
+        <li>Центрирование достигнуто за счёт:
+            <ul>
+                <li><code>height: 100%</code> у <code>html, body, #root, .app, .app-layout</code>.</li>
+                <li><code>display: flex; justify-content: center; align-items: center;</code> у <code>.main-content</code>.</li>
+                <li>Специфичного класса <code>.calculations-layout</code> с <code>min-height: calc(100vh - 64px)</code>.</li>
+            </ul>
+        </li>
+        <li>Калькуляторы (LED, звук, ВКС, эргономика, питание) и тракты отображаются в обычном потоке, не смещаясь.</li>
+        <li>Двойная прокрутка устранена.</li>
+    </ul>
+    <p><strong>Важные файлы:</strong> <code>src/styles/App.css</code>, <code>src/styles/global.css</code>, <code>src/pages/CalculationsPage.tsx</code>.</p>
+</section>
+Если в wiki.html уже есть раздел с идентификатором #calculations или подобный, добавьте этот блок туда. Если нет – вставьте в конец, после всех остальных разделов.
+
+*Дата последнего обновления: 05.04.2026*
