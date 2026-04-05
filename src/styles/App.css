@@ -20,7 +20,5 @@ html, body, #root {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  /* justify-content: center;  не добавлять */
+  /* удаляем display: flex и flex-direction: column */
 }
