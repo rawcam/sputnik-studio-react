@@ -1696,8 +1696,8 @@ html, body, #root, .app, .app-layout {
   margin: 0;
   padding: 0;
 }
+/* Центрирование пустого состояния в разделе Расчёты */
 main.main-content {
-  flex: 1;
   min-height: 0; /* убираем старый min-height */
   display: flex;
   flex-direction: column;
