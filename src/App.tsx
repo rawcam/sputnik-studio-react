@@ -1,6 +1,5 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Topbar } from './components/layout/Topbar'
-import { Sidebar } from './components/layout/Sidebar'
 import { DashboardPage } from './pages/DashboardPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CalculationsPage } from './pages/CalculationsPage'
@@ -13,7 +12,7 @@ function App() {
       <div className="app">
         <Topbar />
         <div className="app-layout">
-                 <main className="main-content">
+          <main className="main-content">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
