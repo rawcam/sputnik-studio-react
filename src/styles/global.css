@@ -1652,7 +1652,3 @@ input:checked + .slider:before {
     white-space: normal;
   }
 }
-
-  color: var(--text-muted);
-  font-size: 0.75rem;
-}
