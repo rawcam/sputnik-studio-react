@@ -2,7 +2,6 @@ import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '../store'
 import { setViewMode, setActiveCalculator } from '../store/tractsSlice'
-import { Sidebar } from '../components/layout/Sidebar'
 import { ActiveTract } from '../features/tracts/ActiveTract'
 import { AllTractsView } from '../features/tracts/AllTractsView'
 import { LedCalculator } from '../features/led/LedCalculator'
@@ -36,29 +35,18 @@ export const CalculationsPage: React.FC = () => {
     }
   }
 
-  // Общий контейнер для всех режимов (сайдбар + основная область)
-  return (
-    <div className="calculations-layout">
-      <Sidebar />
-      <div className="main-content">
-        {viewMode === 'all' && <AllTractsView />}
-        {viewMode === 'calculator' && activeCalculator && renderCalculator()}
-        {viewMode === 'single' && activeTract && <ActiveTract />}
-        {viewMode !== 'all' && viewMode !== 'calculator' && !activeTract && (
-          <div Текст</div>
-          }}>
-            <div className="empty-calculations">
-              <i className="fas fa-calculator"></i>
-              <h3>Начните работу</h3>
-              <p>
-                Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
-                или создайте тракт для построения AV‑цепочки.
-              </p>
-              <small>Все расчёты сохраняются автоматически.</small>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+  if (viewMode === 'all') {
+    return <AllTractsView />
+  }
+
+  if (viewMode === 'calculator' && activeCalculator) {
+    return <>{renderCalculator()}</>
+  }
+
+  if (viewMode === 'single' && activeTract) {
+    return <ActiveTract />
+  }
+
+  // Пустое состояние – временно для теста
+  return <div>Текст</div>
 }
