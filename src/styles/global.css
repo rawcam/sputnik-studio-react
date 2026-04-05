@@ -1761,3 +1761,58 @@ input:checked + .slider:before {
   justify-content: center;
   align-items: center;
 }
+/* Общие стили для лейаута страницы расчётов */
+.calculations-layout {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+}
+
+/* Режим с контентом (калькуляторы, тракты) – содержимое вверху */
+.calculations-layout.normal-mode .main-content {
+  display: block; /* убираем центрирование */
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Режим пустого состояния – центрируем */
+.calculations-layout.empty-mode .main-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Стили для карточки пустого состояния */
+.empty-calculations {
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 32px;
+  border: 1px solid var(--border-light);
+}
+.empty-calculations i {
+  font-size: 3rem;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.empty-calculations h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+.empty-calculations p {
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.empty-calculations small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
