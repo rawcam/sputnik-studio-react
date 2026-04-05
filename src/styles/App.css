@@ -3,9 +3,6 @@ html, body, #root {
   margin: 0;
   padding: 0;
 }
-.app, .app-layout {
-  height: 100%;
-}
 
 .app {
   min-height: 100%;
@@ -15,14 +12,14 @@ html, body, #root {
 
 .app-layout {
   display: flex;
-  flex: 1;
+  flex: 1;  /* занимает всё оставшееся пространство */
   min-height: 0; /* важно для flex-детей */
 }
 
 .main-content {
   flex: 1;
   padding: 20px;
-  overflow-y: auto; /* скролл здесь, а не на body */
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
