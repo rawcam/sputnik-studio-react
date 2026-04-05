@@ -35,36 +35,31 @@ export const CalculationsPage: React.FC = () => {
     }
   }
 
-  // Режим просмотра всех трактов
   if (viewMode === 'all') {
-    return (
-      <div className="main-content">
-        <AllTractsView />
-      </div>
-    )
+    return <AllTractsView />
   }
 
-  // Режим калькулятора
   if (viewMode === 'calculator' && activeCalculator) {
-    return (
-      <div className="main-content">
-        {renderCalculator()}
-      </div>
-    )
+    return <>{renderCalculator()}</>
   }
 
-  // Режим одного тракта
   if (viewMode === 'single' && activeTract) {
-    return (
-      <div className="main-content">
-        <ActiveTract />
-      </div>
-    )
+    return <ActiveTract />
   }
 
-  // Пустое состояние
+  // Пустое состояние – центрирование через position fixed
   return (
-    <div className="main-content">
+    <div
+      style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '90%',
+        maxWidth: '600px',
+        zIndex: 10,
+      }}
+    >
       <div className="empty-calculations">
         <i className="fas fa-calculator"></i>
         <h3>Начните работу</h3>
