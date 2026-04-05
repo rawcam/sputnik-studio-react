@@ -13,8 +13,7 @@ function App() {
       <div className="app">
         <Topbar />
         <div className="app-layout">
-          <Sidebar />
-          <main className="main-content">
+                 <main className="main-content">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
