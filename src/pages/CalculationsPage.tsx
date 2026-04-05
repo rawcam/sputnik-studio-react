@@ -49,6 +49,7 @@ export const CalculationsPage: React.FC = () => {
 
   // Пустое состояние
   return (
+     <div className="calculations-page">
     <div className="empty-calculations">
       <i className="fas fa-calculator"></i>
       <h3>Начните работу</h3>
