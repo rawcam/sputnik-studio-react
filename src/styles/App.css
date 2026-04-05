@@ -22,5 +22,5 @@ html, body, #root {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  /* justify-content: center;  удалено */
+  /* justify-content: center;  не добавлять */
 }
