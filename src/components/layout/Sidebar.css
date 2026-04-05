@@ -9,9 +9,7 @@
   backdrop-filter: blur(12px);
   border-right: 1px solid var(--border-light);
   flex-shrink: 0;
-  /* position: sticky; убираем */
-  top: 0;
-  height: 100%; /* вместо 100vh */
+  height: auto;
   overflow-y: auto;
   z-index: 10;
   transition: width 0.2s ease;
@@ -57,7 +55,6 @@
   color: var(--accent);
 }
 
-/* Секции аккордеонов */
 .sidebar-section {
   border-bottom: 1px solid var(--border-light);
 }
@@ -108,7 +105,6 @@
   transition: all 0.2s;
 }
 
-/* Компактный режим */
 .sidebar.collapsed .section-header span {
   display: none;
 }
@@ -135,7 +131,6 @@
   margin-top: auto;
 }
 
-/* Стили для содержимого аккордеонов */
 .section-content-inner {
   display: flex;
   flex-direction: column;
@@ -276,12 +271,10 @@
   gap: 4px;
 }
 
-/* Переопределение старых отступов из global.css */
 .setting {
   margin-bottom: 0 !important;
 }
 
-/* Гарантия центрирования иконок в компактном режиме */
 .sidebar.collapsed .section-header i:first-child {
   display: inline-block !important;
   margin: 0 !important;
@@ -299,7 +292,6 @@
   text-align: center !important;
 }
 
-/* Улучшенная подсветка для развёрнутого режима */
 .section-header:hover {
   background: var(--accent-glow) !important;
   padding-left: 20px !important;
@@ -310,7 +302,6 @@
   color: var(--accent) !important;
 }
 
-/* Для компактного режима подсветка уже есть */
 .sidebar.collapsed .section-header:hover {
   background: var(--accent-glow) !important;
 }
