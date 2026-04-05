@@ -36,52 +36,33 @@ export const CalculationsPage: React.FC = () => {
     }
   }
 
-  if (viewMode === 'all') {
-    return (
-      <div className="calculations-layout">
-        <Sidebar />
-        <div className="main-content">
-          <AllTractsView />
-        </div>
-      </div>
-    )
-  }
-
-  if (viewMode === 'calculator' && activeCalculator) {
-    return (
-      <div className="calculations-layout">
-        <Sidebar />
-        <div className="main-content">
-          {renderCalculator()}
-        </div>
-      </div>
-    )
-  }
-
-  if (viewMode === 'single' && activeTract) {
-    return (
-      <div className="calculations-layout">
-        <Sidebar />
-        <div className="main-content">
-          <ActiveTract />
-        </div>
-      </div>
-    )
-  }
-
+  // Общий контейнер для всех режимов (сайдбар + основная область)
   return (
     <div className="calculations-layout">
       <Sidebar />
       <div className="main-content">
-        <div className="empty-calculations">
-          <i className="fas fa-calculator"></i>
-          <h3>Начните работу</h3>
-          <p>
-            Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
-            или создайте тракт для построения AV‑цепочки.
-          </p>
-          <small>Все расчёты сохраняются автоматически.</small>
-        </div>
+        {viewMode === 'all' && <AllTractsView />}
+        {viewMode === 'calculator' && activeCalculator && renderCalculator()}
+        {viewMode === 'single' && activeTract && <ActiveTract />}
+        {viewMode !== 'all' && viewMode !== 'calculator' && !activeTract && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            minHeight: 'calc(100vh - 64px)',
+          }}>
+            <div className="empty-calculations">
+              <i className="fas fa-calculator"></i>
+              <h3>Начните работу</h3>
+              <p>
+                Выберите один из калькуляторов (<strong>LED, звук, ВКС, эргономика, питание</strong>) в сайдбаре,<br />
+                или создайте тракт для построения AV‑цепочки.
+              </p>
+              <small>Все расчёты сохраняются автоматически.</small>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
