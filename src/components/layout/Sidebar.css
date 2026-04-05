@@ -2,9 +2,6 @@
   --sidebar-width: 300px;
   --sidebar-collapsed-width: 80px;
 }
-html, body, #root, .app, .app-layout {
-  height: 100%;
-}
 
 .sidebar {
   width: var(--sidebar-width);
@@ -12,9 +9,9 @@ html, body, #root, .app, .app-layout {
   backdrop-filter: blur(12px);
   border-right: 1px solid var(--border-light);
   flex-shrink: 0;
-  position: relative;
+  /* position: sticky; убираем */
   top: 0;
-  height: auto;
+  height: 100%; /* вместо 100vh */
   overflow-y: auto;
   z-index: 10;
   transition: width 0.2s ease;
@@ -278,17 +275,18 @@ html, body, #root, .app, .app-layout {
   flex-direction: column;
   gap: 4px;
 }
+
 /* Переопределение старых отступов из global.css */
 .setting {
   margin-bottom: 0 !important;
 }
 
-/* Гарантия центрирования иконок в компактном режиме (без display: block) */
+/* Гарантия центрирования иконок в компактном режиме */
 .sidebar.collapsed .section-header i:first-child {
   display: inline-block !important;
   margin: 0 !important;
 }
-/* Центрирование иконок в компактном режиме */
+
 .sidebar.collapsed .section-header {
   justify-content: center !important;
   gap: 0 !important;
