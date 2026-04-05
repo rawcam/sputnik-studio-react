@@ -12,9 +12,9 @@ html, body, #root, .app, .app-layout {
   backdrop-filter: blur(12px);
   border-right: 1px solid var(--border-light);
   flex-shrink: 0;
-  position: sticky;
+  position: relative;
   top: 0;
- /* height: 100%; */
+  height: auto;
   overflow-y: auto;
   z-index: 10;
   transition: width 0.2s ease;
