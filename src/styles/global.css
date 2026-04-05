@@ -1694,3 +1694,33 @@ input:checked + .slider:before {
   background: var(--accent-light);
   border-color: var(--accent);
 }
+.empty-calculations {
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  border-radius: 32px;
+  border: 1px solid var(--border-light);
+}
+.empty-calculations i {
+  font-size: 3rem;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.empty-calculations h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+.empty-calculations p {
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.empty-calculations small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
