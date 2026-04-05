@@ -1652,3 +1652,45 @@ input:checked + .slider:before {
     white-space: normal;
   }
 }
+/* ===== СТАТИСТИКА ТРАКТА В СТРОКУ ===== */
+.tract-stats-summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.stat-badge {
+  background: var(--bg-panel-solid);
+  border-radius: 40px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* ===== КОМПАКТНЫЕ КНОПКИ В АККОРДЕОНАХ ===== */
+.btn-sidebar {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  width: 100%;
+  margin-top: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btn-sidebar:hover {
+  background: var(--accent-hover);
+}
+.btn-sidebar-secondary {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+.btn-sidebar-secondary:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
