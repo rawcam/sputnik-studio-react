@@ -1749,15 +1749,15 @@ input:checked + .slider:before {
 }
 .calculations-layout {
   display: flex;
-  flex-direction: column;
+  flex: 1;
   min-height: calc(100vh - 64px);
-  justify-content: center;
-  align-items: center;
 }
 .calculations-layout .main-content {
-  width: 100%;
+  flex: 1;
   padding: 20px;
+  overflow-y: auto;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
