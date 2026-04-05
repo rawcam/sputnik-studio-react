@@ -11,14 +11,14 @@ html, body, #root {
 }
 
 .app-layout {
-  display: flex;
-  flex: 1;
-  min-height: 0;
+  /* убираем display: flex, flex: 1, min-height */
+  display: block;
 }
 
 .main-content {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  /* удаляем display: flex и flex-direction: column */
+  /* убираем все свойства: flex, padding, overflow, display */
+  /* оставляем только базовое */
+  padding: 0;
+  overflow: visible;
+  display: block;
 }
