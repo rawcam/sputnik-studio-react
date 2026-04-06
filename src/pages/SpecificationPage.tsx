@@ -57,7 +57,7 @@ export const SpecificationPage: React.FC = () => {
 
   // Загрузка/сохранение
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v7');
+    const saved = localStorage.getItem('specification_data_v8');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -76,7 +76,7 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v7', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v8', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
@@ -370,12 +370,24 @@ export const SpecificationPage: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif', background: 'var(--bg-page)', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '20px', background: 'var(--bg-panel)', backdropFilter: 'blur(12px)', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid var(--border-light)' }}>
-        <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1, color: 'var(--text-primary)' }} />
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <input type="text" placeholder="Фильтр по вендору" value={filterVendor} onChange={e => setFilterVendor(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)' }} />
-            <input type="text" placeholder="Фильтр по артикулу" value={filterSku} onChange={e => setFilterSku(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)' }} />
+      {/* Тулбар - увеличен по высоте, курсы валют возвращены */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', background: 'var(--bg-panel)', backdropFilter: 'blur(12px)', padding: '16px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid var(--border-light)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+          <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1, color: 'var(--text-primary)' }} />
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div style={{ background: 'var(--card-bg)', padding: '6px 12px', borderRadius: '24px', display: 'flex', gap: '12px' }}>
+              <label style={{ color: 'var(--text-secondary)' }}>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px', marginLeft: '4px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '4px' }} /></label>
+              <label style={{ color: 'var(--text-secondary)' }}>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px', marginLeft: '4px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '4px' }} /></label>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date().toLocaleString()}</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input type="text" placeholder="Фильтр по вендору" value={filterVendor} onChange={e => setFilterVendor(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)' }} />
+              <input type="text" placeholder="Фильтр по артикулу" value={filterSku} onChange={e => setFilterSku(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)' }} />
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button style={{ background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: 'var(--text-primary)' }} onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
@@ -446,7 +458,7 @@ export const SpecificationPage: React.FC = () => {
                   <div className="resize-handle" onMouseDown={(e) => { e.preventDefault(); startResize(col, e.pageX, columnWidths[col]); }}></div>
                 </th>
               ))}
-            </tr>
+            </table>
           </thead>
           <tbody ref={tableBodyRef}>
             {rows.map((row) => {
