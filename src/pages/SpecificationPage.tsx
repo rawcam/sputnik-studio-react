@@ -462,7 +462,7 @@ export const SpecificationPage: React.FC = () => {
                     <tr className="section-row" data-id={row.id}>
                       <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                       <td className="checkbox-col"></td>
-                      <td colSpan={16} style={{ padding: '8px 6px' }}>
+                      <td><td colSpan={15} style={{ padding: '8px 6px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1, textAlign: 'center' }}>
                             <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'} collapse-icon`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer', marginRight: '8px', color: '#cbd5e1' }}></i>
@@ -474,7 +474,7 @@ export const SpecificationPage: React.FC = () => {
                             <button onClick={() => deleteRow(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#cbd5e1' }} title="Удалить раздел"><i className="fas fa-trash-alt"></i></button>
                           </div>
                         </div>
-                      </td>
+                      </td></td>
                     </tr>
                     {!row.collapsed && row.showTotals && (
                       <tr className="section-totals-row">
@@ -543,7 +543,7 @@ export const SpecificationPage: React.FC = () => {
               <td className="text-right" style={{ color: 'var(--text-primary)' }}>{formatNumber(totals.totalGrossRub)} ₽</td>
               <td className="text-right" style={{ color: 'var(--text-primary)' }}>{formatNumber(totals.totalRub)} ₽</td>
               <td colSpan={3} style={{ padding: '8px 6px' }}></td>
-            </table>
+            </tr>
           </tfoot>
         </table>
       </div>
