@@ -4,7 +4,9 @@ import { DashboardPage } from './pages/DashboardPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CalculationsPage } from './pages/CalculationsPage'
 import { TemplatesPage } from './pages/TemplatesPage'
+import { SpecificationPage } from './pages/SpecificationPage'
 import './styles/global.css'
+
 
 function App() {
   return (
