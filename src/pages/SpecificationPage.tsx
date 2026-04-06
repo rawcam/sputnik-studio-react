@@ -31,12 +31,7 @@ type Row = DataRow | SectionRow;
 const statuses = ['Замена', 'Получено КП', 'Закуплено'];
 const currencies = ['RUB', 'USD', 'EUR'];
 const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
-
-const currencyColors: Record<string, string> = {
-  RUB: '#3b82f6',
-  USD: '#10b981',
-  EUR: '#f59e0b',
-};
+const currencyColors: Record<string, string> = { RUB: '#3b82f6', USD: '#10b981', EUR: '#f59e0b' };
 
 export const SpecificationPage: React.FC = () => {
   const [rows, setRows] = useState<Row[]>([]);
@@ -106,17 +101,11 @@ export const SpecificationPage: React.FC = () => {
     return 1;
   };
 
-  const getTotalRub = (row: DataRow) => {
-    return (row.priceAfter || 0) * (row.quantity || 0) * getRate(row.currency);
-  };
-
-  const formatNumber = (num: number): string => {
-    return Math.round(num).toLocaleString('ru-RU');
-  };
+  const getTotalRub = (row: DataRow) => (row.priceAfter || 0) * (row.quantity || 0) * getRate(row.currency);
+  const formatNumber = (num: number): string => Math.round(num).toLocaleString('ru-RU');
 
   const computeTotals = () => {
-    let totalRub = 0;
-    let totalQty = 0;
+    let totalRub = 0, totalQty = 0;
     const byCurrency: Record<string, { sum: number; qty: number }> = {};
     for (const row of rows) {
       if (row.type === 'data') {
@@ -199,23 +188,17 @@ export const SpecificationPage: React.FC = () => {
     }));
   };
 
-  const expandAll = () => {
-    setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: false } : r));
-  };
-
-  const collapseAll = () => {
-    setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: true } : r));
-  };
+  const expandAll = () => setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: false } : r));
+  const collapseAll = () => setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: true } : r));
 
   const resetDemo = () => {
-    const demoRows: Row[] = [
+    setRows([
       { id: 100, type: 'data', vendor: 'Siemens', sku: 'ABC-123', name: 'Контактор 3RT2015', quantity: 10, unit: 'шт', currency: 'RUB', price: 2500, discount: 5, discountAmount: 125, priceAfter: 2375, supplier: 'ООО "Электроснаб"', status: 'Закуплено' },
       { id: 101, type: 'data', vendor: 'Schneider', sku: 'GV2ME07', name: 'Автоматический выключатель', quantity: 5, unit: 'шт', currency: 'USD', price: 45, discount: 10, discountAmount: 4.5, priceAfter: 40.5, supplier: 'Schneider Electric', status: 'Получено КП' },
       { id: 102, type: 'section', title: 'Освещение', collapsed: false },
       { id: 103, type: 'data', vendor: 'Philips', sku: 'LED-9W', name: 'Лампа светодиодная 9W 4000K', quantity: 100, unit: 'шт', currency: 'RUB', price: 120, discount: 0, discountAmount: 0, priceAfter: 120, supplier: 'ООО "Световые решения"', status: 'Замена' },
       { id: 104, type: 'data', vendor: 'Legrand', sku: 'Valena', name: 'Розетка двойная', quantity: 20, unit: 'шт', currency: 'EUR', price: 8.5, discount: 15, discountAmount: 1.275, priceAfter: 7.225, supplier: 'Legrand Rus', status: 'Закуплено' },
-    ];
-    setRows(demoRows);
+    ]);
     setNextId(105);
     setUsdRate(90);
     setEurRate(98);
@@ -244,29 +227,33 @@ export const SpecificationPage: React.FC = () => {
     setSelectedIds([]);
   };
 
-  // Drag-and-drop (SortableJS)
+  // Исправленный Sortable
   useEffect(() => {
     if (!tableBodyRef.current) return;
-    if (sortableRef.current) sortableRef.current.destroy();
-
+    if (sortableRef.current) {
+      try { sortableRef.current.destroy(); } catch (e) {}
+      sortableRef.current = null;
+    }
     sortableRef.current = new Sortable(tableBodyRef.current, {
       handle: '.drag-handle',
       animation: 150,
       onEnd: () => {
-        const domRows = Array.from(tableBodyRef.current!.children);
+        if (!tableBodyRef.current) return;
+        const domRows = Array.from(tableBodyRef.current.children);
         const newRowsOrder: Row[] = [];
         for (const dom of domRows) {
           const id = Number(dom.getAttribute('data-id'));
           const found = rows.find(r => r.id === id);
           if (found) newRowsOrder.push(found);
         }
-        if (newRowsOrder.length === rows.length) {
-          setRows(newRowsOrder);
-        }
+        if (newRowsOrder.length === rows.length) setRows(newRowsOrder);
       },
     });
     return () => {
-      if (sortableRef.current) sortableRef.current.destroy();
+      if (sortableRef.current) {
+        try { sortableRef.current.destroy(); } catch (e) {}
+        sortableRef.current = null;
+      }
     };
   }, [rows]);
 
@@ -284,7 +271,6 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Глобальные стили
   useEffect(() => {
     const styleId = 'spec-global-styles';
     if (!document.getElementById(styleId)) {
@@ -302,16 +288,7 @@ export const SpecificationPage: React.FC = () => {
         .spec-table .text-right { text-align: right; }
         .spec-table .text-center { text-align: center; }
         .spec-table .word-break { word-break: break-word; white-space: normal; }
-        .resize-handle {
-          position: absolute;
-          right: 0;
-          top: 0;
-          width: 6px;
-          height: 100%;
-          cursor: col-resize;
-          background-color: transparent;
-          z-index: 15;
-        }
+        .resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; background-color: transparent; z-index: 15; }
         .resize-handle:hover { background-color: #94a3b8; }
         th { position: relative; }
       `;
@@ -325,7 +302,6 @@ export const SpecificationPage: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif' }}>
-      {/* Тулбар */}
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '20px', background: 'white', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1 }} />
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -429,33 +405,21 @@ export const SpecificationPage: React.FC = () => {
                     <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
                     <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
                     <td className="text-center"><input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="text-center">
-                      <select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
-                        <option>шт</option><option>м</option><option>уп.</option>
-                      </select>
-                    </td>
-                    <td className="text-center">
-                      <select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
-                        {currencies.map(c => <option key={c}>{c}</option>)}
-                      </select>
-                    </td>
+                    <td className="text-center"><select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}><option>шт</option><option>м</option><option>уп.</option></select></td>
+                    <td className="text-center"><select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>{currencies.map(c => <option key={c}>{c}</option>)}</select></td>
                     <td className="text-right"><input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none' }} /></td>
                     <td className="text-center"><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} /></td>
                     <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{sym} {formatNumber(row.discountAmount)}</td>
                     <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{sym} {formatNumber(row.priceAfter)}</td>
                     <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{formatNumber(totalRub)} ₽</td>
                     <td><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="text-center">
-                      <select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
-                        {statuses.map(s => <option key={s}>{s}</option>)}
-                      </select>
-                    </td>
+                    <td className="text-center"><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
                     <td className="action-buttons">
                       <button onClick={() => addDataRowAfterId(row.id)}><i className="fas fa-plus-circle"></i></button>
                       <button onClick={() => duplicateRow(row.id)}><i className="fas fa-copy"></i></button>
                       <button onClick={() => deleteRow(row.id)}><i className="fas fa-trash-alt"></i></button>
                     </td>
-                  </tr>
+                  </table>
                 );
               }
               return null;
