@@ -56,7 +56,7 @@ export const SpecificationPage: React.FC = () => {
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v8');
+    const saved = localStorage.getItem('specification_data_v9');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -75,7 +75,7 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v8', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v9', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
@@ -339,10 +339,10 @@ export const SpecificationPage: React.FC = () => {
         .spec-table .action-buttons button:hover { color: #3b82f6; }
         .spec-table .section-row .collapse-icon { color: #cbd5e1; transition: color 0.2s; }
         .spec-table .section-row .collapse-icon:hover { color: #3b82f6; }
-        .spec-table td { vertical-align: middle; border-right: 1px solid var(--border-light); background-color: var(--bg-panel-solid); color: var(--text-primary); }
-        .spec-table th { border-right: 1px solid var(--border-light); position: sticky; top: 0; background: var(--card-bg); color: var(--text-secondary); z-index: 10; }
+        .spec-table td { vertical-align: middle; border-right: 1px solid var(--border-light); background-color: var(--bg-panel-solid); color: var(--text-primary); padding: 8px 6px; }
+        .spec-table th { border-right: 1px solid var(--border-light); position: sticky; top: 0; background: var(--card-bg); color: var(--text-secondary); z-index: 10; padding: 8px 6px; }
         .spec-table td:last-child, .spec-table th:last-child { border-right: none; }
-        .spec-table .text-right { text-align: right; }
+        .spec-table .text-right { text-align: right; padding-right: 12px; }
         .spec-table .text-center { text-align: center; }
         .spec-table .word-break { word-break: break-word; white-space: normal; }
         .resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; background-color: transparent; z-index: 15; }
@@ -363,7 +363,6 @@ export const SpecificationPage: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif', background: 'var(--bg-page)', minHeight: '100vh' }}>
-      {/* Тулбар */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', background: 'var(--bg-panel)', backdropFilter: 'blur(12px)', padding: '16px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid var(--border-light)' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
           <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1, color: 'var(--text-primary)' }} />
@@ -429,7 +428,7 @@ export const SpecificationPage: React.FC = () => {
           <thead>
             <tr>
               {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountAmount', 'priceAfter', 'grossRub', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
-                <th key={col} style={{ width: columnWidths[col], padding: '8px 6px', borderBottom: '1px solid var(--border-light)', background: 'var(--card-bg)', fontWeight: 600, position: 'sticky', top: 0, zIndex: 10 }}>
+                <th key={col} style={{ width: columnWidths[col] }}>
                   {col === 'drag' && <i className="fas fa-grip-vertical" style={{ color: '#cbd5e1' }}></i>}
                   {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} />}
                   {col === 'num' && '#'}
@@ -475,8 +474,8 @@ export const SpecificationPage: React.FC = () => {
                             <button onClick={() => deleteRow(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#cbd5e1' }} title="Удалить раздел"><i className="fas fa-trash-alt"></i></button>
                           </div>
                         </div>
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                     {!row.collapsed && row.showTotals && (
                       <tr className="section-totals-row">
                         <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>Итого по разделу:</td>
@@ -496,6 +495,18 @@ export const SpecificationPage: React.FC = () => {
                 const grossRub = getGrossRub(row);
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
+                // Скрываем строки данных, если раздел свернут (проверяем предыдущий раздел)
+                // Нужно найти, принадлежит ли эта строка свернутому разделу.
+                // Для этого при рендере мы должны знать состояние сворачивания текущего раздела.
+                // Проще: добавим в состояние строки привязку к разделу, но для простоты – найдём ближайший сверху раздел.
+                let sectionCollapsed = false;
+                for (let i = rows.indexOf(row) - 1; i >= 0; i--) {
+                  if (rows[i].type === 'section') {
+                    sectionCollapsed = (rows[i] as SectionRow).collapsed;
+                    break;
+                  }
+                }
+                if (sectionCollapsed) return null;
                 return (
                   <tr key={row.id} className={`data-row ${!visible ? 'filtered-out' : ''}`} data-id={row.id}>
                     <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
