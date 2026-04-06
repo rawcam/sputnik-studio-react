@@ -227,7 +227,7 @@ export const SpecificationPage: React.FC = () => {
     setSelectedIds([]);
   };
 
-  // Исправленный Sortable
+  // Sortable
   useEffect(() => {
     if (!tableBodyRef.current) return;
     if (sortableRef.current) {
@@ -380,14 +380,16 @@ export const SpecificationPage: React.FC = () => {
                     <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                     <td className="checkbox-col"></td>
                     <td></td>
-                    <td colSpan={14} style={{ padding: '8px 6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'}`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer' }}></i>
-                        <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)} style={{ fontWeight: 600 }}>{row.title}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => addDataRowAfterId(row.id)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}><i className="fas fa-plus-circle"></i> Добавить строку</button>
-                        <button onClick={() => deleteRow(row.id)} style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}><i className="fas fa-trash-alt"></i> Удалить раздел</button>
+                    <td colSpan={14} style={{ padding: '8px 6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'}`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer' }}></i>
+                          <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)} style={{ fontWeight: 600 }}>{row.title}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => addDataRowAfterId(row.id)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}><i className="fas fa-plus-circle"></i> Добавить строку</button>
+                          <button onClick={() => deleteRow(row.id)} style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}><i className="fas fa-trash-alt"></i> Удалить раздел</button>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -419,7 +421,7 @@ export const SpecificationPage: React.FC = () => {
                       <button onClick={() => duplicateRow(row.id)}><i className="fas fa-copy"></i></button>
                       <button onClick={() => deleteRow(row.id)}><i className="fas fa-trash-alt"></i></button>
                     </td>
-                  </table>
+                  </tr>
                 );
               }
               return null;
