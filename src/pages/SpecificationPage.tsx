@@ -41,6 +41,8 @@ export const SpecificationPage: React.FC = () => {
   const [eurRate, setEurRate] = useState(98);
   const [tableName, setTableName] = useState('Спецификация оборудования');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [filterVendor, setFilterVendor] = useState('');
+  const [filterSku, setFilterSku] = useState('');
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
   const sortableRef = useRef<Sortable | null>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
@@ -53,8 +55,9 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
+  // Загрузка/сохранение
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v5');
+    const saved = localStorage.getItem('specification_data_v6');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -73,13 +76,14 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v5', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v6', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
 
+  // Вспомогательные функции
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
     if (currency === 'EUR') return eurRate;
@@ -106,11 +110,19 @@ export const SpecificationPage: React.FC = () => {
     updateCalculations();
   }, []);
 
+  // Фильтрация (по вендору и артикулу, без учёта регистра)
+  const isDataRowVisible = (row: DataRow) => {
+    const vendorMatch = filterVendor === '' || row.vendor.toLowerCase().includes(filterVendor.toLowerCase());
+    const skuMatch = filterSku === '' || row.sku.toLowerCase().includes(filterSku.toLowerCase());
+    return vendorMatch && skuMatch;
+  };
+
+  // Подсчёт итогов только по видимым строкам
   const computeTotals = () => {
     let totalGrossRub = 0, totalRub = 0, totalQty = 0, totalDiscountRub = 0;
     const byCurrency: Record<string, { gross: number; net: number; qty: number }> = {};
     for (const row of rows) {
-      if (row.type === 'data') {
+      if (row.type === 'data' && isDataRowVisible(row)) {
         const gross = getGrossRub(row);
         const net = getTotalRub(row);
         const discountRub = gross - net;
@@ -138,7 +150,7 @@ export const SpecificationPage: React.FC = () => {
         continue;
       }
       if (start && row.type === 'section') break;
-      if (start && row.type === 'data') {
+      if (start && row.type === 'data' && isDataRowVisible(row)) {
         sectionGross += getGrossRub(row);
         sectionNet += getTotalRub(row);
         sectionQty += row.quantity;
@@ -147,6 +159,7 @@ export const SpecificationPage: React.FC = () => {
     return { gross: sectionGross, net: sectionNet, qty: sectionQty };
   };
 
+  // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -227,10 +240,12 @@ export const SpecificationPage: React.FC = () => {
     setUsdRate(90);
     setEurRate(98);
     setTableName('Спецификация оборудования');
+    setFilterVendor('');
+    setFilterSku('');
   };
 
   const exportToExcel = () => {
-    const sheetData: any[][] = [['Вендор', 'Артикул', 'Наименование', 'Кол-во', 'Ед.', 'Валюта', 'Цена за ед.', 'Скидка %', 'Сумма скидки (валюта)', 'Цена после (валюта)', 'Валовая сумма (руб)', 'Итого (руб)', 'Поставщик', 'Статус']];
+    const sheetData: any[][] = [['Вендор', 'Артикул', 'Наименование', 'Кол-во', 'Ед.', 'Валюта', 'Цена за ед.', 'Скидка %', 'Сумма скидки', 'Цена после (валюта)', 'Валовая сумма (руб)', 'Итого (руб)', 'Поставщик', 'Статус']];
     for (const row of rows) {
       if (row.type === 'section') {
         sheetData.push([`=== ${row.title} ===`, '', '', '', '', '', '', '', '', '', '', '', '', '']);
@@ -252,7 +267,7 @@ export const SpecificationPage: React.FC = () => {
     setSelectedIds([]);
   };
 
-  // Sortable – только для строк данных, разделы не перетаскиваются
+  // Drag-and-drop только для строк данных
   useEffect(() => {
     if (!tableBodyRef.current) return;
     if (sortableRef.current) {
@@ -260,7 +275,7 @@ export const SpecificationPage: React.FC = () => {
       sortableRef.current = null;
     }
     sortableRef.current = new Sortable(tableBodyRef.current, {
-      handle: '.data-row .drag-handle',  // только строки данных
+      handle: '.data-row .drag-handle',
       animation: 150,
       onEnd: () => {
         if (!tableBodyRef.current) return;
@@ -282,6 +297,7 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
+  // Изменение ширины столбцов
   const startResize = (colKey: string, startX: number, startWidth: number) => {
     const onMouseMove = (moveEvent: MouseEvent) => {
       let newWidth = startWidth + (moveEvent.pageX - startX);
@@ -296,6 +312,7 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
+  // Глобальные стили
   useEffect(() => {
     const styleId = 'spec-global-styles';
     if (!document.getElementById(styleId)) {
@@ -307,8 +324,10 @@ export const SpecificationPage: React.FC = () => {
         .spec-table .data-row:hover { background-color: #e0f2fe !important; }
         .spec-table .section-row { background-color: #f1f5f9; font-weight: 600; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; cursor: pointer; }
         .spec-table .section-row:hover { background-color: #e6edf5; }
-        .spec-table .action-buttons button { background: transparent; border: none; cursor: pointer; padding: 4px 6px; color: #4b5563; transition: color 0.2s; }
+        .spec-table .action-buttons button { background: transparent; border: none; cursor: pointer; padding: 4px 6px; color: #cbd5e1; transition: color 0.2s; }
         .spec-table .action-buttons button:hover { color: #3b82f6; }
+        .spec-table .section-row .collapse-icon { color: #cbd5e1; transition: color 0.2s; }
+        .spec-table .section-row .collapse-icon:hover { color: #3b82f6; }
         .spec-table td { vertical-align: middle; border-right: 1px solid #e5e7eb; }
         .spec-table th { border-right: 1px solid #e5e7eb; position: sticky; top: 0; background: #f8fafc; z-index: 10; }
         .spec-table td:last-child, .spec-table th:last-child { border-right: none; }
@@ -320,6 +339,7 @@ export const SpecificationPage: React.FC = () => {
         th { position: relative; }
         .section-totals-row { background-color: #eef2ff; font-weight: 500; padding: 10px 0; border-top: 1px solid #cbd5e1; }
         .section-totals-row td { padding: 10px 6px; }
+        .filtered-out { display: none; }
       `;
       document.head.appendChild(style);
     }
@@ -333,12 +353,11 @@ export const SpecificationPage: React.FC = () => {
     <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '20px', background: 'white', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1 }} />
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <div style={{ background: '#f1f5f9', padding: '6px 12px', borderRadius: '24px', display: 'flex', gap: '12px' }}>
-            <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px', marginLeft: '4px' }} /></label>
-            <label>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px', marginLeft: '4px' }} /></label>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input type="text" placeholder="Фильтр по вендору" value={filterVendor} onChange={e => setFilterVendor(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #cbd5e1', fontSize: '0.8rem', width: '140px' }} />
+            <input type="text" placeholder="Фильтр по артикулу" value={filterSku} onChange={e => setFilterSku(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #cbd5e1', fontSize: '0.8rem', width: '140px' }} />
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#475569' }}>{new Date().toLocaleString()}</div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
             <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={collapseAll}><i className="fas fa-minus-square"></i> Свернуть всё</button>
@@ -398,7 +417,7 @@ export const SpecificationPage: React.FC = () => {
                   {col === 'currency' && 'Валюта'}
                   {col === 'price' && 'Цена за ед.'}
                   {col === 'discount' && 'Скидка %'}
-                  {col === 'discountAmount' && 'Сумма скидки (валюта)'}
+                  {col === 'discountAmount' && 'Сумма скидки'}
                   {col === 'priceAfter' && 'Цена после (валюта)'}
                   {col === 'grossRub' && 'Валовая сумма (руб)'}
                   {col === 'totalRub' && 'Итого (руб)'}
@@ -420,25 +439,27 @@ export const SpecificationPage: React.FC = () => {
                     <tr className="section-row" data-id={row.id}>
                       <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                       <td className="checkbox-col"></td>
-                      <td></td> {/* пустая ячейка для номера */}
+                      <td></td>
                       <td colSpan={15} style={{ padding: '8px 6px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1, textAlign: 'center' }}>
-                            <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'}`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer', marginRight: '8px' }}></i>
+                            <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'} collapse-icon`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer', marginRight: '8px', color: '#cbd5e1' }}></i>
                             <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)} style={{ fontWeight: 700, fontSize: '1.2rem' }}>{row.title}</span>
-                            <i className="fas fa-chart-line" onClick={() => toggleSectionTotals(row.id)} style={{ cursor: 'pointer', marginLeft: '12px', color: row.showTotals ? '#3b82f6' : '#9ca3af' }} title="Показать/скрыть итоги по разделу"></i>
+                            <i className="fas fa-chart-line" onClick={() => toggleSectionTotals(row.id)} style={{ cursor: 'pointer', marginLeft: '12px', color: row.showTotals ? '#3b82f6' : '#cbd5e1' }} title="Показать/скрыть итоги по разделу"></i>
                           </div>
                           <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => addDataRowAfterId(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem' }} title="Добавить строку"><i className="fas fa-plus-circle"></i></button>
-                            <button onClick={() => deleteRow(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem' }} title="Удалить раздел"><i className="fas fa-trash-alt"></i></button>
+                            <button onClick={() => addDataRowAfterId(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#cbd5e1' }} title="Добавить строку"><i className="fas fa-plus-circle"></i></button>
+                            <button onClick={() => deleteRow(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#cbd5e1' }} title="Удалить раздел"><i className="fas fa-trash-alt"></i></button>
                           </div>
                         </div>
                        </td>
                      </tr>
                     {!row.collapsed && row.showTotals && (
                       <tr className="section-totals-row">
-                        <td colSpan={12} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px' }}>Итого по разделу:</td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>—</td>
+                        <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px' }}>Итого по разделу:</td>
+                        <td className="text-center" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.qty)}</td>
+                        <td colSpan={4} style={{ padding: '10px 6px' }}></td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.gross - sectionTotals.net)} ₽</td>
                         <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.gross)} ₽</td>
                         <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.net)} ₽</td>
                         <td colSpan={3} style={{ padding: '10px 6px' }}></td>
@@ -446,16 +467,17 @@ export const SpecificationPage: React.FC = () => {
                     )}
                   </React.Fragment>
                 );
-              } else if (row.type === 'data' && !sectionCollapsed) {
-                dataCounter++;
+              } else if (row.type === 'data') {
+                const visible = isDataRowVisible(row);
+                dataCounter = visible ? dataCounter + 1 : dataCounter;
                 const grossRub = getGrossRub(row);
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
                 return (
-                  <tr key={row.id} className="data-row" data-id={row.id}>
+                  <tr key={row.id} className={`data-row ${!visible ? 'filtered-out' : ''}`} data-id={row.id}>
                     <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                     <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
-                    <td className="text-center">{dataCounter}</td>
+                    <td className="text-center">{visible ? dataCounter : ''}</td>
                     <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
                     <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
                     <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
@@ -485,12 +507,11 @@ export const SpecificationPage: React.FC = () => {
             <tr style={{ background: '#f8fafc', fontWeight: 600, borderTop: '2px solid #cbd5e1' }}>
               <td colSpan={6} style={{ textAlign: 'right', padding: '8px 6px' }}>Итого по всем разделам:</td>
               <td className="text-center">{formatNumber(totals.totalQty)}</td>
-              <td colSpan={3}></td>
+              <td colSpan={4} style={{ padding: '8px 6px' }}></td>
               <td className="text-right">{formatNumber(totals.totalDiscountRub)} ₽</td>
-              <td className="text-right">—</td>
               <td className="text-right">{formatNumber(totals.totalGrossRub)} ₽</td>
               <td className="text-right">{formatNumber(totals.totalRub)} ₽</td>
-              <td colSpan={3}></td>
+              <td colSpan={3} style={{ padding: '8px 6px' }}></td>
             </tr>
           </tfoot>
         </table>
