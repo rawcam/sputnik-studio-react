@@ -462,8 +462,7 @@ export const SpecificationPage: React.FC = () => {
                     <tr className="section-row" data-id={row.id}>
                       <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                       <td className="checkbox-col"></td>
-                      <td></td> {/* пустая ячейка для номера */}
-                      <td colSpan={15} style={{ padding: '8px 6px' }}>
+                      <td colSpan={16} style={{ padding: '8px 6px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1, textAlign: 'center' }}>
                             <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'} collapse-icon`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer', marginRight: '8px', color: '#cbd5e1' }}></i>
@@ -475,8 +474,8 @@ export const SpecificationPage: React.FC = () => {
                             <button onClick={() => deleteRow(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#cbd5e1' }} title="Удалить раздел"><i className="fas fa-trash-alt"></i></button>
                           </div>
                         </div>
-                       </td>
-                     </td>
+                      </td>
+                    </tr>
                     {!row.collapsed && row.showTotals && (
                       <tr className="section-totals-row">
                         <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>Итого по разделу:</td>
@@ -496,7 +495,7 @@ export const SpecificationPage: React.FC = () => {
                 const grossRub = getGrossRub(row);
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
-                // Определяем, свернут ли раздел, к которому принадлежит строка
+                // Определяем, свернут ли раздел
                 let sectionCollapsed = false;
                 for (let i = idx - 1; i >= 0; i--) {
                   if (array[i].type === 'section') {
@@ -529,7 +528,7 @@ export const SpecificationPage: React.FC = () => {
                       <button onClick={() => duplicateRow(row.id)} title="Дублировать строку"><i className="fas fa-copy"></i></button>
                       <button onClick={() => deleteRow(row.id)} title="Удалить строку"><i className="fas fa-trash-alt"></i></button>
                     </td>
-                  </table>
+                  </tr>
                 );
               }
               return null;
@@ -544,7 +543,7 @@ export const SpecificationPage: React.FC = () => {
               <td className="text-right" style={{ color: 'var(--text-primary)' }}>{formatNumber(totals.totalGrossRub)} ₽</td>
               <td className="text-right" style={{ color: 'var(--text-primary)' }}>{formatNumber(totals.totalRub)} ₽</td>
               <td colSpan={3} style={{ padding: '8px 6px' }}></td>
-            </tr>
+            </table>
           </tfoot>
         </table>
       </div>
