@@ -54,7 +54,7 @@ export const SpecificationPage: React.FC = () => {
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v4');
+    const saved = localStorage.getItem('specification_data_v5');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -73,7 +73,7 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v4', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v5', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
@@ -159,12 +159,6 @@ export const SpecificationPage: React.FC = () => {
     const newRows = [...rows];
     newRows.splice(index + 1, 0, newRow);
     setRows(newRows);
-  };
-
-  const addDataRowAtEnd = () => {
-    const newId = nextId;
-    setNextId(nextId + 1);
-    setRows([...rows, { id: newId, type: 'data', vendor: '', sku: '', name: '', quantity: 0, unit: 'шт', currency: 'RUB', price: 0, discount: 0, discountAmount: 0, priceAfter: 0, supplier: '', status: 'Замена' }]);
   };
 
   const addSection = () => {
@@ -258,6 +252,7 @@ export const SpecificationPage: React.FC = () => {
     setSelectedIds([]);
   };
 
+  // Sortable – только для строк данных, разделы не перетаскиваются
   useEffect(() => {
     if (!tableBodyRef.current) return;
     if (sortableRef.current) {
@@ -265,7 +260,7 @@ export const SpecificationPage: React.FC = () => {
       sortableRef.current = null;
     }
     sortableRef.current = new Sortable(tableBodyRef.current, {
-      handle: '.drag-handle',
+      handle: '.data-row .drag-handle',  // только строки данных
       animation: 150,
       onEnd: () => {
         if (!tableBodyRef.current) return;
@@ -315,7 +310,7 @@ export const SpecificationPage: React.FC = () => {
         .spec-table .action-buttons button { background: transparent; border: none; cursor: pointer; padding: 4px 6px; color: #4b5563; transition: color 0.2s; }
         .spec-table .action-buttons button:hover { color: #3b82f6; }
         .spec-table td { vertical-align: middle; border-right: 1px solid #e5e7eb; }
-        .spec-table th { border-right: 1px solid #e5e7eb; }
+        .spec-table th { border-right: 1px solid #e5e7eb; position: sticky; top: 0; background: #f8fafc; z-index: 10; }
         .spec-table td:last-child, .spec-table th:last-child { border-right: none; }
         .spec-table .text-right { text-align: right; }
         .spec-table .text-center { text-align: center; }
@@ -323,7 +318,8 @@ export const SpecificationPage: React.FC = () => {
         .resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; background-color: transparent; z-index: 15; }
         .resize-handle:hover { background-color: #94a3b8; }
         th { position: relative; }
-        .section-totals-row { background-color: #eef2ff; font-weight: 500; }
+        .section-totals-row { background-color: #eef2ff; font-weight: 500; padding: 10px 0; border-top: 1px solid #cbd5e1; }
+        .section-totals-row td { padding: 10px 6px; }
       `;
       document.head.appendChild(style);
     }
@@ -347,7 +343,6 @@ export const SpecificationPage: React.FC = () => {
             <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
             <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={collapseAll}><i className="fas fa-minus-square"></i> Свернуть всё</button>
             <button style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={addSection}><i className="fas fa-layer-group"></i> Раздел</button>
-            <button style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={addDataRowAtEnd}><i className="fas fa-plus-circle"></i> Строка</button>
             <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
             <button style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={resetDemo}><i className="fas fa-undo-alt"></i> Сброс</button>
           </div>
@@ -362,17 +357,17 @@ export const SpecificationPage: React.FC = () => {
       )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '16px', width: '100%' }}>
-        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #3b82f6`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #3b82f6`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="Итоговая стоимость после применения всех скидок, пересчитанная в рубли по курсу">
           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>Общая сумма (руб)</div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{formatNumber(totals.totalRub)} ₽</div>
           <div style={{ fontSize: '0.7rem', color: '#475569' }}>Количество: {formatNumber(totals.totalQty)} шт.</div>
         </div>
-        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #10b981`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #10b981`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="Стоимость без скидок, пересчитанная в рубли по курсу">
           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>Валовая сумма (руб)</div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{formatNumber(totals.totalGrossRub)} ₽</div>
           <div style={{ fontSize: '0.7rem', color: '#475569' }}>Скидка: {formatNumber(totals.totalDiscountRub)} ₽</div>
         </div>
-        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #f59e0b`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #f59e0b`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="(Валовая сумма − Общая сумма) / Валовая сумма × 100%">
           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>Маржинальность</div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{totals.marginPercent.toFixed(1)}%</div>
           <div style={{ fontSize: '0.7rem', color: '#475569' }}>от валовой суммы</div>
@@ -391,7 +386,7 @@ export const SpecificationPage: React.FC = () => {
           <thead>
             <tr>
               {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountAmount', 'priceAfter', 'grossRub', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
-                <th key={col} style={{ width: columnWidths[col], padding: '8px 6px', borderBottom: '1px solid #e5e7eb', background: '#f8fafc', fontWeight: 600, position: 'relative' }}>
+                <th key={col} style={{ width: columnWidths[col], padding: '8px 6px', borderBottom: '1px solid #e5e7eb', background: '#f8fafc', fontWeight: 600, position: 'sticky', top: 0, zIndex: 10 }}>
                   {col === 'drag' && <i className="fas fa-grip-vertical" style={{ color: '#cbd5e1' }}></i>}
                   {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} />}
                   {col === 'num' && '#'}
@@ -425,7 +420,7 @@ export const SpecificationPage: React.FC = () => {
                     <tr className="section-row" data-id={row.id}>
                       <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                       <td className="checkbox-col"></td>
-                      <td></td>
+                      <td></td> {/* пустая ячейка для номера */}
                       <td colSpan={15} style={{ padding: '8px 6px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1, textAlign: 'center' }}>
@@ -441,12 +436,12 @@ export const SpecificationPage: React.FC = () => {
                        </td>
                      </tr>
                     {!row.collapsed && row.showTotals && (
-                      <tr className="section-totals-row" style={{ background: '#eef2ff' }}>
-                        <td colSpan={12} style={{ textAlign: 'right', fontWeight: 600, padding: '8px 6px' }}>Итого по разделу:</td>
-                        <td className="text-right" style={{ fontWeight: 600 }}>—</td>
-                        <td className="text-right" style={{ fontWeight: 600 }}>{formatNumber(sectionTotals.gross)} ₽</td>
-                        <td className="text-right" style={{ fontWeight: 600 }}>{formatNumber(sectionTotals.net)} ₽</td>
-                        <td colSpan={3}></td>
+                      <tr className="section-totals-row">
+                        <td colSpan={12} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px' }}>Итого по разделу:</td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>—</td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.gross)} ₽</td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.net)} ₽</td>
+                        <td colSpan={3} style={{ padding: '10px 6px' }}></td>
                       </tr>
                     )}
                   </React.Fragment>
