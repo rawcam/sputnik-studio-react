@@ -551,7 +551,6 @@ export const SpecificationPage: React.FC = () => {
               } else if (row.type === 'data') {
                 const visible = isDataRowVisible(row);
                 if (visible) dataCounter++;
-                const grossRub = getGrossRub(row);
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
                 // Определяем, свернут ли раздел, к которому принадлежит строка
@@ -579,7 +578,7 @@ export const SpecificationPage: React.FC = () => {
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{sym} {formatNumber(row.discountAmount)}</td>
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{sym} {formatNumber(row.priceAfter)}</td>
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{formatNumber(totalRub)} ₽</td>
-                    <td><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--text-primary)' }} /></td>
+                    <td style={{ textAlign: 'center' }}><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--text-primary)' }} /></td>
                     <td className="text-center"><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
                     <td className="action-buttons">
                       <button onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже"><i className="fas fa-plus-circle"></i></button>
