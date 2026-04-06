@@ -172,6 +172,8 @@ export const SpecificationPage: React.FC = () => {
     const newRows = [...rows];
     newRows.splice(index + 1, 0, newRow);
     setRows(newRows);
+    // Принудительный пересчёт (хотя setRows вызовет ререндер, но для надёжности)
+    setTimeout(() => updateCalculations(), 0);
   };
 
   const addSection = () => {
@@ -190,6 +192,7 @@ export const SpecificationPage: React.FC = () => {
     const newRows = [...rows];
     newRows.splice(index + 1, 0, clone);
     setRows(newRows);
+    setTimeout(() => updateCalculations(), 0);
   };
 
   const deleteRow = (id: number) => {
@@ -347,7 +350,6 @@ export const SpecificationPage: React.FC = () => {
 
   const totals = computeTotals();
   let dataCounter = 0;
-  let sectionCollapsed = false;
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif' }}>
@@ -432,7 +434,6 @@ export const SpecificationPage: React.FC = () => {
           <tbody ref={tableBodyRef}>
             {rows.map((row) => {
               if (row.type === 'section') {
-                sectionCollapsed = row.collapsed;
                 const sectionTotals = getSectionTotals(row.id);
                 return (
                   <React.Fragment key={row.id}>
@@ -469,7 +470,7 @@ export const SpecificationPage: React.FC = () => {
                 );
               } else if (row.type === 'data') {
                 const visible = isDataRowVisible(row);
-                dataCounter = visible ? dataCounter + 1 : dataCounter;
+                if (visible) dataCounter++;
                 const grossRub = getGrossRub(row);
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
@@ -497,7 +498,7 @@ export const SpecificationPage: React.FC = () => {
                       <button onClick={() => duplicateRow(row.id)} title="Дублировать строку"><i className="fas fa-copy"></i></button>
                       <button onClick={() => deleteRow(row.id)} title="Удалить строку"><i className="fas fa-trash-alt"></i></button>
                     </td>
-                  </tr>
+                  </table>
                 );
               }
               return null;
