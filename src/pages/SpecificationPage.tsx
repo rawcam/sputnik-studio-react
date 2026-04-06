@@ -28,7 +28,7 @@ interface SectionRow {
   type: 'section';
   title: string;
   collapsed: boolean;
-  showTotals: boolean;
+  showTotals: boolean;    // временно не используется, но оставлено для будущего
 }
 
 type Row = DataRow | SectionRow;
@@ -168,24 +168,8 @@ export const SpecificationPage: React.FC = () => {
     return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
 
-  // Вычисление итогов по конкретному разделу (только видимые строки)
-  const getSectionTotals = (sectionId: number) => {
-    let sectionGross = 0, sectionNet = 0, sectionQty = 0;
-    let start = false;
-    for (const row of rows) {
-      if (row.type === 'section' && row.id === sectionId) {
-        start = true;
-        continue;
-      }
-      if (start && row.type === 'section') break;
-      if (start && row.type === 'data' && isDataRowVisible(row)) {
-        sectionGross += getGrossRub(row);
-        sectionNet += getTotalRub(row);
-        sectionQty += row.quantity;
-      }
-    }
-    return { gross: sectionGross, net: sectionNet, qty: sectionQty };
-  };
+  // Вычисление итогов по конкретному разделу (только видимые строки) – временно не используется
+  // const getSectionTotals = (sectionId: number) => { ... };
 
   // ==========================================================================
   // ОПЕРАЦИИ С ДАННЫМИ (CRUD)
@@ -386,13 +370,11 @@ export const SpecificationPage: React.FC = () => {
         .spec-table .action-buttons button:hover { color: #3b82f6; }
         .spec-table .section-row .collapse-icon { color: #cbd5e1; transition: color 0.2s; }
         .spec-table .section-row .collapse-icon:hover { color: #3b82f6; }
-        /* Вертикальные разделители */
-        .spec-table tr td:not(:last-child),
-        .spec-table tr th:not(:last-child) {
+        /* Вертикальные разделители (как в рабочем HTML) */
+        .spec-table td, .spec-table th {
           border-right: 1px solid var(--border-light);
         }
-        .spec-table td:last-child,
-        .spec-table th:last-child {
+        .spec-table td:last-child, .spec-table th:last-child {
           border-right: none;
         }
         .spec-table { border-collapse: collapse; }
@@ -404,8 +386,8 @@ export const SpecificationPage: React.FC = () => {
         .resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; background-color: transparent; z-index: 15; }
         .resize-handle:hover { background-color: #94a3b8; }
         th { position: relative; }
-        .section-totals-row { background-color: var(--card-bg); font-weight: 500; border-top: 1px solid var(--border-light); }
-        .section-totals-row td { padding: 10px 8px; background-color: var(--card-bg); }
+        /* Строка итогов по разделу временно скрыта */
+        .section-totals-row { display: none; }
         .filtered-out { display: none; }
         input, select { background: var(--bg-panel-solid); color: var(--text-primary); border: 1px solid var(--border-light); border-radius: 8px; padding: 6px 8px; }
         .readonly-cell { background: var(--card-bg); }
@@ -521,7 +503,7 @@ export const SpecificationPage: React.FC = () => {
           <tbody ref={tableBodyRef}>
             {rows.map((row, idx, array) => {
               if (row.type === 'section') {
-                const sectionTotals = getSectionTotals(row.id);
+                // Итоги по разделу временно отключены
                 return (
                   <React.Fragment key={row.id}>
                     <tr className="section-row" data-id={row.id}>
@@ -541,17 +523,6 @@ export const SpecificationPage: React.FC = () => {
                         </div>
                       </td>
                     </tr>
-                    {!row.collapsed && row.showTotals && (
-                      <tr className="section-totals-row">
-                        <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>Итого по разделу:</td>
-                        <td className="text-center" style={{ fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.qty)}</td>
-                        <td colSpan={4} style={{ padding: '10px 8px' }}></td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.gross - sectionTotals.net)} ₽</td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.gross)} ₽</td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.net)} ₽</td>
-                        <td colSpan={3} style={{ padding: '10px 8px' }}></td>
-                      </tr>
-                    )}
                   </React.Fragment>
                 );
               } else if (row.type === 'data') {
