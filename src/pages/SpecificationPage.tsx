@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import Sortable from 'sortablejs';
 import * as XLSX from 'xlsx';
 
+// ============================================================================
+// ТИПЫ
+// ============================================================================
+
 interface DataRow {
   id: number;
   type: 'data';
@@ -29,12 +33,21 @@ interface SectionRow {
 
 type Row = DataRow | SectionRow;
 
+// ============================================================================
+// КОНСТАНТЫ
+// ============================================================================
+
 const statuses = ['Замена', 'Получено КП', 'Закуплено'];
 const currencies = ['RUB', 'USD', 'EUR'];
 const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
 const currencyColors: Record<string, string> = { RUB: '#3b82f6', USD: '#10b981', EUR: '#f59e0b' };
 
+// ============================================================================
+// КОМПОНЕНТ
+// ============================================================================
+
 export const SpecificationPage: React.FC = () => {
+  // Состояние данных
   const [rows, setRows] = useState<Row[]>([]);
   const [nextId, setNextId] = useState(105);
   const [usdRate, setUsdRate] = useState(90);
@@ -43,21 +56,28 @@ export const SpecificationPage: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [filterVendor, setFilterVendor] = useState('');
   const [filterSku, setFilterSku] = useState('');
+
+  // Refs для таблицы и Sortable
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
   const sortableRef = useRef<Sortable | null>(null);
+
+  // Ширина столбцов (сохраняется в localStorage)
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem('spec_column_widths');
     return saved ? JSON.parse(saved) : {
       drag: 40, checkbox: 30, num: 50, vendor: 120, sku: 120, name: 250,
       qty: 90, unit: 80, currency: 90, price: 110, discount: 100,
-      discountAmount: 130, priceAfter: 130, grossRub: 130, totalRub: 130,
+      discountAmount: 130, priceAfter: 130, totalRub: 130,
       supplier: 140, status: 120, actions: 100,
     };
   });
 
-  // Загрузка сохранённых данных
+  // ==========================================================================
+  // ЗАГРУЗКА / СОХРАНЕНИЕ
+  // ==========================================================================
+
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v11');
+    const saved = localStorage.getItem('specification_data_v12');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -74,32 +94,34 @@ export const SpecificationPage: React.FC = () => {
     resetDemo();
   }, []);
 
-  // Сохранение данных
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v11', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v12', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
-  // Сохранение ширины столбцов
   useEffect(() => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
 
-  // Конвертация валют
+  // ==========================================================================
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (расчёты)
+  // ==========================================================================
+
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
     if (currency === 'EUR') return eurRate;
     return 1;
   };
 
-  // Валовая сумма (без скидки) в рублях
+  // Валовая сумма (без скидки) в рублях: price * quantity * курс
   const getGrossRub = (row: DataRow) => row.price * row.quantity * getRate(row.currency);
-  // Сумма после скидки в рублях
+
+  // Общая сумма (после скидки) в рублях: priceAfter * quantity * курс
   const getTotalRub = (row: DataRow) => (row.priceAfter || 0) * row.quantity * getRate(row.currency);
 
   const formatNumber = (num: number): string => Math.round(num).toLocaleString('ru-RU');
 
-  // Пересчёт скидок и цен после скидки
+  // Пересчёт скидок и цен после скидки для всех строк данных
   const updateCalculations = () => {
     setRows(prev =>
       prev.map(row => {
@@ -165,7 +187,10 @@ export const SpecificationPage: React.FC = () => {
     return { gross: sectionGross, net: sectionNet, qty: sectionQty };
   };
 
-  // Операции с данными
+  // ==========================================================================
+  // ОПЕРАЦИИ С ДАННЫМИ (CRUD)
+  // ==========================================================================
+
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -253,15 +278,14 @@ export const SpecificationPage: React.FC = () => {
   };
 
   const exportToExcel = () => {
-    const sheetData: any[][] = [['Вендор', 'Артикул', 'Наименование', 'Кол-во', 'Ед.', 'Валюта', 'Цена за ед.', 'Скидка %', 'Сумма скидки', 'Цена после (валюта)', 'Валовая сумма (руб)', 'Итого (руб)', 'Поставщик', 'Статус']];
+    const sheetData: any[][] = [['Вендор', 'Артикул', 'Наименование', 'Кол-во', 'Ед.', 'Валюта', 'Цена за ед.', 'Скидка %', 'Сумма скидки', 'Цена после скидки', 'Общая сумма (руб)', 'Поставщик', 'Статус']];
     for (const row of rows) {
       if (row.type === 'section') {
-        sheetData.push([`=== ${row.title} ===`, '', '', '', '', '', '', '', '', '', '', '', '', '']);
+        sheetData.push([`=== ${row.title} ===`, '', '', '', '', '', '', '', '', '', '', '', '']);
       } else {
-        const grossRub = getGrossRub(row);
         const totalRub = getTotalRub(row);
         const sym = currencySymbols[row.currency];
-        sheetData.push([row.vendor, row.sku, row.name, row.quantity, row.unit, row.currency, row.price, row.discount, `${sym} ${formatNumber(row.discountAmount)}`, `${sym} ${formatNumber(row.priceAfter)}`, `${formatNumber(grossRub)} ₽`, `${formatNumber(totalRub)} ₽`, row.supplier, row.status]);
+        sheetData.push([row.vendor, row.sku, row.name, row.quantity, row.unit, row.currency, row.price, row.discount, `${sym} ${formatNumber(row.discountAmount)}`, `${sym} ${formatNumber(row.priceAfter)}`, `${formatNumber(totalRub)} ₽`, row.supplier, row.status]);
       }
     }
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
@@ -275,7 +299,10 @@ export const SpecificationPage: React.FC = () => {
     setSelectedIds([]);
   };
 
-  // Drag-and-drop только для строк данных
+  // ==========================================================================
+  // DRAG-AND-DROP (только для строк данных)
+  // ==========================================================================
+
   useEffect(() => {
     if (!tableBodyRef.current) return;
     if (sortableRef.current) {
@@ -305,7 +332,10 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
-  // Изменение ширины столбцов
+  // ==========================================================================
+  // ИЗМЕНЕНИЕ ШИРИНЫ СТОЛБЦОВ (resize)
+  // ==========================================================================
+
   const startResize = (colKey: string, startX: number, startWidth: number) => {
     const onMouseMove = (moveEvent: MouseEvent) => {
       let newWidth = startWidth + (moveEvent.pageX - startX);
@@ -320,7 +350,10 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Глобальные стили (с поддержкой тёмной темы и вертикальными разделителями)
+  // ==========================================================================
+  // ГЛОБАЛЬНЫЕ СТИЛИ (с поддержкой тёмной темы и вертикальными разделителями)
+  // ==========================================================================
+
   useEffect(() => {
     const styleId = 'spec-global-styles';
     if (!document.getElementById(styleId)) {
@@ -353,10 +386,11 @@ export const SpecificationPage: React.FC = () => {
         .spec-table .action-buttons button:hover { color: #3b82f6; }
         .spec-table .section-row .collapse-icon { color: #cbd5e1; transition: color 0.2s; }
         .spec-table .section-row .collapse-icon:hover { color: #3b82f6; }
-        /* Вертикальные разделители */
+        /* Вертикальные разделители (тонкая светлая линия) */
         .spec-table td, .spec-table th { border-right: 1px solid var(--border-light) !important; }
         .spec-table td:last-child, .spec-table th:last-child { border-right: none !important; }
-        .spec-table td, .spec-table th { padding: 8px 6px; background-color: var(--bg-panel-solid); color: var(--text-primary); }
+        /* Отступы для воздушности */
+        .spec-table td, .spec-table th { padding: 10px 8px; background-color: var(--bg-panel-solid); color: var(--text-primary); }
         .spec-table th { background: var(--card-bg); color: var(--text-secondary); position: sticky; top: 0; z-index: 10; }
         .spec-table .text-right { text-align: right; padding-right: 12px; }
         .spec-table .text-center { text-align: center; }
@@ -364,19 +398,22 @@ export const SpecificationPage: React.FC = () => {
         .resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; background-color: transparent; z-index: 15; }
         .resize-handle:hover { background-color: #94a3b8; }
         th { position: relative; }
-        /* Строка итогов по разделу */
         .section-totals-row { background-color: var(--card-bg); font-weight: 500; border-top: 1px solid var(--border-light); }
-        .section-totals-row td { padding: 10px 6px; background-color: var(--card-bg); }
+        .section-totals-row td { padding: 10px 8px; background-color: var(--card-bg); }
         .filtered-out { display: none; }
-        input, select { background: var(--bg-panel-solid); color: var(--text-primary); border: 1px solid var(--border-light); border-radius: 8px; padding: 4px 6px; }
+        input, select { background: var(--bg-panel-solid); color: var(--text-primary); border: 1px solid var(--border-light); border-radius: 8px; padding: 6px 8px; }
         .readonly-cell { background: var(--card-bg); }
-        /* Строка общих итогов (tfoot) – визуально отделена */
-        .spec-table tfoot tr { background-color: var(--card-bg); border-top: 3px double var(--accent); font-weight: 700; }
-        .spec-table tfoot td { background-color: var(--card-bg); padding: 10px 6px; }
+        /* Итоговая строка (tfoot) – отделена двойной линией */
+        .spec-table tfoot tr { background-color: var(--card-bg); border-top: 3px double var(--accent, #3b82f6); font-weight: 700; }
+        .spec-table tfoot td { background-color: var(--card-bg); padding: 12px 8px; }
       `;
       document.head.appendChild(style);
     }
   }, []);
+
+  // ==========================================================================
+  // РЕНДЕР
+  // ==========================================================================
 
   const totals = computeTotals();
   let dataCounter = 0;
@@ -451,23 +488,22 @@ export const SpecificationPage: React.FC = () => {
         <table className="spec-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1600px', fontSize: '0.8rem' }}>
           <thead>
             <tr>
-              {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountAmount', 'priceAfter', 'grossRub', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
+              {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountAmount', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
                 <th key={col} style={{ width: columnWidths[col] }}>
                   {col === 'drag' && <i className="fas fa-grip-vertical" style={{ color: '#cbd5e1' }}></i>}
                   {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} />}
                   {col === 'num' && '#'}
                   {col === 'vendor' && 'Вендор'}
                   {col === 'sku' && 'Артикул'}
-                  {col === 'name' && 'Наименование'}
-                  {col === 'qty' && 'Кол-во'}
-                  {col === 'unit' && 'Ед.'}
+                  {col === 'name' && 'Наименование (описание)'}
+                  {col === 'qty' && 'Количество'}
+                  {col === 'unit' && 'Ед. изм.'}
                   {col === 'currency' && 'Валюта'}
                   {col === 'price' && 'Цена за ед.'}
-                  {col === 'discount' && 'Скидка %'}
+                  {col === 'discount' && 'Скидка (%)'}
                   {col === 'discountAmount' && 'Сумма скидки'}
-                  {col === 'priceAfter' && 'Цена после (валюта)'}
-                  {col === 'grossRub' && 'Валовая сумма (руб)'}
-                  {col === 'totalRub' && 'Итого (руб)'}
+                  {col === 'priceAfter' && 'Цена за вычетом скидки'}
+                  {col === 'totalRub' && 'Общая сумма (руб)'}
                   {col === 'supplier' && 'Поставщик'}
                   {col === 'status' && 'Статус'}
                   {col === 'actions' && 'Действия'}
@@ -485,7 +521,7 @@ export const SpecificationPage: React.FC = () => {
                     <tr className="section-row" data-id={row.id}>
                       <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                       <td className="checkbox-col"></td>
-                      <td colSpan={16} style={{ padding: '8px 6px' }}>
+                      <td colSpan={16} style={{ padding: '10px 8px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1, textAlign: 'center' }}>
                             <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'} collapse-icon`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer', marginRight: '8px', color: '#cbd5e1' }}></i>
@@ -501,13 +537,13 @@ export const SpecificationPage: React.FC = () => {
                     </tr>
                     {!row.collapsed && row.showTotals && (
                       <tr className="section-totals-row">
-                        <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>Итого по разделу:</td>
-                        <td className="text-center" style={{ fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.qty)}</td>
-                        <td colSpan={4} style={{ padding: '10px 6px' }}></td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.gross - sectionTotals.net)} ₽</td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.gross)} ₽</td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.net)} ₽</td>
-                        <td colSpan={3} style={{ padding: '10px 6px' }}></td>
+                        <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>Итого по разделу:</td>
+                        <td className="text-center" style={{ fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.qty)}</td>
+                        <td colSpan={4} style={{ padding: '10px 8px' }}></td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.gross - sectionTotals.net)} ₽</td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.gross)} ₽</td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 8px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.net)} ₽</td>
+                        <td colSpan={3} style={{ padding: '10px 8px' }}></td>
                       </tr>
                     )}
                   </React.Fragment>
@@ -542,9 +578,8 @@ export const SpecificationPage: React.FC = () => {
                     <td className="text-center"><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }} /></td>
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{sym} {formatNumber(row.discountAmount)}</td>
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{sym} {formatNumber(row.priceAfter)}</td>
-                    <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{formatNumber(grossRub)} ₽</td>
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{formatNumber(totalRub)} ₽</td>
-                    <td style={{ textAlign: 'center' }}><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--text-primary)' }} /></td>
+                    <td><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--text-primary)' }} /></td>
                     <td className="text-center"><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
                     <td className="action-buttons">
                       <button onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже"><i className="fas fa-plus-circle"></i></button>
@@ -559,13 +594,13 @@ export const SpecificationPage: React.FC = () => {
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={6} style={{ textAlign: 'right', padding: '10px 6px', fontWeight: 700, color: 'var(--text-primary)' }}>Итого по всем разделам:</td>
+              <td colSpan={6} style={{ textAlign: 'right', padding: '12px 8px', fontWeight: 700, color: 'var(--text-primary)' }}>Итого по всем разделам:</td>
               <td className="text-center" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(totals.totalQty)}</td>
-              <td colSpan={4} style={{ padding: '10px 6px' }}></td>
+              <td colSpan={4} style={{ padding: '12px 8px' }}></td>
               <td className="text-right" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(totals.totalDiscountRub)} ₽</td>
               <td className="text-right" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(totals.totalGrossRub)} ₽</td>
               <td className="text-right" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(totals.totalRub)} ₽</td>
-              <td colSpan={3} style={{ padding: '10px 6px' }}></td>
+              <td colSpan={3} style={{ padding: '12px 8px' }}></td>
             </tr>
           </tfoot>
         </table>
