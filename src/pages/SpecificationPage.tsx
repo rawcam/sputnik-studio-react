@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Sortable from 'sortablejs';
 import * as XLSX from 'xlsx';
 
 interface DataRow {
@@ -31,37 +32,78 @@ const statuses = ['Замена', 'Получено КП', 'Закуплено']
 const currencies = ['RUB', 'USD', 'EUR'];
 const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
 
-export const SpecificationPage: React.FC = () => {
-  // Инициализация демо-данных сразу при создании компонента
-  const getInitialRows = (): Row[] => {
-    const saved = localStorage.getItem('specification_data_v2');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.rows && parsed.rows.length) return parsed.rows;
-      } catch (e) {}
-    }
-    // Демо-данные
-    return [
-      { id: 100, type: 'data', vendor: 'Siemens', sku: 'ABC-123', name: 'Контактор 3RT2015', quantity: 10, unit: 'шт', currency: 'RUB', price: 2500, discount: 5, discountAmount: 125, priceAfter: 2375, supplier: 'ООО "Электроснаб"', status: 'Закуплено' },
-      { id: 101, type: 'data', vendor: 'Schneider', sku: 'GV2ME07', name: 'Автоматический выключатель', quantity: 5, unit: 'шт', currency: 'USD', price: 45, discount: 10, discountAmount: 4.5, priceAfter: 40.5, supplier: 'Schneider Electric', status: 'Получено КП' },
-      { id: 102, type: 'section', title: 'Освещение', collapsed: false },
-      { id: 103, type: 'data', vendor: 'Philips', sku: 'LED-9W', name: 'Лампа светодиодная 9W 4000K', quantity: 100, unit: 'шт', currency: 'RUB', price: 120, discount: 0, discountAmount: 0, priceAfter: 120, supplier: 'ООО "Световые решения"', status: 'Замена' },
-      { id: 104, type: 'data', vendor: 'Legrand', sku: 'Valena', name: 'Розетка двойная', quantity: 20, unit: 'шт', currency: 'EUR', price: 8.5, discount: 15, discountAmount: 1.275, priceAfter: 7.225, supplier: 'Legrand Rus', status: 'Закуплено' },
-    ];
-  };
+// Цвета для валют в итоговых карточках
+const currencyColors: Record<string, string> = {
+  RUB: '#3b82f6',
+  USD: '#10b981',
+  EUR: '#f59e0b',
+};
 
-  const [rows, setRows] = useState<Row[]>(getInitialRows());
+export const SpecificationPage: React.FC = () => {
+  const [rows, setRows] = useState<Row[]>([]);
   const [nextId, setNextId] = useState(105);
   const [usdRate, setUsdRate] = useState(90);
   const [eurRate, setEurRate] = useState(98);
   const [tableName, setTableName] = useState('Спецификация оборудования');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
+  const sortableRef = useRef<Sortable | null>(null);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('spec_column_widths');
+    return saved ? JSON.parse(saved) : {
+      drag: 40, checkbox: 30, num: 50, vendor: 120, sku: 120, name: 250,
+      qty: 90, unit: 80, currency: 90, price: 110, discount: 100,
+      discountSum: 130, priceAfter: 130, totalRub: 130, supplier: 140,
+      status: 120, actions: 100,
+    };
+  });
 
-  // Сохранение в localStorage при каждом изменении rows
-  React.useEffect(() => {
-    localStorage.setItem('specification_data_v2', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+  // Загрузка данных из localStorage или инициализация демо
+  useEffect(() => {
+    const saved = localStorage.getItem('specification_data_v3');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.rows && data.rows.length) {
+          setRows(data.rows);
+          setNextId(data.nextId);
+          setUsdRate(data.usdRate ?? 90);
+          setEurRate(data.eurRate ?? 98);
+          setTableName(data.tableName ?? 'Спецификация оборудования');
+          return;
+        }
+      } catch (e) {}
+    }
+    resetDemo();
+  }, []);
+
+  // Сохранение данных
+  useEffect(() => {
+    if (rows.length === 0) return;
+    localStorage.setItem('specification_data_v3', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
+
+  // Сохранение ширин столбцов
+  useEffect(() => {
+    localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
+  }, [columnWidths]);
+
+  // Пересчёт скидок
+  const updateCalculations = () => {
+    setRows(prev =>
+      prev.map(row => {
+        if (row.type === 'data') {
+          const discountAmount = (row.price * row.discount) / 100;
+          const priceAfter = row.price - discountAmount;
+          return { ...row, discountAmount, priceAfter };
+        }
+        return row;
+      })
+    );
+  };
+  useEffect(() => {
+    updateCalculations();
+  }, []); // только при монтировании, дальше через updateDataField
 
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
@@ -71,6 +113,10 @@ export const SpecificationPage: React.FC = () => {
 
   const getTotalRub = (row: DataRow) => {
     return (row.priceAfter || 0) * (row.quantity || 0) * getRate(row.currency);
+  };
+
+  const formatNumber = (num: number): string => {
+    return Math.round(num).toLocaleString('ru-RU');
   };
 
   const computeTotals = () => {
@@ -91,6 +137,7 @@ export const SpecificationPage: React.FC = () => {
     return { totalRub, totalQty, byCurrency };
   };
 
+  // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -189,7 +236,7 @@ export const SpecificationPage: React.FC = () => {
       } else {
         const sym = currencySymbols[row.currency];
         const totalRub = getTotalRub(row);
-        sheetData.push([row.vendor, row.sku, row.name, row.quantity, row.unit, row.currency, row.price, row.discount, `${sym} ${row.discountAmount.toFixed(2)}`, `${sym} ${row.priceAfter.toFixed(2)}`, `${totalRub.toFixed(2)} ₽`, row.supplier, row.status]);
+        sheetData.push([row.vendor, row.sku, row.name, row.quantity, row.unit, row.currency, row.price, row.discount, `${sym} ${formatNumber(row.discountAmount)}`, `${sym} ${formatNumber(row.priceAfter)}`, `${formatNumber(totalRub)} ₽`, row.supplier, row.status]);
       }
     }
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
@@ -203,101 +250,182 @@ export const SpecificationPage: React.FC = () => {
     setSelectedIds([]);
   };
 
+  // Drag-and-drop (SortableJS)
+  useEffect(() => {
+    if (!tableBodyRef.current) return;
+    if (sortableRef.current) sortableRef.current.destroy();
+
+    sortableRef.current = new Sortable(tableBodyRef.current, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: () => {
+        // Получаем новый порядок из DOM
+        const domRows = Array.from(tableBodyRef.current!.children);
+        const newRowsOrder: Row[] = [];
+        for (const dom of domRows) {
+          const id = Number(dom.getAttribute('data-id'));
+          const found = rows.find(r => r.id === id);
+          if (found) newRowsOrder.push(found);
+        }
+        if (newRowsOrder.length === rows.length) {
+          setRows(newRowsOrder);
+        }
+      },
+    });
+    return () => {
+      if (sortableRef.current) sortableRef.current.destroy();
+    };
+  }, [rows]);
+
+  // Функция для изменения ширины колонок
+  const startResize = (colKey: string, startX: number, startWidth: number) => {
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      let newWidth = startWidth + (moveEvent.pageX - startX);
+      if (newWidth < 30) newWidth = 30;
+      setColumnWidths(prev => ({ ...prev, [colKey]: newWidth }));
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  // Глобальные стили (добавляем один раз)
+  useEffect(() => {
+    const styleId = 'spec-global-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        .spec-table .drag-handle { cursor: grab; color: #cbd5e1; text-align: center; }
+        .spec-table .data-row { transition: background-color 0.15s; cursor: grab; }
+        .spec-table .data-row:hover { background-color: #e0f2fe !important; }
+        .spec-table .section-row { background-color: #f1f5f9; font-weight: 600; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; cursor: pointer; }
+        .spec-table .section-row:hover { background-color: #e6edf5; }
+        .spec-table .action-buttons button { background: transparent; border: none; cursor: pointer; padding: 4px 6px; color: #4b5563; transition: color 0.2s; }
+        .spec-table .action-buttons button:hover { color: #3b82f6; }
+        .spec-table td { vertical-align: middle; }
+        .spec-table .text-right { text-align: right; }
+        .spec-table .text-center { text-align: center; }
+        .spec-table .word-break { word-break: break-word; white-space: normal; }
+        .resize-handle {
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: 6px;
+          height: 100%;
+          cursor: col-resize;
+          background-color: transparent;
+          z-index: 15;
+        }
+        .resize-handle:hover { background-color: #94a3b8; }
+        th { position: relative; }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   const totals = computeTotals();
   let dataCounter = 0;
   let sectionCollapsed = false;
 
-  // Стили (inline, чтобы гарантированно работать)
-  const containerStyle: React.CSSProperties = { padding: '20px', fontFamily: 'Inter, sans-serif' };
-  const toolbarStyle: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '20px', background: 'white', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', alignItems: 'center' };
-  const buttonStyle: React.CSSProperties = { fontFamily: 'inherit', fontSize: '0.8rem', padding: '6px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f1f5f9' };
-  const primaryButtonStyle: React.CSSProperties = { ...buttonStyle, background: '#3b82f6', color: 'white' };
-  const dangerButtonStyle: React.CSSProperties = { ...buttonStyle, background: '#fee2e2', color: '#b91c1c' };
-  const tableWrapperStyle: React.CSSProperties = { overflowX: 'auto', background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', maxHeight: '70vh', overflowY: 'auto' };
-  const tableStyle: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', minWidth: '1550px', fontSize: '0.8rem' };
-  const thStyle: React.CSSProperties = { padding: '8px 6px', borderBottom: '1px solid #e5e7eb', background: '#f8fafc', fontWeight: 600, position: 'sticky', top: 0 };
-  const tdStyle: React.CSSProperties = { padding: '8px 6px', borderBottom: '1px solid #e5e7eb', verticalAlign: 'middle' };
-  const inputStyle: React.CSSProperties = { background: 'transparent', border: 'none', width: '100%', fontSize: '0.8rem', outline: 'none', padding: '4px 0' };
-  const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer' };
+  const cols = ['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountSum', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'];
 
   return (
-    <div style={containerStyle}>
-      <div style={toolbarStyle}>
-        <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px' }} />
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', background: '#f1f5f9', padding: '6px 12px', borderRadius: '24px' }}>
-          <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px', marginLeft: '4px' }} /></label>
-          <label>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px', marginLeft: '4px' }} /></label>
-        </div>
-        <div style={{ fontSize: '0.75rem', color: '#475569' }}>{new Date().toLocaleString()}</div>
-        <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
-          <button style={buttonStyle} onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
-          <button style={buttonStyle} onClick={collapseAll}><i className="fas fa-minus-square"></i> Свернуть всё</button>
-          <button style={primaryButtonStyle} onClick={addSection}><i className="fas fa-layer-group"></i> Раздел</button>
-          <button style={primaryButtonStyle} onClick={addDataRowAtEnd}><i className="fas fa-plus-circle"></i> Строка</button>
-          <button style={buttonStyle} onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
-          <button style={dangerButtonStyle} onClick={resetDemo}><i className="fas fa-undo-alt"></i> Сброс</button>
+    <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif' }}>
+      {/* Тулбар */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '20px', background: 'white', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1 }} />
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div style={{ background: '#f1f5f9', padding: '6px 12px', borderRadius: '24px', display: 'flex', gap: '12px' }}>
+            <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px', marginLeft: '4px' }} /></label>
+            <label>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px', marginLeft: '4px' }} /></label>
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#475569' }}>{new Date().toLocaleString()}</div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
+            <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={collapseAll}><i className="fas fa-minus-square"></i> Свернуть всё</button>
+            <button style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={addSection}><i className="fas fa-layer-group"></i> Раздел</button>
+            <button style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={addDataRowAtEnd}><i className="fas fa-plus-circle"></i> Строка</button>
+            <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
+            <button style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={resetDemo}><i className="fas fa-undo-alt"></i> Сброс</button>
+          </div>
         </div>
       </div>
 
+      {/* Панель массового выбора */}
       {selectedIds.length > 0 && (
         <div style={{ background: '#eef2ff', borderRadius: '12px', padding: '8px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span>Выбрано: {selectedIds.length}</span>
-          <button style={dangerButtonStyle} onClick={deleteSelected}><i className="fas fa-trash-alt"></i> Удалить выбранные</button>
+          <button style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer' }} onClick={deleteSelected}><i className="fas fa-trash-alt"></i> Удалить выбранные</button>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '16px' }}>
-        <div style={{ background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: '4px solid #3b82f6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+      {/* Итоговые карточки (на всю ширину, с цветами валют) */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '16px', width: '100%' }}>
+        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #3b82f6`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>Общая сумма (руб)</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{totals.totalRub.toFixed(2)} ₽</div>
-          <div style={{ fontSize: '0.7rem', color: '#475569' }}>Количество: {totals.totalQty} шт.</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{formatNumber(totals.totalRub)} ₽</div>
+          <div style={{ fontSize: '0.7rem', color: '#475569' }}>Количество: {formatNumber(totals.totalQty)} шт.</div>
         </div>
         {Object.entries(totals.byCurrency).map(([curr, data]) => (
-          <div key={curr} style={{ background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: '4px solid #3b82f6' }}>
+          <div key={curr} style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid ${currencyColors[curr] || '#3b82f6'}`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
             <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>{curr}</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{currencySymbols[curr]} {data.sum.toFixed(2)}</div>
-            <div style={{ fontSize: '0.7rem', color: '#475569' }}>Кол-во: {data.qty}</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{currencySymbols[curr]} {formatNumber(data.sum)}</div>
+            <div style={{ fontSize: '0.7rem', color: '#475569' }}>Кол-во: {formatNumber(data.qty)}</div>
           </div>
         ))}
       </div>
 
-      <div style={tableWrapperStyle}>
-        <table style={tableStyle}>
+      {/* Таблица */}
+      <div style={{ overflowX: 'auto', background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', maxHeight: '70vh', overflowY: 'auto' }}>
+        <table className="spec-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1550px', fontSize: '0.8rem' }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, width: 40 }}><i className="fas fa-grip-vertical"></i></th>
-              <th style={{ ...thStyle, width: 30 }}><input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} /></th>
-              <th style={{ ...thStyle, width: 50 }}>#</th>
-              <th style={{ ...thStyle, width: 120 }}>Вендор</th>
-              <th style={{ ...thStyle, width: 120 }}>Артикул</th>
-              <th style={{ ...thStyle, width: 250 }}>Наименование</th>
-              <th style={{ ...thStyle, width: 90 }}>Кол-во</th>
-              <th style={{ ...thStyle, width: 80 }}>Ед.</th>
-              <th style={{ ...thStyle, width: 90 }}>Валюта</th>
-              <th style={{ ...thStyle, width: 110 }}>Цена за ед.</th>
-              <th style={{ ...thStyle, width: 100 }}>Скидка %</th>
-              <th style={{ ...thStyle, width: 130 }}>Сумма скидки</th>
-              <th style={{ ...thStyle, width: 130 }}>Цена после</th>
-              <th style={{ ...thStyle, width: 130 }}>Итого руб</th>
-              <th style={{ ...thStyle, width: 140 }}>Поставщик</th>
-              <th style={{ ...thStyle, width: 120 }}>Статус</th>
-              <th style={{ ...thStyle, width: 100 }}>Действия</th>
+              {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountSum', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'].map((col, idx) => (
+                <th key={col} style={{ width: columnWidths[col], padding: '8px 6px', borderBottom: '1px solid #e5e7eb', background: '#f8fafc', fontWeight: 600, position: 'relative' }}>
+                  {col === 'drag' && <i className="fas fa-grip-vertical" style={{ color: '#cbd5e1' }}></i>}
+                  {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} />}
+                  {col === 'num' && '#'}
+                  {col === 'vendor' && 'Вендор'}
+                  {col === 'sku' && 'Артикул'}
+                  {col === 'name' && 'Наименование'}
+                  {col === 'qty' && 'Кол-во'}
+                  {col === 'unit' && 'Ед.'}
+                  {col === 'currency' && 'Валюта'}
+                  {col === 'price' && 'Цена за ед.'}
+                  {col === 'discount' && 'Скидка %'}
+                  {col === 'discountSum' && 'Сумма скидки'}
+                  {col === 'priceAfter' && 'Цена после'}
+                  {col === 'totalRub' && 'Итого руб'}
+                  {col === 'supplier' && 'Поставщик'}
+                  {col === 'status' && 'Статус'}
+                  {col === 'actions' && 'Действия'}
+                  <div className="resize-handle" onMouseDown={(e) => { e.preventDefault(); startResize(col, e.pageX, columnWidths[col]); }}></div>
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={tableBodyRef}>
             {rows.map(row => {
               if (row.type === 'section') {
                 sectionCollapsed = row.collapsed;
                 return (
-                  <tr key={row.id} style={{ background: '#f1f5f9', fontWeight: 600, borderTop: '1px solid #cbd5e1', borderBottom: '1px solid #cbd5e1', cursor: 'pointer' }}>
-                    <td style={tdStyle}><i className="fas fa-grip-vertical"></i></td>
-                    <td style={tdStyle}></td>
-                    <td style={tdStyle}></td>
-                    <td colSpan={14} style={{ ...tdStyle, padding: '8px 6px' }}>
-                      <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'}`} onClick={() => toggleSection(row.id)} style={{ marginRight: '8px', cursor: 'pointer' }}></i>
-                      <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)}>{row.title}</span>
-                      <button onClick={() => addDataRowAfterId(row.id)} style={{ marginLeft: 12, background: '#2563eb', color: 'white', border: 'none', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}><i className="fas fa-plus-circle"></i> Добавить строку</button>
-                      <button onClick={() => deleteRow(row.id)} style={{ marginLeft: 8, background: '#fee2e2', color: '#b91c1c', border: 'none', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}><i className="fas fa-trash-alt"></i> Удалить раздел</button>
+                  <tr key={row.id} className="section-row" data-id={row.id}>
+                    <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
+                    <td className="checkbox-col"></td>
+                    <td></td>
+                    <td colSpan={14} style={{ padding: '8px 6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'}`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer' }}></i>
+                        <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)} style={{ fontWeight: 600 }}>{row.title}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => addDataRowAfterId(row.id)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}><i className="fas fa-plus-circle"></i> Добавить строку</button>
+                        <button onClick={() => deleteRow(row.id)} style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}><i className="fas fa-trash-alt"></i> Удалить раздел</button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -306,39 +434,39 @@ export const SpecificationPage: React.FC = () => {
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
                 return (
-                  <tr key={row.id} style={{ cursor: 'grab' }}>
-                    <td style={tdStyle}><i className="fas fa-grip-vertical"></i></td>
-                    <td style={tdStyle}><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
-                    <td style={tdStyle}>{dataCounter}</td>
-                    <td style={tdStyle}><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={inputStyle} /></td>
-                    <td style={tdStyle}><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={inputStyle} /></td>
-                    <td style={tdStyle}><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={inputStyle} /></td>
-                    <td style={tdStyle}><input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={inputStyle} /></td>
-                    <td style={tdStyle}>
-                      <select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={selectStyle}>
+                  <tr key={row.id} className="data-row" data-id={row.id}>
+                    <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
+                    <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
+                    <td className="text-center">{dataCounter}</td>
+                    <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
+                    <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
+                    <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
+                    <td className="text-center"><input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} /></td>
+                    <td className="text-center">
+                      <select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
                         <option>шт</option><option>м</option><option>уп.</option>
                       </select>
                     </td>
-                    <td style={tdStyle}>
-                      <select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={selectStyle}>
+                    <td className="text-center">
+                      <select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
                         {currencies.map(c => <option key={c}>{c}</option>)}
                       </select>
                     </td>
-                    <td style={tdStyle}><input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} style={inputStyle} /></td>
-                    <td style={tdStyle}><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={inputStyle} /></td>
-                    <td style={{ ...tdStyle, background: '#f9fafb', fontWeight: 500 }}>{sym} {row.discountAmount.toFixed(2)}</td>
-                    <td style={{ ...tdStyle, background: '#f9fafb', fontWeight: 500 }}>{sym} {row.priceAfter.toFixed(2)}</td>
-                    <td style={{ ...tdStyle, background: '#f9fafb', fontWeight: 500 }}>{totalRub.toFixed(2)} ₽</td>
-                    <td style={tdStyle}><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={inputStyle} /></td>
-                    <td style={tdStyle}>
-                      <select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={selectStyle}>
+                    <td className="text-right"><input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none' }} /></td>
+                    <td className="text-center"><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} /></td>
+                    <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{sym} {formatNumber(row.discountAmount)}</td>
+                    <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{sym} {formatNumber(row.priceAfter)}</td>
+                    <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{formatNumber(totalRub)} ₽</td>
+                    <td><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
+                    <td className="text-center">
+                      <select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
                         {statuses.map(s => <option key={s}>{s}</option>)}
                       </select>
                     </td>
-                    <td style={{ ...tdStyle, whiteSpace: 'nowrap', opacity: 0.8 }}>
-                      <button onClick={() => addDataRowAfterId(row.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px' }}><i className="fas fa-plus-circle"></i></button>
-                      <button onClick={() => duplicateRow(row.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px' }}><i className="fas fa-copy"></i></button>
-                      <button onClick={() => deleteRow(row.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px' }}><i className="fas fa-trash-alt"></i></button>
+                    <td className="action-buttons">
+                      <button onClick={() => addDataRowAfterId(row.id)}><i className="fas fa-plus-circle"></i></button>
+                      <button onClick={() => duplicateRow(row.id)}><i className="fas fa-copy"></i></button>
+                      <button onClick={() => deleteRow(row.id)}><i className="fas fa-trash-alt"></i></button>
                     </td>
                   </tr>
                 );
