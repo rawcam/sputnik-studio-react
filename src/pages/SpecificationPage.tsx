@@ -77,7 +77,7 @@ export const SpecificationPage: React.FC = () => {
   // ==========================================================================
 
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v12');
+    const saved = localStorage.getItem('specification_data_v13');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -96,7 +96,7 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v12', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v13', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
@@ -386,10 +386,16 @@ export const SpecificationPage: React.FC = () => {
         .spec-table .action-buttons button:hover { color: #3b82f6; }
         .spec-table .section-row .collapse-icon { color: #cbd5e1; transition: color 0.2s; }
         .spec-table .section-row .collapse-icon:hover { color: #3b82f6; }
-        /* Вертикальные разделители (тонкая светлая линия) */
-        .spec-table td, .spec-table th { border-right: 1px solid var(--border-light) !important; }
-        .spec-table td:last-child, .spec-table th:last-child { border-right: none !important; }
-        /* Отступы для воздушности */
+        /* Вертикальные разделители */
+        .spec-table tr td:not(:last-child),
+        .spec-table tr th:not(:last-child) {
+          border-right: 1px solid var(--border-light);
+        }
+        .spec-table td:last-child,
+        .spec-table th:last-child {
+          border-right: none;
+        }
+        .spec-table { border-collapse: collapse; }
         .spec-table td, .spec-table th { padding: 10px 8px; background-color: var(--bg-panel-solid); color: var(--text-primary); }
         .spec-table th { background: var(--card-bg); color: var(--text-secondary); position: sticky; top: 0; z-index: 10; }
         .spec-table .text-right { text-align: right; padding-right: 12px; }
@@ -483,9 +489,9 @@ export const SpecificationPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Таблица */}
+      {/* Таблица с горизонтальной прокруткой */}
       <div style={{ overflowX: 'auto', background: 'var(--bg-panel)', borderRadius: '16px', border: '1px solid var(--border-light)', maxHeight: '70vh', overflowY: 'auto' }}>
-        <table className="spec-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1600px', fontSize: '0.8rem' }}>
+        <table className="spec-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1800px', fontSize: '0.8rem' }}>
           <thead>
             <tr>
               {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountAmount', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
@@ -578,7 +584,7 @@ export const SpecificationPage: React.FC = () => {
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{sym} {formatNumber(row.discountAmount)}</td>
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{sym} {formatNumber(row.priceAfter)}</td>
                     <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{formatNumber(totalRub)} ₽</td>
-                    <td style={{ textAlign: 'center' }}><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--text-primary)' }} /></td>
+                    <td><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--text-primary)' }} /></td>
                     <td className="text-center"><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
                     <td className="action-buttons">
                       <button onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже"><i className="fas fa-plus-circle"></i></button>
