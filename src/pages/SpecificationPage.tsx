@@ -55,7 +55,6 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
-  // Загрузка/сохранение
   useEffect(() => {
     const saved = localStorage.getItem('specification_data_v8');
     if (saved) {
@@ -83,7 +82,6 @@ export const SpecificationPage: React.FC = () => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
 
-  // Вспомогательные функции
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
     if (currency === 'EUR') return eurRate;
@@ -110,7 +108,6 @@ export const SpecificationPage: React.FC = () => {
     updateCalculations();
   }, []);
 
-  // Фильтрация
   const isDataRowVisible = (row: DataRow) => {
     const vendorMatch = filterVendor === '' || row.vendor.toLowerCase().includes(filterVendor.toLowerCase());
     const skuMatch = filterSku === '' || row.sku.toLowerCase().includes(filterSku.toLowerCase());
@@ -158,7 +155,6 @@ export const SpecificationPage: React.FC = () => {
     return { gross: sectionGross, net: sectionNet, qty: sectionQty };
   };
 
-  // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -268,7 +264,6 @@ export const SpecificationPage: React.FC = () => {
     setSelectedIds([]);
   };
 
-  // Drag-and-drop только для строк данных
   useEffect(() => {
     if (!tableBodyRef.current) return;
     if (sortableRef.current) {
@@ -298,7 +293,6 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
-  // Изменение ширины столбцов
   const startResize = (colKey: string, startX: number, startWidth: number) => {
     const onMouseMove = (moveEvent: MouseEvent) => {
       let newWidth = startWidth + (moveEvent.pageX - startX);
@@ -313,7 +307,6 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Глобальные стили с поддержкой тёмной темы
   useEffect(() => {
     const styleId = 'spec-global-styles';
     if (!document.getElementById(styleId)) {
@@ -370,7 +363,7 @@ export const SpecificationPage: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif', background: 'var(--bg-page)', minHeight: '100vh' }}>
-      {/* Тулбар - увеличен по высоте, курсы валют возвращены */}
+      {/* Тулбар */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', background: 'var(--bg-panel)', backdropFilter: 'blur(12px)', padding: '16px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid var(--border-light)' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
           <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1, color: 'var(--text-primary)' }} />
@@ -458,7 +451,7 @@ export const SpecificationPage: React.FC = () => {
                   <div className="resize-handle" onMouseDown={(e) => { e.preventDefault(); startResize(col, e.pageX, columnWidths[col]); }}></div>
                 </th>
               ))}
-            </table>
+            </tr>
           </thead>
           <tbody ref={tableBodyRef}>
             {rows.map((row) => {
