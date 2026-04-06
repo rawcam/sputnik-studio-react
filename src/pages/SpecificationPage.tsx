@@ -32,7 +32,6 @@ const statuses = ['Замена', 'Получено КП', 'Закуплено']
 const currencies = ['RUB', 'USD', 'EUR'];
 const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
 
-// Цвета для валют в итоговых карточках
 const currencyColors: Record<string, string> = {
   RUB: '#3b82f6',
   USD: '#10b981',
@@ -58,7 +57,6 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
-  // Загрузка данных из localStorage или инициализация демо
   useEffect(() => {
     const saved = localStorage.getItem('specification_data_v3');
     if (saved) {
@@ -77,18 +75,15 @@ export const SpecificationPage: React.FC = () => {
     resetDemo();
   }, []);
 
-  // Сохранение данных
   useEffect(() => {
     if (rows.length === 0) return;
     localStorage.setItem('specification_data_v3', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
-  // Сохранение ширин столбцов
   useEffect(() => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
 
-  // Пересчёт скидок
   const updateCalculations = () => {
     setRows(prev =>
       prev.map(row => {
@@ -103,7 +98,7 @@ export const SpecificationPage: React.FC = () => {
   };
   useEffect(() => {
     updateCalculations();
-  }, []); // только при монтировании, дальше через updateDataField
+  }, []);
 
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
@@ -137,7 +132,6 @@ export const SpecificationPage: React.FC = () => {
     return { totalRub, totalQty, byCurrency };
   };
 
-  // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -259,7 +253,6 @@ export const SpecificationPage: React.FC = () => {
       handle: '.drag-handle',
       animation: 150,
       onEnd: () => {
-        // Получаем новый порядок из DOM
         const domRows = Array.from(tableBodyRef.current!.children);
         const newRowsOrder: Row[] = [];
         for (const dom of domRows) {
@@ -277,7 +270,6 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
-  // Функция для изменения ширины колонок
   const startResize = (colKey: string, startX: number, startWidth: number) => {
     const onMouseMove = (moveEvent: MouseEvent) => {
       let newWidth = startWidth + (moveEvent.pageX - startX);
@@ -292,7 +284,7 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Глобальные стили (добавляем один раз)
+  // Глобальные стили
   useEffect(() => {
     const styleId = 'spec-global-styles';
     if (!document.getElementById(styleId)) {
@@ -331,8 +323,6 @@ export const SpecificationPage: React.FC = () => {
   let dataCounter = 0;
   let sectionCollapsed = false;
 
-  const cols = ['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountSum', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'];
-
   return (
     <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif' }}>
       {/* Тулбар */}
@@ -355,7 +345,6 @@ export const SpecificationPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Панель массового выбора */}
       {selectedIds.length > 0 && (
         <div style={{ background: '#eef2ff', borderRadius: '12px', padding: '8px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span>Выбрано: {selectedIds.length}</span>
@@ -363,7 +352,6 @@ export const SpecificationPage: React.FC = () => {
         </div>
       )}
 
-      {/* Итоговые карточки (на всю ширину, с цветами валют) */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '16px', width: '100%' }}>
         <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #3b82f6`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>Общая сумма (руб)</div>
@@ -379,12 +367,11 @@ export const SpecificationPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Таблица */}
       <div style={{ overflowX: 'auto', background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', maxHeight: '70vh', overflowY: 'auto' }}>
         <table className="spec-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1550px', fontSize: '0.8rem' }}>
           <thead>
             <tr>
-              {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountSum', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'].map((col, idx) => (
+              {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountSum', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
                 <th key={col} style={{ width: columnWidths[col], padding: '8px 6px', borderBottom: '1px solid #e5e7eb', background: '#f8fafc', fontWeight: 600, position: 'relative' }}>
                   {col === 'drag' && <i className="fas fa-grip-vertical" style={{ color: '#cbd5e1' }}></i>}
                   {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} />}
