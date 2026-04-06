@@ -57,7 +57,7 @@ export const SpecificationPage: React.FC = () => {
 
   // Загрузка/сохранение
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v6');
+    const saved = localStorage.getItem('specification_data_v7');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -76,7 +76,7 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v6', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v7', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
@@ -110,14 +110,13 @@ export const SpecificationPage: React.FC = () => {
     updateCalculations();
   }, []);
 
-  // Фильтрация (по вендору и артикулу, без учёта регистра)
+  // Фильтрация
   const isDataRowVisible = (row: DataRow) => {
     const vendorMatch = filterVendor === '' || row.vendor.toLowerCase().includes(filterVendor.toLowerCase());
     const skuMatch = filterSku === '' || row.sku.toLowerCase().includes(filterSku.toLowerCase());
     return vendorMatch && skuMatch;
   };
 
-  // Подсчёт итогов только по видимым строкам
   const computeTotals = () => {
     let totalGrossRub = 0, totalRub = 0, totalQty = 0, totalDiscountRub = 0;
     const byCurrency: Record<string, { gross: number; net: number; qty: number }> = {};
@@ -172,7 +171,6 @@ export const SpecificationPage: React.FC = () => {
     const newRows = [...rows];
     newRows.splice(index + 1, 0, newRow);
     setRows(newRows);
-    // Принудительный пересчёт (хотя setRows вызовет ререндер, но для надёжности)
     setTimeout(() => updateCalculations(), 0);
   };
 
@@ -315,24 +313,41 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Глобальные стили
+  // Глобальные стили с поддержкой тёмной темы
   useEffect(() => {
     const styleId = 'spec-global-styles';
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
+        .spec-table {
+          --bg-panel: var(--bg-panel, rgba(255,255,255,0.85));
+          --bg-panel-solid: var(--bg-panel-solid, #ffffff);
+          --text-primary: var(--text-primary, #1a2c3e);
+          --text-secondary: var(--text-secondary, #4b6a8a);
+          --border-light: var(--border-light, rgba(203,213,225,0.5));
+          --card-bg: var(--card-bg, rgba(249,252,255,0.8));
+        }
+        body.dark .spec-table {
+          --bg-panel: var(--bg-panel, rgba(30,41,59,0.85));
+          --bg-panel-solid: var(--bg-panel-solid, #1e293b);
+          --text-primary: var(--text-primary, #e2e8f0);
+          --text-secondary: var(--text-secondary, #94a3b8);
+          --border-light: var(--border-light, rgba(71,85,105,0.5));
+          --card-bg: var(--card-bg, rgba(30,41,59,0.7));
+        }
         .spec-table .drag-handle { cursor: grab; color: #cbd5e1; text-align: center; }
         .spec-table .data-row { transition: background-color 0.15s; cursor: grab; }
         .spec-table .data-row:hover { background-color: #e0f2fe !important; }
-        .spec-table .section-row { background-color: #f1f5f9; font-weight: 600; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; cursor: pointer; }
-        .spec-table .section-row:hover { background-color: #e6edf5; }
+        body.dark .spec-table .data-row:hover { background-color: #1e293b !important; }
+        .spec-table .section-row { background-color: var(--card-bg); font-weight: 600; border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); cursor: pointer; }
+        .spec-table .section-row:hover { background-color: rgba(37,99,235,0.1); }
         .spec-table .action-buttons button { background: transparent; border: none; cursor: pointer; padding: 4px 6px; color: #cbd5e1; transition: color 0.2s; }
         .spec-table .action-buttons button:hover { color: #3b82f6; }
         .spec-table .section-row .collapse-icon { color: #cbd5e1; transition: color 0.2s; }
         .spec-table .section-row .collapse-icon:hover { color: #3b82f6; }
-        .spec-table td { vertical-align: middle; border-right: 1px solid #e5e7eb; }
-        .spec-table th { border-right: 1px solid #e5e7eb; position: sticky; top: 0; background: #f8fafc; z-index: 10; }
+        .spec-table td { vertical-align: middle; border-right: 1px solid var(--border-light); background-color: var(--bg-panel-solid); color: var(--text-primary); }
+        .spec-table th { border-right: 1px solid var(--border-light); position: sticky; top: 0; background: var(--card-bg); color: var(--text-secondary); z-index: 10; }
         .spec-table td:last-child, .spec-table th:last-child { border-right: none; }
         .spec-table .text-right { text-align: right; }
         .spec-table .text-center { text-align: center; }
@@ -340,9 +355,11 @@ export const SpecificationPage: React.FC = () => {
         .resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; background-color: transparent; z-index: 15; }
         .resize-handle:hover { background-color: #94a3b8; }
         th { position: relative; }
-        .section-totals-row { background-color: #eef2ff; font-weight: 500; padding: 10px 0; border-top: 1px solid #cbd5e1; }
-        .section-totals-row td { padding: 10px 6px; }
+        .section-totals-row { background-color: var(--card-bg); font-weight: 500; border-top: 1px solid var(--border-light); }
+        .section-totals-row td { padding: 10px 6px; background-color: var(--card-bg); }
         .filtered-out { display: none; }
+        input, select { background: var(--bg-panel-solid); color: var(--text-primary); border: 1px solid var(--border-light); border-radius: 8px; padding: 4px 6px; }
+        .readonly-cell { background: var(--card-bg); }
       `;
       document.head.appendChild(style);
     }
@@ -352,62 +369,62 @@ export const SpecificationPage: React.FC = () => {
   let dataCounter = 0;
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '20px', background: 'white', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1 }} />
+    <div style={{ padding: '20px', fontFamily: 'Inter, sans-serif', background: 'var(--bg-page)', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '20px', background: 'var(--bg-panel)', backdropFilter: 'blur(12px)', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid var(--border-light)' }}>
+        <input type="text" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600, background: 'transparent', border: 'none', padding: '4px 8px', borderRadius: '8px', flex: 1, color: 'var(--text-primary)' }} />
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <input type="text" placeholder="Фильтр по вендору" value={filterVendor} onChange={e => setFilterVendor(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #cbd5e1', fontSize: '0.8rem', width: '140px' }} />
-            <input type="text" placeholder="Фильтр по артикулу" value={filterSku} onChange={e => setFilterSku(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #cbd5e1', fontSize: '0.8rem', width: '140px' }} />
+            <input type="text" placeholder="Фильтр по вендору" value={filterVendor} onChange={e => setFilterVendor(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)' }} />
+            <input type="text" placeholder="Фильтр по артикулу" value={filterSku} onChange={e => setFilterSku(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--bg-panel-solid)', color: 'var(--text-primary)' }} />
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
-            <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={collapseAll}><i className="fas fa-minus-square"></i> Свернуть всё</button>
+            <button style={{ background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: 'var(--text-primary)' }} onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
+            <button style={{ background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: 'var(--text-primary)' }} onClick={collapseAll}><i className="fas fa-minus-square"></i> Свернуть всё</button>
             <button style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={addSection}><i className="fas fa-layer-group"></i> Раздел</button>
-            <button style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
+            <button style={{ background: 'var(--card-bg)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: 'var(--text-primary)' }} onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
             <button style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer' }} onClick={resetDemo}><i className="fas fa-undo-alt"></i> Сброс</button>
           </div>
         </div>
       </div>
 
       {selectedIds.length > 0 && (
-        <div style={{ background: '#eef2ff', borderRadius: '12px', padding: '8px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span>Выбрано: {selectedIds.length}</span>
+        <div style={{ background: 'var(--accent-glow)', borderRadius: '12px', padding: '8px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <span style={{ color: 'var(--text-primary)' }}>Выбрано: {selectedIds.length}</span>
           <button style={{ background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer' }} onClick={deleteSelected}><i className="fas fa-trash-alt"></i> Удалить выбранные</button>
         </div>
       )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '16px', width: '100%' }}>
-        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #3b82f6`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="Итоговая стоимость после применения всех скидок, пересчитанная в рубли по курсу">
-          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>Общая сумма (руб)</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{formatNumber(totals.totalRub)} ₽</div>
-          <div style={{ fontSize: '0.7rem', color: '#475569' }}>Количество: {formatNumber(totals.totalQty)} шт.</div>
+        <div style={{ flex: '1 1 200px', background: 'var(--bg-panel-solid)', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #3b82f6`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="Итоговая стоимость после применения всех скидок, пересчитанная в рубли по курсу">
+          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Общая сумма (руб)</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(totals.totalRub)} ₽</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Количество: {formatNumber(totals.totalQty)} шт.</div>
         </div>
-        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #10b981`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="Стоимость без скидок, пересчитанная в рубли по курсу">
-          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>Валовая сумма (руб)</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{formatNumber(totals.totalGrossRub)} ₽</div>
-          <div style={{ fontSize: '0.7rem', color: '#475569' }}>Скидка: {formatNumber(totals.totalDiscountRub)} ₽</div>
+        <div style={{ flex: '1 1 200px', background: 'var(--bg-panel-solid)', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #10b981`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="Стоимость без скидок, пересчитанная в рубли по курсу">
+          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Валовая сумма (руб)</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(totals.totalGrossRub)} ₽</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Скидка: {formatNumber(totals.totalDiscountRub)} ₽</div>
         </div>
-        <div style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #f59e0b`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="(Валовая сумма − Общая сумма) / Валовая сумма × 100%">
-          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>Маржинальность</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{totals.marginPercent.toFixed(1)}%</div>
-          <div style={{ fontSize: '0.7rem', color: '#475569' }}>от валовой суммы</div>
+        <div style={{ flex: '1 1 200px', background: 'var(--bg-panel-solid)', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid #f59e0b`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} title="(Валовая сумма − Общая сумма) / Валовая сумма × 100%">
+          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Маржинальность</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>{totals.marginPercent.toFixed(1)}%</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>от валовой суммы</div>
         </div>
         {Object.entries(totals.byCurrency).map(([curr, data]) => (
-          <div key={curr} style={{ flex: '1 1 200px', background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid ${currencyColors[curr] || '#3b82f6'}`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#64748b' }}>{curr}</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{currencySymbols[curr]} {formatNumber(data.net)}</div>
-            <div style={{ fontSize: '0.7rem', color: '#475569' }}>Валовая: {currencySymbols[curr]} {formatNumber(data.gross)}</div>
+          <div key={curr} style={{ flex: '1 1 200px', background: 'var(--bg-panel-solid)', borderRadius: '16px', padding: '12px 24px', borderLeft: `4px solid ${currencyColors[curr] || '#3b82f6'}`, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>{curr}</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>{currencySymbols[curr]} {formatNumber(data.net)}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Валовая: {currencySymbols[curr]} {formatNumber(data.gross)}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ overflowX: 'auto', background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', maxHeight: '70vh', overflowY: 'auto' }}>
+      <div style={{ overflowX: 'auto', background: 'var(--bg-panel)', borderRadius: '16px', border: '1px solid var(--border-light)', maxHeight: '70vh', overflowY: 'auto' }}>
         <table className="spec-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1600px', fontSize: '0.8rem' }}>
           <thead>
             <tr>
               {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountAmount', 'priceAfter', 'grossRub', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
-                <th key={col} style={{ width: columnWidths[col], padding: '8px 6px', borderBottom: '1px solid #e5e7eb', background: '#f8fafc', fontWeight: 600, position: 'sticky', top: 0, zIndex: 10 }}>
+                <th key={col} style={{ width: columnWidths[col], padding: '8px 6px', borderBottom: '1px solid var(--border-light)', background: 'var(--card-bg)', fontWeight: 600, position: 'sticky', top: 0, zIndex: 10 }}>
                   {col === 'drag' && <i className="fas fa-grip-vertical" style={{ color: '#cbd5e1' }}></i>}
                   {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} />}
                   {col === 'num' && '#'}
@@ -445,7 +462,7 @@ export const SpecificationPage: React.FC = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1, textAlign: 'center' }}>
                             <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'} collapse-icon`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer', marginRight: '8px', color: '#cbd5e1' }}></i>
-                            <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)} style={{ fontWeight: 700, fontSize: '1.2rem' }}>{row.title}</span>
+                            <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)} style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-primary)' }}>{row.title}</span>
                             <i className="fas fa-chart-line" onClick={() => toggleSectionTotals(row.id)} style={{ cursor: 'pointer', marginLeft: '12px', color: row.showTotals ? '#3b82f6' : '#cbd5e1' }} title="Показать/скрыть итоги по разделу"></i>
                           </div>
                           <div style={{ display: 'flex', gap: '8px' }}>
@@ -453,16 +470,16 @@ export const SpecificationPage: React.FC = () => {
                             <button onClick={() => deleteRow(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#cbd5e1' }} title="Удалить раздел"><i className="fas fa-trash-alt"></i></button>
                           </div>
                         </div>
-                       </td>
-                     </tr>
+                      </td>
+                    </tr>
                     {!row.collapsed && row.showTotals && (
                       <tr className="section-totals-row">
-                        <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px' }}>Итого по разделу:</td>
-                        <td className="text-center" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.qty)}</td>
+                        <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>Итого по разделу:</td>
+                        <td className="text-center" style={{ fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.qty)}</td>
                         <td colSpan={4} style={{ padding: '10px 6px' }}></td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.gross - sectionTotals.net)} ₽</td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.gross)} ₽</td>
-                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px' }}>{formatNumber(sectionTotals.net)} ₽</td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.gross - sectionTotals.net)} ₽</td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.gross)} ₽</td>
+                        <td className="text-right" style={{ fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>{formatNumber(sectionTotals.net)} ₽</td>
                         <td colSpan={3} style={{ padding: '10px 6px' }}></td>
                       </tr>
                     )}
@@ -479,39 +496,39 @@ export const SpecificationPage: React.FC = () => {
                     <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                     <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
                     <td className="text-center">{visible ? dataCounter : ''}</td>
-                    <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="text-center"><input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="text-center"><select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}><option>шт</option><option>м</option><option>уп.</option></select></td>
-                    <td className="text-center"><select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>{currencies.map(c => <option key={c}>{c}</option>)}</select></td>
-                    <td className="text-right"><input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="text-center"><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{sym} {formatNumber(row.discountAmount)}</td>
-                    <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{sym} {formatNumber(row.priceAfter)}</td>
-                    <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{formatNumber(grossRub)} ₽</td>
-                    <td className="text-right readonly-cell" style={{ background: '#f9fafb', fontWeight: 500 }}>{formatNumber(totalRub)} ₽</td>
-                    <td style={{ textAlign: 'center' }}><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }} /></td>
-                    <td className="text-center"><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
+                    <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }} /></td>
+                    <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }} /></td>
+                    <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }} /></td>
+                    <td className="text-center"><input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }} /></td>
+                    <td className="text-center"><select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }}><option>шт</option><option>м</option><option>уп.</option></select></td>
+                    <td className="text-center"><select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }}>{currencies.map(c => <option key={c}>{c}</option>)}</select></td>
+                    <td className="text-right"><input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }} /></td>
+                    <td className="text-center"><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }} /></td>
+                    <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{sym} {formatNumber(row.discountAmount)}</td>
+                    <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{sym} {formatNumber(row.priceAfter)}</td>
+                    <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{formatNumber(grossRub)} ₽</td>
+                    <td className="text-right readonly-cell" style={{ background: 'var(--card-bg)', fontWeight: 500, color: 'var(--text-primary)' }}>{formatNumber(totalRub)} ₽</td>
+                    <td style={{ textAlign: 'center' }}><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--text-primary)' }} /></td>
+                    <td className="text-center"><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
                     <td className="action-buttons">
                       <button onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже"><i className="fas fa-plus-circle"></i></button>
                       <button onClick={() => duplicateRow(row.id)} title="Дублировать строку"><i className="fas fa-copy"></i></button>
                       <button onClick={() => deleteRow(row.id)} title="Удалить строку"><i className="fas fa-trash-alt"></i></button>
                     </td>
-                  </table>
+                  </tr>
                 );
               }
               return null;
             })}
           </tbody>
           <tfoot>
-            <tr style={{ background: '#f8fafc', fontWeight: 600, borderTop: '2px solid #cbd5e1' }}>
-              <td colSpan={6} style={{ textAlign: 'right', padding: '8px 6px' }}>Итого по всем разделам:</td>
-              <td className="text-center">{formatNumber(totals.totalQty)}</td>
+            <tr style={{ background: 'var(--card-bg)', fontWeight: 600, borderTop: '2px solid var(--border-light)' }}>
+              <td colSpan={6} style={{ textAlign: 'right', padding: '8px 6px', color: 'var(--text-primary)' }}>Итого по всем разделам:</td>
+              <td className="text-center" style={{ color: 'var(--text-primary)' }}>{formatNumber(totals.totalQty)}</td>
               <td colSpan={4} style={{ padding: '8px 6px' }}></td>
-              <td className="text-right">{formatNumber(totals.totalDiscountRub)} ₽</td>
-              <td className="text-right">{formatNumber(totals.totalGrossRub)} ₽</td>
-              <td className="text-right">{formatNumber(totals.totalRub)} ₽</td>
+              <td className="text-right" style={{ color: 'var(--text-primary)' }}>{formatNumber(totals.totalDiscountRub)} ₽</td>
+              <td className="text-right" style={{ color: 'var(--text-primary)' }}>{formatNumber(totals.totalGrossRub)} ₽</td>
+              <td className="text-right" style={{ color: 'var(--text-primary)' }}>{formatNumber(totals.totalRub)} ₽</td>
               <td colSpan={3} style={{ padding: '8px 6px' }}></td>
             </tr>
           </tfoot>
