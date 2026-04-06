@@ -33,6 +33,8 @@ const currencies = ['RUB', 'USD', 'EUR'];
 const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
 
 export const SpecificationPage: React.FC = () => {
+  console.log('SpecificationPage mounted'); // отладка
+
   const [rows, setRows] = useState<Row[]>([]);
   const [nextId, setNextId] = useState(100);
   const [usdRate, setUsdRate] = useState(90);
@@ -43,16 +45,21 @@ export const SpecificationPage: React.FC = () => {
   const sortableRef = useRef<Sortable | null>(null);
   const [creationDate] = useState(() => new Date().toLocaleString());
 
-  // Загрузка из localStorage
+  // Загрузка из localStorage или сброс демо
   useEffect(() => {
     const saved = localStorage.getItem('specification_data');
     if (saved) {
-      const data = JSON.parse(saved);
-      setRows(data.rows);
-      setNextId(data.nextId);
-      setUsdRate(data.usdRate ?? 90);
-      setEurRate(data.eurRate ?? 98);
-      setTableName(data.tableName ?? 'Спецификация оборудования');
+      try {
+        const data = JSON.parse(saved);
+        setRows(data.rows);
+        setNextId(data.nextId);
+        setUsdRate(data.usdRate ?? 90);
+        setEurRate(data.eurRate ?? 98);
+        setTableName(data.tableName ?? 'Спецификация оборудования');
+      } catch (e) {
+        console.error(e);
+        resetDemo();
+      }
     } else {
       resetDemo();
     }
@@ -67,7 +74,7 @@ export const SpecificationPage: React.FC = () => {
     );
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
-  // Пересчёт всех строк
+  // Пересчёт discountAmount и priceAfter при изменении цен/скидок
   const updateCalculations = () => {
     setRows(prev =>
       prev.map(row => {
@@ -83,9 +90,8 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     updateCalculations();
-  }, [rows]); // при изменении цен/скидок пересчитаем
+  }, [rows]);
 
-  // Вспомогательные функции
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
     if (currency === 'EUR') return eurRate;
@@ -114,7 +120,6 @@ export const SpecificationPage: React.FC = () => {
     return { totalRub, totalQty, byCurrency };
   };
 
-  // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -217,7 +222,6 @@ export const SpecificationPage: React.FC = () => {
       prev.map(r => {
         if (r.type === 'data' && r.id === id) {
           const updated = { ...r, [field]: value };
-          // пересчёт скидки и цены
           if (field === 'price' || field === 'discount') {
             const discountAmount = (updated.price * updated.discount) / 100;
             const priceAfter = updated.price - discountAmount;
@@ -244,77 +248,13 @@ export const SpecificationPage: React.FC = () => {
   };
 
   const resetDemo = () => {
+    console.log('resetDemo called');
     const demoRows: Row[] = [
-      {
-        id: 100,
-        type: 'data',
-        vendor: 'Siemens',
-        sku: 'ABC-123',
-        name: 'Контактор 3RT2015',
-        quantity: 10,
-        unit: 'шт',
-        currency: 'RUB',
-        price: 2500,
-        discount: 5,
-        discountAmount: 125,
-        priceAfter: 2375,
-        supplier: 'ООО "Электроснаб"',
-        status: 'Закуплено',
-      },
-      {
-        id: 101,
-        type: 'data',
-        vendor: 'Schneider',
-        sku: 'GV2ME07',
-        name: 'Автоматический выключатель',
-        quantity: 5,
-        unit: 'шт',
-        currency: 'USD',
-        price: 45,
-        discount: 10,
-        discountAmount: 4.5,
-        priceAfter: 40.5,
-        supplier: 'Schneider Electric',
-        status: 'Получено КП',
-      },
-      {
-        id: 102,
-        type: 'section',
-        title: 'Освещение',
-        collapsed: false,
-      },
-      {
-        id: 103,
-        type: 'data',
-        vendor: 'Philips',
-        sku: 'LED-9W',
-        name: 'Лампа светодиодная 9W 4000K',
-        quantity: 100,
-        unit: 'шт',
-        currency: 'RUB',
-        price: 120,
-        discount: 0,
-        discountAmount: 0,
-        priceAfter: 120,
-        supplier: 'ООО "Световые решения"',
-        status: 'Замена',
-      },
-      {
-        id: 104,
-        type: 'data',
-        vendor: 'Legrand',
-        sku: 'Valena',
-        name: 'Розетка двойная',
-        quantity: 20,
-        unit: 'шт',
-        currency: 'EUR',
-        price: 8.5,
-        discount: 15,
-        discountAmount: 1.275,
-        priceAfter: 7.225,
-        supplier: 'Legrand Rus',
-        status: 'Закуплено',
-      },
+      { id: 100, type: 'data', vendor: 'Siemens', sku: 'ABC-123', name: 'Контактор 3RT2015', quantity: 10, unit: 'шт', currency: 'RUB', price: 2500, discount: 5, discountAmount: 125, priceAfter: 2375, supplier: 'ООО "Электроснаб"', status: 'Закуплено' },
+      { id: 101, type: 'data', vendor: 'Schneider', sku: 'GV2ME07', name: 'Автоматический выключатель', quantity: 5, unit: 'шт', currency: 'USD', price: 45, discount: 10, discountAmount: 4.5, priceAfter: 40.5, supplier: 'Schneider Electric', status: 'Получено КП' },
+      { id: 102, type: 'section', title: 'Освещение', collapsed: false },
+      { id: 103, type: 'data', vendor: 'Philips', sku: 'LED-9W', name: 'Лампа светодиодная 9W 4000K', quantity: 100, unit: 'шт', currency: 'RUB', price: 120, discount: 0, discountAmount: 0, priceAfter: 120, supplier: 'ООО "Световые решения"', status: 'Замена' },
+      { id: 104, type: 'data', vendor: 'Legrand', sku: 'Valena', name: 'Розетка двойная', quantity: 20, unit: 'шт', currency: 'EUR', price: 8.5, discount: 15, discountAmount: 1.275, priceAfter: 7.225, supplier: 'Legrand Rus', status: 'Закуплено' },
     ];
     setRows(demoRows);
     setNextId(105);
@@ -324,44 +264,14 @@ export const SpecificationPage: React.FC = () => {
   };
 
   const exportToExcel = () => {
-    const sheetData: any[][] = [
-      [
-        'Вендор',
-        'Артикул',
-        'Наименование',
-        'Кол-во',
-        'Ед.',
-        'Валюта',
-        'Цена',
-        'Скидка %',
-        'Сумма скидки',
-        'Цена после',
-        'Итого руб',
-        'Поставщик',
-        'Статус',
-      ],
-    ];
+    const sheetData: any[][] = [['Вендор', 'Артикул', 'Наименование', 'Кол-во', 'Ед.', 'Валюта', 'Цена', 'Скидка %', 'Сумма скидки', 'Цена после', 'Итого руб', 'Поставщик', 'Статус']];
     for (const row of rows) {
       if (row.type === 'section') {
         sheetData.push([`=== ${row.title} ===`, '', '', '', '', '', '', '', '', '', '', '', '']);
       } else {
         const sym = currencySymbols[row.currency];
         const totalRub = getTotalRub(row);
-        sheetData.push([
-          row.vendor,
-          row.sku,
-          row.name,
-          row.quantity,
-          row.unit,
-          row.currency,
-          row.price,
-          row.discount,
-          `${sym} ${row.discountAmount.toFixed(2)}`,
-          `${sym} ${row.priceAfter.toFixed(2)}`,
-          `${totalRub.toFixed(2)} ₽`,
-          row.supplier,
-          row.status,
-        ]);
+        sheetData.push([row.vendor, row.sku, row.name, row.quantity, row.unit, row.currency, row.price, row.discount, `${sym} ${row.discountAmount.toFixed(2)}`, `${sym} ${row.priceAfter.toFixed(2)}`, `${totalRub.toFixed(2)} ₽`, row.supplier, row.status]);
       }
     }
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
@@ -383,7 +293,6 @@ export const SpecificationPage: React.FC = () => {
         handle: '.drag-handle',
         animation: 150,
         onEnd: () => {
-          // синхронизируем порядок строк
           if (tableBodyRef.current) {
             const newRowsOrder: Row[] = [];
             const children = Array.from(tableBodyRef.current.children);
@@ -406,9 +315,7 @@ export const SpecificationPage: React.FC = () => {
   useEffect(() => {
     const checkboxes = document.querySelectorAll('.row-checkbox');
     const handleChange = () => {
-      const checked = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(
-        cb => Number(cb.getAttribute('data-id'))
-      );
+      const checked = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => Number(cb.getAttribute('data-id')));
       setSelectedIds(checked);
     };
     checkboxes.forEach(cb => cb.addEventListener('change', handleChange));
@@ -417,248 +324,51 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
-  // Динамические стили (изолированные)
-  useEffect(() => {
-    const styleId = 'specification-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = `
-        .specification-module * { box-sizing: border-box; }
-        .specification-module {
-          background: transparent;
-          padding: 20px;
-        }
-        .spec-toolbar {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 20px;
-          background: var(--bg-panel, rgba(255,255,255,0.85));
-          backdrop-filter: blur(12px);
-          padding: 12px 20px;
-          border-radius: 24px;
-          border: 1px solid var(--border-light, rgba(203,213,225,0.5));
-        }
-        .table-title {
-          font-size: 1.5rem;
-          font-weight: 600;
-          background: transparent;
-          border: none;
-          padding: 4px 8px;
-          border-radius: 8px;
-          cursor: pointer;
-          font-family: inherit;
-          color: var(--text-primary, #1a2c3e);
-        }
-        .table-title:hover { background-color: #eef2ff; }
-        .currency-rates {
-          display: flex;
-          gap: 16px;
-          align-items: center;
-          background: var(--card-bg, #f8fafc);
-          padding: 6px 12px;
-          border-radius: 24px;
-        }
-        .currency-rates input {
-          width: 70px;
-          padding: 4px 6px;
-          border-radius: 8px;
-          border: 1px solid #cbd5e1;
-        }
-        .buttons-group button {
-          font-family: inherit;
-          font-size: 0.8rem;
-          padding: 6px 12px;
-          border-radius: 8px;
-          border: none;
-          cursor: pointer;
-          background-color: #f1f5f9;
-          transition: all 0.2s;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .buttons-group button.primary { background-color: #3b82f6; color: white; }
-        .buttons-group button.danger { background-color: #fee2e2; color: #b91c1c; }
-        .mass-actions {
-          background: #eef2ff;
-          border-radius: 12px;
-          padding: 8px 16px;
-          margin-bottom: 16px;
-          display: none;
-          align-items: center;
-          gap: 16px;
-        }
-        .mass-actions.visible { display: flex; }
-        .totals-panel, .totals-footer {
-          background: #f8fafc;
-          border-radius: 12px;
-          padding: 16px 20px;
-          margin-bottom: 16px;
-          border: 1px solid #e2e8f0;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 20px;
-        }
-        .totals-card {
-          background: white;
-          border-radius: 16px;
-          padding: 12px 24px;
-          min-width: 220px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-          border-left: 4px solid #3b82f6;
-        }
-        .table-wrapper {
-          overflow-x: auto;
-          border-radius: 16px;
-          background: white;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          border: 1px solid #e2e8f0;
-          max-height: 70vh;
-          overflow-y: auto;
-        }
-        #specTable {
-          width: 100%;
-          border-collapse: collapse;
-          table-layout: fixed;
-          min-width: 1550px;
-        }
-        #specTable th, #specTable td {
-          padding: 8px 6px;
-          border-bottom: 1px solid #e5e7eb;
-          vertical-align: middle;
-          border-right: 1px solid #e9ecef;
-        }
-        #specTable th {
-          background-color: #f8fafc;
-          font-weight: 600;
-          font-size: 0.8rem;
-          position: sticky;
-          top: 0;
-        }
-        .data-row { cursor: grab; transition: background-color 0.15s; }
-        .data-row:hover { background-color: #e0f2fe !important; }
-        .section-row {
-          background-color: #f1f5f9;
-          font-weight: 600;
-          border-top: 1px solid #cbd5e1;
-          border-bottom: 1px solid #cbd5e1;
-          cursor: pointer;
-        }
-        .drag-handle { cursor: grab; text-align: center; color: #cbd5e1; }
-        .action-buttons { white-space: nowrap; opacity: 0; transition: opacity 0.2s; }
-        .data-row:hover .action-buttons { opacity: 1; }
-        .action-buttons button { background: none; padding: 4px 6px; margin: 0 2px; border: none; cursor: pointer; }
-        .collapse-icon { margin-right: 6px; cursor: pointer; }
-        input, select {
-          background: transparent;
-          border: none;
-          width: 100%;
-          font-size: 0.8rem;
-          outline: none;
-          padding: 4px 0;
-        }
-        input:focus, select:focus {
-          outline: 2px solid #3b82f6;
-          border-radius: 4px;
-        }
-        .readonly-cell { background-color: #f9fafb; font-weight: 500; }
-        .text-right { text-align: right; }
-        .checkbox-col { text-align: center; width: 30px; }
-      `;
-      document.head.appendChild(style);
-    }
-    return () => {
-      const styleEl = document.getElementById(styleId);
-      if (styleEl) styleEl.remove();
-    };
-  }, []);
-
-  // Рендер
   const totals = computeTotals();
   let dataCounter = 0;
   let sectionCollapsed = false;
 
   return (
-    <div className="specification-module">
-      <div className="spec-toolbar">
-        <input
-          type="text"
-          className="table-title"
-          value={tableName}
-          onChange={e => setTableName(e.target.value)}
-          maxLength={50}
-        />
-        <div className="currency-rates">
-          <label>USD → RUB</label>
-          <input
-            type="number"
-            value={usdRate}
-            onChange={e => setUsdRate(parseFloat(e.target.value) || 0)}
-            step="0.1"
-          />
-          <label>EUR → RUB</label>
-          <input
-            type="number"
-            value={eurRate}
-            onChange={e => setEurRate(parseFloat(e.target.value) || 0)}
-            step="0.1"
-          />
+    <div className="specification-module" style={{ padding: '20px' }}>
+      <div className="spec-toolbar" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '20px', background: 'white', padding: '12px 20px', borderRadius: '16px' }}>
+        <input type="text" className="table-title" value={tableName} onChange={e => setTableName(e.target.value)} style={{ fontSize: '1.5rem', fontWeight: 600 }} />
+        <div className="currency-rates" style={{ display: 'flex', gap: '16px' }}>
+          <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px' }} /></label>
+          <label>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" style={{ width: '70px' }} /></label>
         </div>
-        <div className="date-info">
-          <i className="far fa-calendar-alt"></i> {creationDate}
-        </div>
+        <div className="date-info">{creationDate}</div>
         <div className="buttons-group">
-          <button onClick={expandAll}>
-            <i className="fas fa-plus-square"></i> Развернуть всё
-          </button>
-          <button onClick={collapseAll}>
-            <i className="fas fa-minus-square"></i> Свернуть всё
-          </button>
-          <button onClick={addSection} className="primary">
-            <i className="fas fa-layer-group"></i> Раздел
-          </button>
-          <button onClick={addDataRowAtEnd} className="primary">
-            <i className="fas fa-plus-circle"></i> Строка
-          </button>
-          <button onClick={exportToExcel}>
-            <i className="fas fa-file-excel"></i> Excel
-          </button>
-          <button onClick={resetDemo} className="danger">
-            <i className="fas fa-undo-alt"></i> Сброс
-          </button>
+          <button onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
+          <button onClick={collapseAll}><i className="fas fa-minus-square"></i> Свернуть всё</button>
+          <button onClick={addSection} className="primary" style={{ background: '#3b82f6', color: 'white' }}><i className="fas fa-layer-group"></i> Раздел</button>
+          <button onClick={addDataRowAtEnd} className="primary" style={{ background: '#3b82f6', color: 'white' }}><i className="fas fa-plus-circle"></i> Строка</button>
+          <button onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
+          <button onClick={resetDemo} className="danger" style={{ background: '#fee2e2', color: '#b91c1c' }}><i className="fas fa-undo-alt"></i> Сброс</button>
         </div>
       </div>
 
-      <div id="massActionsPanel" className={`mass-actions ${selectedIds.length > 0 ? 'visible' : ''}`}>
+      <div className={`mass-actions`} style={{ display: selectedIds.length > 0 ? 'flex' : 'none', background: '#eef2ff', padding: '8px 16px', marginBottom: '16px', gap: '16px' }}>
         <span>Выбрано: {selectedIds.length}</span>
-        <button onClick={deleteSelected} className="danger">
-          <i className="fas fa-trash-alt"></i> Удалить выбранные
-        </button>
+        <button onClick={deleteSelected} className="danger" style={{ background: '#fee2e2', color: '#b91c1c' }}><i className="fas fa-trash-alt"></i> Удалить выбранные</button>
       </div>
 
-      <div className="totals-panel">
-        <div className="totals-card">
+      <div className="totals-panel" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '16px' }}>
+        <div className="totals-card" style={{ background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: '4px solid #3b82f6' }}>
           <div className="label">Общая сумма (руб)</div>
           <div className="value">{totals.totalRub.toFixed(2)} ₽</div>
           <div className="sub">Количество: {totals.totalQty} шт.</div>
         </div>
         {Object.entries(totals.byCurrency).map(([curr, data]) => (
-          <div key={curr} className="totals-card">
+          <div key={curr} className="totals-card" style={{ background: 'white', borderRadius: '16px', padding: '12px 24px', borderLeft: '4px solid #3b82f6' }}>
             <div className="label">{curr}</div>
-            <div className="value">
-              {currencySymbols[curr]} {data.sum.toFixed(2)}
-            </div>
+            <div className="value">{currencySymbols[curr]} {data.sum.toFixed(2)}</div>
             <div className="sub">Кол-во: {data.qty}</div>
           </div>
         ))}
       </div>
 
-      <div className="table-wrapper">
-        <table id="specTable">
+      <div className="table-wrapper" style={{ overflowX: 'auto', background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', maxHeight: '70vh', overflowY: 'auto' }}>
+        <table id="specTable" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1550px' }}>
           <thead>
             <tr>
               <th style={{ width: 40 }}><i className="fas fa-grip-vertical"></i></th>
@@ -685,35 +395,15 @@ export const SpecificationPage: React.FC = () => {
               if (row.type === 'section') {
                 sectionCollapsed = row.collapsed;
                 return (
-                  <tr key={row.id} className="section-row" data-id={row.id}>
+                  <tr key={row.id} className="section-row" data-id={row.id} style={{ background: '#f1f5f9', fontWeight: 600 }}>
                     <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                     <td className="checkbox-col"></td>
                     <td></td>
                     <td colSpan={14}>
-                      <i
-                        className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'} collapse-icon`}
-                        onClick={() => toggleSection(row.id)}
-                      ></i>
-                      <span
-                        contentEditable
-                        suppressContentEditableWarning
-                        onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)}
-                      >
-                        {row.title}
-                      </span>
-                      <button
-                        className="add-row-below-section"
-                        onClick={() => addDataRowAfterId(row.id)}
-                        style={{ marginLeft: 12, background: '#2563eb', color: 'white', border: 'none', padding: '2px 8px', borderRadius: 20 }}
-                      >
-                        <i className="fas fa-plus-circle"></i> Добавить строку
-                      </button>
-                      <button
-                        onClick={() => deleteRow(row.id)}
-                        style={{ marginLeft: 8, background: '#fee2e2', color: '#b91c1c', border: 'none', padding: '2px 8px', borderRadius: 20 }}
-                      >
-                        <i className="fas fa-trash-alt"></i> Удалить раздел
-                      </button>
+                      <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'} collapse-icon`} onClick={() => toggleSection(row.id)} style={{ marginRight: '6px', cursor: 'pointer' }}></i>
+                      <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)}>{row.title}</span>
+                      <button onClick={() => addDataRowAfterId(row.id)} style={{ marginLeft: 12, background: '#2563eb', color: 'white', border: 'none', padding: '2px 8px', borderRadius: 20 }}><i className="fas fa-plus-circle"></i> Добавить строку</button>
+                      <button onClick={() => deleteRow(row.id)} style={{ marginLeft: 8, background: '#fee2e2', color: '#b91c1c', border: 'none', padding: '2px 8px', borderRadius: 20 }}><i className="fas fa-trash-alt"></i> Удалить раздел</button>
                     </td>
                   </tr>
                 );
@@ -722,37 +412,23 @@ export const SpecificationPage: React.FC = () => {
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
                 return (
-                  <tr key={row.id} className="data-row" data-id={row.id}>
+                  <tr key={row.id} className="data-row" data-id={row.id} style={{ cursor: 'grab' }}>
                     <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
-                    <td className="checkbox-col">
-                      <input type="checkbox" className="row-checkbox" data-id={row.id} />
-                    </td>
+                    <td className="checkbox-col"><input type="checkbox" className="row-checkbox" data-id={row.id} /></td>
                     <td className="row-number">{dataCounter}</td>
-                    <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} /></td>
-                    <td><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} /></td>
-                    <td><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} /></td>
-                    <td><input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} /></td>
-                    <td>
-                      <select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)}>
-                        <option>шт</option><option>м</option><option>уп.</option>
-                      </select>
-                    </td>
-                    <td>
-                      <select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)}>
-                        {currencies.map(c => <option key={c}>{c}</option>)}
-                      </select>
-                    </td>
-                    <td><input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} /></td>
-                    <td><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} /></td>
+                    <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%' }} /></td>
+                    <td><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%' }} /></td>
+                    <td><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%' }} /></td>
+                    <td><input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={{ width: '100%' }} /></td>
+                    <td><select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%' }}><option>шт</option><option>м</option><option>уп.</option></select></td>
+                    <td><select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%' }}>{currencies.map(c => <option key={c}>{c}</option>)}</select></td>
+                    <td><input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} style={{ width: '100%' }} /></td>
+                    <td><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={{ width: '100%' }} /></td>
                     <td className="readonly-cell text-right">{sym} {row.discountAmount.toFixed(2)}</td>
                     <td className="readonly-cell text-right">{sym} {row.priceAfter.toFixed(2)}</td>
                     <td className="readonly-cell text-right">{totalRub.toFixed(2)} ₽</td>
-                    <td><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} /></td>
-                    <td>
-                      <select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)}>
-                        {statuses.map(s => <option key={s}>{s}</option>)}
-                      </select>
-                    </td>
+                    <td><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%' }} /></td>
+                    <td><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
                     <td className="action-buttons">
                       <button onClick={() => addDataRowAfterId(row.id)}><i className="fas fa-plus-circle"></i></button>
                       <button onClick={() => duplicateRow(row.id)}><i className="fas fa-copy"></i></button>
