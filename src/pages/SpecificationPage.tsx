@@ -56,7 +56,7 @@ export const SpecificationPage: React.FC = () => {
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v9');
+    const saved = localStorage.getItem('specification_data_v10');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -75,7 +75,7 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v9', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v10', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
@@ -339,9 +339,10 @@ export const SpecificationPage: React.FC = () => {
         .spec-table .action-buttons button:hover { color: #3b82f6; }
         .spec-table .section-row .collapse-icon { color: #cbd5e1; transition: color 0.2s; }
         .spec-table .section-row .collapse-icon:hover { color: #3b82f6; }
-        .spec-table td { vertical-align: middle; border-right: 1px solid var(--border-light); background-color: var(--bg-panel-solid); color: var(--text-primary); padding: 8px 6px; }
-        .spec-table th { border-right: 1px solid var(--border-light); position: sticky; top: 0; background: var(--card-bg); color: var(--text-secondary); z-index: 10; padding: 8px 6px; }
-        .spec-table td:last-child, .spec-table th:last-child { border-right: none; }
+        .spec-table td, .spec-table th { border-right: 1px solid var(--border-light) !important; }
+        .spec-table td:last-child, .spec-table th:last-child { border-right: none !important; }
+        .spec-table td, .spec-table th { padding: 8px 6px; background-color: var(--bg-panel-solid); color: var(--text-primary); }
+        .spec-table th { background: var(--card-bg); color: var(--text-secondary); position: sticky; top: 0; z-index: 10; }
         .spec-table .text-right { text-align: right; padding-right: 12px; }
         .spec-table .text-center { text-align: center; }
         .spec-table .word-break { word-break: break-word; white-space: normal; }
@@ -453,7 +454,7 @@ export const SpecificationPage: React.FC = () => {
             </tr>
           </thead>
           <tbody ref={tableBodyRef}>
-            {rows.map((row) => {
+            {rows.map((row, idx, array) => {
               if (row.type === 'section') {
                 const sectionTotals = getSectionTotals(row.id);
                 return (
@@ -461,7 +462,7 @@ export const SpecificationPage: React.FC = () => {
                     <tr className="section-row" data-id={row.id}>
                       <td className="drag-handle"><i className="fas fa-grip-vertical"></i></td>
                       <td className="checkbox-col"></td>
-                      <td></td>
+                      <td></td> {/* пустая ячейка для номера */}
                       <td colSpan={15} style={{ padding: '8px 6px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1, textAlign: 'center' }}>
@@ -475,7 +476,7 @@ export const SpecificationPage: React.FC = () => {
                           </div>
                         </div>
                        </td>
-                     </tr>
+                     </td>
                     {!row.collapsed && row.showTotals && (
                       <tr className="section-totals-row">
                         <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '10px 6px', color: 'var(--text-primary)' }}>Итого по разделу:</td>
@@ -495,14 +496,11 @@ export const SpecificationPage: React.FC = () => {
                 const grossRub = getGrossRub(row);
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
-                // Скрываем строки данных, если раздел свернут (проверяем предыдущий раздел)
-                // Нужно найти, принадлежит ли эта строка свернутому разделу.
-                // Для этого при рендере мы должны знать состояние сворачивания текущего раздела.
-                // Проще: добавим в состояние строки привязку к разделу, но для простоты – найдём ближайший сверху раздел.
+                // Определяем, свернут ли раздел, к которому принадлежит строка
                 let sectionCollapsed = false;
-                for (let i = rows.indexOf(row) - 1; i >= 0; i--) {
-                  if (rows[i].type === 'section') {
-                    sectionCollapsed = (rows[i] as SectionRow).collapsed;
+                for (let i = idx - 1; i >= 0; i--) {
+                  if (array[i].type === 'section') {
+                    sectionCollapsed = (array[i] as SectionRow).collapsed;
                     break;
                   }
                 }
@@ -531,7 +529,7 @@ export const SpecificationPage: React.FC = () => {
                       <button onClick={() => duplicateRow(row.id)} title="Дублировать строку"><i className="fas fa-copy"></i></button>
                       <button onClick={() => deleteRow(row.id)} title="Удалить строку"><i className="fas fa-trash-alt"></i></button>
                     </td>
-                  </tr>
+                  </table>
                 );
               }
               return null;
