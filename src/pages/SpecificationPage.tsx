@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { updateSpecificationRows, addSpecification } from '../store/specificationsSlice';
 import * as XLSX from 'xlsx';
 import './SpecificationPage.css';
+
+// ============================================================================
+// ТИПЫ
+// ============================================================================
 
 export interface DataRow {
   id: number;
@@ -28,21 +36,41 @@ export interface SectionRow {
 
 export type Row = DataRow | SectionRow;
 
+// ============================================================================
+// КОНСТАНТЫ
+// ============================================================================
+
 const statuses = ['Замена', 'Получено КП', 'Закуплено'];
 const currencies = ['RUB', 'USD', 'EUR'];
 const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
 const currencyColors: Record<string, string> = { RUB: '#3b82f6', USD: '#10b981', EUR: '#f59e0b' };
 
+// ============================================================================
+// КОМПОНЕНТ
+// ============================================================================
+
 export const SpecificationPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const specifications = useSelector((state: RootState) => state.specifications.list);
+  const projects = useSelector((state: RootState) => state.projects.list);
+
+  // Текущая спецификация (загружаем из Redux по id)
+  const currentSpec = id ? specifications.find(s => s.id === id) : null;
+
   const [rows, setRows] = useState<Row[]>([]);
   const [nextId, setNextId] = useState(105);
   const [usdRate, setUsdRate] = useState(90);
   const [eurRate, setEurRate] = useState(98);
   const [tableName, setTableName] = useState('Спецификация оборудования');
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [filterVendor, setFilterVendor] = useState('');
   const [filterSku, setFilterSku] = useState('');
+
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
+
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem('spec_column_widths');
     return saved ? JSON.parse(saved) : {
@@ -53,32 +81,53 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
+  // Загрузка данных спецификации из Redux
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v17');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (data.rows && data.rows.length) {
-          setRows(data.rows);
-          setNextId(data.nextId);
-          setUsdRate(data.usdRate ?? 90);
-          setEurRate(data.eurRate ?? 98);
-          setTableName(data.tableName ?? 'Спецификация оборудования');
-          return;
-        }
-      } catch (e) {}
+    if (currentSpec) {
+      setRows(currentSpec.rows);
+      setTableName(currentSpec.name);
+      setSelectedProjectId(currentSpec.projectId);
+      // Найдём максимальный id для nextId
+      const maxId = currentSpec.rows.reduce((max, row) => Math.max(max, row.id), 0);
+      setNextId(maxId + 1);
+    } else if (id === undefined) {
+      // Новая спецификация (без id) – загружаем демо или пустую
+      resetDemo();
+      setSelectedProjectId(null);
+    } else {
+      // Если id есть, но спецификация не найдена – возможно, надо создать? Пока просто редирект на список
+      navigate('/specifications');
     }
-    resetDemo();
-  }, []);
+  }, [currentSpec, id]);
 
+  // Сохранение изменений в Redux
   useEffect(() => {
-    if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v17', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
-  }, [rows, nextId, usdRate, eurRate, tableName]);
+    if (currentSpec && rows.length > 0) {
+      dispatch(updateSpecificationRows({ id: currentSpec.id, rows }));
+    } else if (!currentSpec && id === undefined && rows.length > 0) {
+      // Новая спецификация – сохраняем как новую
+      const newId = Date.now().toString();
+      const now = new Date().toISOString();
+      dispatch(addSpecification({
+        id: newId,
+        name: tableName,
+        projectId: selectedProjectId,
+        createdAt: now,
+        updatedAt: now,
+        rows: rows,
+      }));
+      navigate(`/specification/${newId}`);
+    }
+  }, [rows, currentSpec, id]);
 
+  // Сохранение ширины столбцов
   useEffect(() => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
+
+  // ==========================================================================
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // ==========================================================================
 
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
@@ -133,6 +182,10 @@ export const SpecificationPage: React.FC = () => {
     const marginPercent = totalGrossRub === 0 ? 0 : ((totalGrossRub - totalRub) / totalGrossRub) * 100;
     return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
+
+  // ==========================================================================
+  // ОПЕРАЦИИ С ДАННЫМИ
+  // ==========================================================================
 
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
@@ -212,8 +265,7 @@ export const SpecificationPage: React.FC = () => {
     setUsdRate(90);
     setEurRate(98);
     setTableName('Спецификация оборудования');
-    setFilterVendor('');
-    setFilterSku('');
+    setSelectedProjectId(null);
   };
 
   const exportToExcel = () => {
@@ -252,6 +304,10 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
+  // ==========================================================================
+  // РЕНДЕР
+  // ==========================================================================
+
   const totals = computeTotals();
   let dataCounter = 0;
 
@@ -259,7 +315,12 @@ export const SpecificationPage: React.FC = () => {
     <div className="spec-page">
       <div className="spec-toolbar">
         <div className="spec-toolbar-row">
-          <input type="text" className="spec-table-name" value={tableName} onChange={e => setTableName(e.target.value)} />
+          <input
+            type="text"
+            className="spec-table-name"
+            value={tableName}
+            onChange={e => setTableName(e.target.value)}
+          />
           <div className="spec-rates">
             <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
             <label>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
@@ -269,9 +330,31 @@ export const SpecificationPage: React.FC = () => {
         <div className="spec-toolbar-row">
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="text" placeholder="Фильтр по вендору" value={filterVendor} onChange={e => setFilterVendor(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }} />
-              <input type="text" placeholder="Фильтр по артикулу" value={filterSku} onChange={e => setFilterSku(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }} />
+              <input
+                type="text"
+                placeholder="Фильтр по вендору"
+                value={filterVendor}
+                onChange={e => setFilterVendor(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
+              />
+              <input
+                type="text"
+                placeholder="Фильтр по артикулу"
+                value={filterSku}
+                onChange={e => setFilterSku(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
+              />
             </div>
+            <select
+              value={selectedProjectId || ''}
+              onChange={e => setSelectedProjectId(e.target.value || null)}
+              style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
+            >
+              <option value="">— Не привязан —</option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>{project.shortId} {project.name}</option>
+              ))}
+            </select>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="spec-button" onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
