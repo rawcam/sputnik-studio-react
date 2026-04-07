@@ -1,3 +1,4 @@
+// src/store/index.ts
 import { configureStore } from '@reduxjs/toolkit'
 import themeReducer from './themeSlice'
 import uiReducer from './uiSlice'
@@ -14,7 +15,7 @@ import soundReducer from './soundSlice'
 import vcReducer from './vcSlice'
 import ergoReducer from './ergoSlice'
 import powerReducer from './powerSlice'
-import specificationsReducer from './specificationsSlice'  // <-- ДОБАВИТЬ
+import specificationsReducer from './specificationsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -33,7 +34,7 @@ export const store = configureStore({
     vc: vcReducer,
     ergo: ergoReducer,
     power: powerReducer,
-    specifications: specificationsReducer,  // <-- ДОБАВИТЬ
+    specifications: specificationsReducer,
   },
 })
 
