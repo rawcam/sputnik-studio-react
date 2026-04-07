@@ -1,4 +1,3 @@
-// src/store/specificationsSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Row } from '../pages/SpecificationPage';
 
@@ -13,38 +12,21 @@ export interface Specification {
 
 interface SpecificationsState {
   list: Specification[];
+  currentSpecId: string | null;
 }
 
-// Загрузка из localStorage при инициализации
 const loadInitialState = (): SpecificationsState => {
-  const saved = localStorage.getItem('specifications_redax');
+  const saved = localStorage.getItem('specifications_data');
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      return { list: parsed.list || [] };
+      return {
+        list: parsed.list || [],
+        currentSpecId: parsed.currentSpecId || null,
+      };
     } catch (e) {}
   }
-  // Перенос старой спецификации из старого ключа
-  const oldData = localStorage.getItem('specification_data_v17');
-  if (oldData) {
-    try {
-      const parsed = JSON.parse(oldData);
-      const rows = parsed.rows || [];
-      if (rows.length > 0) {
-        const now = new Date().toISOString();
-        const legacySpec: Specification = {
-          id: 'legacy',
-          name: 'Старая спецификация',
-          projectId: null,
-          createdAt: now,
-          updatedAt: now,
-          rows: rows,
-        };
-        return { list: [legacySpec] };
-      }
-    } catch (e) {}
-  }
-  return { list: [] };
+  return { list: [], currentSpecId: null };
 };
 
 const initialState: SpecificationsState = loadInitialState();
@@ -55,20 +37,10 @@ const specificationsSlice = createSlice({
   reducers: {
     setSpecifications: (state, action: PayloadAction<Specification[]>) => {
       state.list = action.payload;
-      localStorage.setItem('specifications_redax', JSON.stringify({ list: state.list }));
     },
-    addSpecification: (state, action: PayloadAction<Omit<Specification, 'id' | 'createdAt' | 'updatedAt'>>) => {
-      const newId = Date.now().toString();
-      const now = new Date().toISOString();
-      const newSpec: Specification = {
-        ...action.payload,
-        id: newId,
-        createdAt: now,
-        updatedAt: now,
-        rows: action.payload.rows || [],
-      };
-      state.list.push(newSpec);
-      localStorage.setItem('specifications_redax', JSON.stringify({ list: state.list }));
+    addSpecification: (state, action: PayloadAction<Specification>) => {
+      state.list.push(action.payload);
+      localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
     },
     updateSpecification: (state, action: PayloadAction<{ id: string; updates: Partial<Omit<Specification, 'id' | 'createdAt'>> }>) => {
       const { id, updates } = action.payload;
@@ -79,12 +51,19 @@ const specificationsSlice = createSlice({
           ...updates,
           updatedAt: new Date().toISOString(),
         };
-        localStorage.setItem('specifications_redax', JSON.stringify({ list: state.list }));
+        localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
       }
     },
     deleteSpecification: (state, action: PayloadAction<string>) => {
       state.list = state.list.filter(s => s.id !== action.payload);
-      localStorage.setItem('specifications_redax', JSON.stringify({ list: state.list }));
+      if (state.currentSpecId === action.payload) {
+        state.currentSpecId = null;
+      }
+      localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+    },
+    setCurrentSpecId: (state, action: PayloadAction<string | null>) => {
+      state.currentSpecId = action.payload;
+      localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
     },
     updateSpecificationRows: (state, action: PayloadAction<{ id: string; rows: Row[] }>) => {
       const { id, rows } = action.payload;
@@ -92,7 +71,29 @@ const specificationsSlice = createSlice({
       if (index !== -1) {
         state.list[index].rows = rows;
         state.list[index].updatedAt = new Date().toISOString();
-        localStorage.setItem('specifications_redax', JSON.stringify({ list: state.list }));
+        localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+      }
+    },
+    migrateFromOldStorage: (state) => {
+      const oldData = localStorage.getItem('specification_data_v17');
+      if (oldData && state.list.length === 0) {
+        try {
+          const parsed = JSON.parse(oldData);
+          const rows = parsed.rows || [];
+          if (rows.length > 0) {
+            const now = new Date().toISOString();
+            const migratedSpec: Specification = {
+              id: 'legacy',
+              name: 'Старая спецификация',
+              projectId: null,
+              createdAt: now,
+              updatedAt: now,
+              rows: rows,
+            };
+            state.list.push(migratedSpec);
+            localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+          }
+        } catch (e) {}
       }
     },
   },
@@ -103,7 +104,9 @@ export const {
   addSpecification,
   updateSpecification,
   deleteSpecification,
+  setCurrentSpecId,
   updateSpecificationRows,
+  migrateFromOldStorage,
 } = specificationsSlice.actions;
 
 export default specificationsSlice.reducer;
