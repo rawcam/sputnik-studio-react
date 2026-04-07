@@ -1,4 +1,4 @@
-import { Row, DataRow } from '../pages/SpecificationPage';
+import { Row } from '../pages/SpecificationPage';
 
 export const getSpecTotalRub = (rows: Row[], usdRate: number, eurRate: number): number => {
   let total = 0;
