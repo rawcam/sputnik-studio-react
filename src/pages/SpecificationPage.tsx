@@ -1,8 +1,10 @@
+// src/pages/SpecificationPage.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { updateSpecificationRows, updateSpecification } from '../store/specificationsSlice';
+import Sortable from 'sortablejs';
 import * as XLSX from 'xlsx';
 import './SpecificationPage.css';
 
@@ -57,6 +59,7 @@ export const SpecificationPage: React.FC = () => {
   const [filterSku, setFilterSku] = useState('');
 
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
+  const sortableRef = useRef<Sortable | null>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem('spec_column_widths');
     return saved ? JSON.parse(saved) : {
@@ -67,7 +70,7 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
-  // Загрузка спецификации из Redux
+  // Загрузка спецификации
   useEffect(() => {
     if (currentSpec) {
       setRows(currentSpec.rows);
@@ -76,7 +79,6 @@ export const SpecificationPage: React.FC = () => {
       const maxId = currentSpec.rows.reduce((max, row) => Math.max(max, row.id), 0);
       setNextId(maxId + 1);
     } else if (id === undefined) {
-      // Новая спецификация (без id) – создаём пустую
       resetDemo();
       setSelectedProjectId(null);
       setTableName('');
@@ -85,7 +87,7 @@ export const SpecificationPage: React.FC = () => {
     }
   }, [currentSpec, id]);
 
-  // Автосохранение строк и метаданных
+  // Автосохранение
   useEffect(() => {
     if (currentSpec && rows.length > 0) {
       dispatch(updateSpecificationRows({ id: currentSpec.id, rows }));
@@ -108,16 +110,52 @@ export const SpecificationPage: React.FC = () => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
 
-  // ==========================================================================
-  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-  // ==========================================================================
+  // Drag-and-drop (SortableJS)
+  useEffect(() => {
+    if (!tableBodyRef.current) return;
+    if (sortableRef.current) {
+      try { sortableRef.current.destroy(); } catch (e) {}
+      sortableRef.current = null;
+    }
+    const timer = setTimeout(() => {
+      if (tableBodyRef.current && typeof Sortable !== 'undefined') {
+        try {
+          sortableRef.current = new Sortable(tableBodyRef.current, {
+            handle: '.spec-data-row .spec-drag-handle',
+            animation: 150,
+            forceFallback: true,
+            onEnd: () => {
+              if (!tableBodyRef.current) return;
+              const domRows = Array.from(tableBodyRef.current.children);
+              const newRowsOrder: Row[] = [];
+              for (const dom of domRows) {
+                const id = Number(dom.getAttribute('data-id'));
+                const found = rows.find(r => r.id === id);
+                if (found) newRowsOrder.push(found);
+              }
+              if (newRowsOrder.length === rows.length) setRows(newRowsOrder);
+            },
+          });
+        } catch (e) {
+          console.error('Sortable init error:', e);
+        }
+      }
+    }, 50);
+    return () => {
+      clearTimeout(timer);
+      if (sortableRef.current) {
+        try { sortableRef.current.destroy(); } catch (e) {}
+        sortableRef.current = null;
+      }
+    };
+  }, [rows]);
 
+  // ========== Вспомогательные функции (без изменений) ==========
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
     if (currency === 'EUR') return eurRate;
     return 1;
   };
-
   const getGrossRub = (row: DataRow) => row.price * row.quantity * getRate(row.currency);
   const getTotalRub = (row: DataRow) => (row.priceAfter || 0) * row.quantity * getRate(row.currency);
   const formatNumber = (num: number): string => Math.round(num).toLocaleString('ru-RU');
@@ -166,10 +204,7 @@ export const SpecificationPage: React.FC = () => {
     return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
 
-  // ==========================================================================
-  // ОПЕРАЦИИ С ДАННЫМИ
-  // ==========================================================================
-
+  // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -287,10 +322,7 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // ==========================================================================
-  // КЛАВИАТУРНАЯ НАВИГАЦИЯ (исправленная)
-  // ==========================================================================
-
+  // Клавиатурная навигация (исправленная, с перемещением по столбцам)
   const getFocusableElements = useCallback(() => {
     if (!tableBodyRef.current) return [];
     return Array.from(
@@ -317,12 +349,6 @@ export const SpecificationPage: React.FC = () => {
 
       const currentCol = getColumnIndex(target);
       if (currentCol === -1) return;
-
-      const rowsCount = focusable.reduce((acc, el) => {
-        const col = getColumnIndex(el);
-        if (col === currentCol) acc++;
-        return acc;
-      }, 0);
 
       const getNextInColumn = (direction: 'up' | 'down'): HTMLElement | null => {
         let found = false;
@@ -368,7 +394,6 @@ export const SpecificationPage: React.FC = () => {
         default:
           return;
       }
-
       if (nextIndex !== currentIndex && nextIndex >= 0 && nextIndex < focusable.length) {
         e.preventDefault();
         focusable[nextIndex].focus();
@@ -376,10 +401,6 @@ export const SpecificationPage: React.FC = () => {
     },
     [getFocusableElements]
   );
-
-  // ==========================================================================
-  // РЕНДЕР
-  // ==========================================================================
 
   const totals = computeTotals();
   let dataCounter = 0;
@@ -547,9 +568,15 @@ export const SpecificationPage: React.FC = () => {
                     <td className="spec-drag-handle"><i className="fas fa-grip-vertical"></i></td>
                     <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
                     <td className="spec-text-center">{visible ? dataCounter : ''}</td>
-                    <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
-                    <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none' }} /></td>
+                    <td className="spec-text-center">
+                      <input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }} />
+                    </td>
+                    <td className="spec-text-center word-break">
+                      <input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }} />
+                    </td>
+                    <td className="word-break">
+                      <input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'left' }} />
+                    </td>
                     <td className="spec-text-center">
                       <input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} />
                     </td>
@@ -572,7 +599,7 @@ export const SpecificationPage: React.FC = () => {
                     <td className="spec-text-right readonly-cell">{sym} {formatNumber(row.discountAmount)}</td>
                     <td className="spec-text-right readonly-cell">{sym} {formatNumber(row.priceAfter)}</td>
                     <td className="spec-text-right readonly-cell">{formatNumber(totalRub)} ₽</td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td className="spec-text-center">
                       <input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }} />
                     </td>
                     <td className="spec-text-center">
