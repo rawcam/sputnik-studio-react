@@ -1,225 +1,520 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { RootState } from '../store';
-import { 
-  addSpecification, 
-  deleteSpecification, 
-  setCurrentSpecId,
-  migrateFromOldStorage,
-  Specification 
-} from '../store/specificationsSlice';
+import React, { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
+import './SpecificationPage.css';
 
-export const SpecificationsListPage: React.FC = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const specifications = useSelector((state: RootState) => state.specifications.list);
-  const projects = useSelector((state: RootState) => state.projects.list);
-  
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newSpecName, setNewSpecName] = useState('');
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+// ============================================================================
+// ТИПЫ
+// ============================================================================
 
-  // Миграция старых данных из localStorage при первом запуске
+export interface DataRow {
+  id: number;
+  type: 'data';
+  vendor: string;
+  sku: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  currency: string;
+  price: number;
+  discount: number;
+  discountAmount: number;
+  priceAfter: number;
+  supplier: string;
+  status: string;
+}
+
+export interface SectionRow {
+  id: number;
+  type: 'section';
+  title: string;
+  collapsed: boolean;
+}
+
+export type Row = DataRow | SectionRow;
+
+// ============================================================================
+// КОНСТАНТЫ
+// ============================================================================
+
+const statuses = ['Замена', 'Получено КП', 'Закуплено'];
+const currencies = ['RUB', 'USD', 'EUR'];
+const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
+const currencyColors: Record<string, string> = { RUB: '#3b82f6', USD: '#10b981', EUR: '#f59e0b' };
+
+// ============================================================================
+// КОМПОНЕНТ
+// ============================================================================
+
+export const SpecificationPage: React.FC = () => {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [nextId, setNextId] = useState(105);
+  const [usdRate, setUsdRate] = useState(90);
+  const [eurRate, setEurRate] = useState(98);
+  const [tableName, setTableName] = useState('Спецификация оборудования');
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [filterVendor, setFilterVendor] = useState('');
+  const [filterSku, setFilterSku] = useState('');
+
+  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
+
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('spec_column_widths');
+    return saved ? JSON.parse(saved) : {
+      drag: 40, checkbox: 30, num: 50, vendor: 120, sku: 120, name: 250,
+      qty: 90, unit: 80, currency: 90, price: 110, discount: 100,
+      discountAmount: 130, priceAfter: 130, totalRub: 130,
+      supplier: 140, status: 120, actions: 100,
+    };
+  });
+
+  // ==========================================================================
+  // ЗАГРУЗКА / СОХРАНЕНИЕ
+  // ==========================================================================
+
   useEffect(() => {
-    dispatch(migrateFromOldStorage());
-  }, [dispatch]);
-
-  const getProjectDisplay = (projectId: string | null) => {
-    if (!projectId) return '—';
-    const project = projects.find(p => p.id === projectId);
-    if (!project) return '—';
-    return `${project.shortId} ${project.name}`;
-  };
-
-  const handleCreateSpec = () => {
-    if (!newSpecName.trim()) {
-      alert('Введите название спецификации');
-      return;
+    const saved = localStorage.getItem('specification_data_v17');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.rows && data.rows.length) {
+          setRows(data.rows);
+          setNextId(data.nextId);
+          setUsdRate(data.usdRate ?? 90);
+          setEurRate(data.eurRate ?? 98);
+          setTableName(data.tableName ?? 'Спецификация оборудования');
+          return;
+        }
+      } catch (e) {}
     }
-    if (!selectedProjectId) {
-      alert('Выберите проект');
-      return;
-    }
-    dispatch(addSpecification({
-      name: newSpecName,
-      projectId: selectedProjectId,
-      rows: [],
-    }));
-    setShowCreateModal(false);
-    setNewSpecName('');
-    setSelectedProjectId('');
+    resetDemo();
+  }, []);
+
+  useEffect(() => {
+    if (rows.length === 0) return;
+    localStorage.setItem('specification_data_v17', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+  }, [rows, nextId, usdRate, eurRate, tableName]);
+
+  useEffect(() => {
+    localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
+  }, [columnWidths]);
+
+  // ==========================================================================
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // ==========================================================================
+
+  const getRate = (currency: string) => {
+    if (currency === 'USD') return usdRate;
+    if (currency === 'EUR') return eurRate;
+    return 1;
   };
 
-  const handleOpenSpec = (id: string) => {
-    dispatch(setCurrentSpecId(id));
-    navigate(`/specification/${id}`);
+  const getGrossRub = (row: DataRow) => row.price * row.quantity * getRate(row.currency);
+  const getTotalRub = (row: DataRow) => (row.priceAfter || 0) * row.quantity * getRate(row.currency);
+  const formatNumber = (num: number): string => Math.round(num).toLocaleString('ru-RU');
+
+  const updateCalculations = () => {
+    setRows(prev =>
+      prev.map(row => {
+        if (row.type === 'data') {
+          const discountAmount = (row.price * row.discount) / 100;
+          const priceAfter = row.price - discountAmount;
+          return { ...row, discountAmount, priceAfter };
+        }
+        return row;
+      })
+    );
+  };
+  useEffect(() => {
+    updateCalculations();
+  }, []);
+
+  const isDataRowVisible = (row: DataRow) => {
+    const vendorMatch = filterVendor === '' || row.vendor.toLowerCase().includes(filterVendor.toLowerCase());
+    const skuMatch = filterSku === '' || row.sku.toLowerCase().includes(filterSku.toLowerCase());
+    return vendorMatch && skuMatch;
   };
 
-  const handleDeleteSpec = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('Удалить спецификацию?')) {
-      dispatch(deleteSpecification(id));
-    }
-  };
-
-  const getItemsCount = (spec: Specification) => {
-    return spec.rows.filter(row => row.type === 'data').length;
-  };
-
-  const getTotalSum = (spec: Specification) => {
-    let sum = 0;
-    for (const row of spec.rows) {
-      if (row.type === 'data') {
-        sum += (row.priceAfter || 0) * row.quantity;
+  const computeTotals = () => {
+    let totalGrossRub = 0, totalRub = 0, totalQty = 0, totalDiscountRub = 0;
+    const byCurrency: Record<string, { gross: number; net: number; qty: number }> = {};
+    for (const row of rows) {
+      if (row.type === 'data' && isDataRowVisible(row)) {
+        const gross = getGrossRub(row);
+        const net = getTotalRub(row);
+        totalGrossRub += gross;
+        totalRub += net;
+        totalDiscountRub += gross - net;
+        totalQty += row.quantity;
+        const curr = row.currency;
+        if (!byCurrency[curr]) byCurrency[curr] = { gross: 0, net: 0, qty: 0 };
+        byCurrency[curr].gross += row.price * row.quantity;
+        byCurrency[curr].net += row.priceAfter * row.quantity;
+        byCurrency[curr].qty += row.quantity;
       }
     }
-    return sum.toLocaleString('ru-RU');
+    const marginPercent = totalGrossRub === 0 ? 0 : ((totalGrossRub - totalRub) / totalGrossRub) * 100;
+    return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
+
+  // ==========================================================================
+  // ОПЕРАЦИИ С ДАННЫМИ
+  // ==========================================================================
+
+  const addDataRowAfterId = (afterId: number) => {
+    const index = rows.findIndex(r => r.id === afterId);
+    if (index === -1) return;
+    const newId = nextId;
+    setNextId(nextId + 1);
+    const newRow: DataRow = {
+      id: newId, type: 'data', vendor: '', sku: '', name: '', quantity: 0, unit: 'шт', currency: 'RUB',
+      price: 0, discount: 0, discountAmount: 0, priceAfter: 0, supplier: '', status: 'Замена'
+    };
+    const newRows = [...rows];
+    newRows.splice(index + 1, 0, newRow);
+    setRows(newRows);
+    setTimeout(() => updateCalculations(), 0);
+  };
+
+  const addSection = () => {
+    const newId = nextId;
+    setNextId(nextId + 1);
+    setRows([...rows, { id: newId, type: 'section', title: 'Новый раздел', collapsed: false }]);
+  };
+
+  const duplicateRow = (id: number) => {
+    const index = rows.findIndex(r => r.id === id);
+    if (index === -1 || rows[index].type !== 'data') return;
+    const original = rows[index] as DataRow;
+    const newId = nextId;
+    setNextId(nextId + 1);
+    const clone = { ...original, id: newId, name: original.name + ' (копия)' };
+    const newRows = [...rows];
+    newRows.splice(index + 1, 0, clone);
+    setRows(newRows);
+    setTimeout(() => updateCalculations(), 0);
+  };
+
+  const deleteRow = (id: number) => {
+    setRows(rows.filter(r => r.id !== id));
+    setSelectedIds(prev => prev.filter(pid => pid !== id));
+  };
+
+  const toggleSection = (id: number) => {
+    setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, collapsed: !r.collapsed } : r));
+  };
+
+  const updateSectionTitle = (id: number, title: string) => {
+    setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, title } : r));
+  };
+
+  const updateDataField = (id: number, field: keyof DataRow, value: any) => {
+    setRows(prev => prev.map(r => {
+      if (r.type === 'data' && r.id === id) {
+        const updated = { ...r, [field]: value };
+        if (field === 'price' || field === 'discount') {
+          const discountAmount = (updated.price * updated.discount) / 100;
+          const priceAfter = updated.price - discountAmount;
+          updated.discountAmount = discountAmount;
+          updated.priceAfter = priceAfter;
+        }
+        return updated;
+      }
+      return r;
+    }));
+  };
+
+  const expandAll = () => setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: false } : r));
+  const collapseAll = () => setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: true } : r));
+
+  const resetDemo = () => {
+    setRows([
+      { id: 100, type: 'data', vendor: 'Siemens', sku: 'ABC-123', name: 'Контактор 3RT2015', quantity: 10, unit: 'шт', currency: 'RUB', price: 2500, discount: 5, discountAmount: 125, priceAfter: 2375, supplier: 'ООО "Электроснаб"', status: 'Закуплено' },
+      { id: 101, type: 'data', vendor: 'Schneider', sku: 'GV2ME07', name: 'Автоматический выключатель', quantity: 5, unit: 'шт', currency: 'USD', price: 45, discount: 10, discountAmount: 4.5, priceAfter: 40.5, supplier: 'Schneider Electric', status: 'Получено КП' },
+      { id: 102, type: 'section', title: 'Освещение', collapsed: false },
+      { id: 103, type: 'data', vendor: 'Philips', sku: 'LED-9W', name: 'Лампа светодиодная 9W 4000K', quantity: 100, unit: 'шт', currency: 'RUB', price: 120, discount: 0, discountAmount: 0, priceAfter: 120, supplier: 'ООО "Световые решения"', status: 'Замена' },
+      { id: 104, type: 'data', vendor: 'Legrand', sku: 'Valena', name: 'Розетка двойная', quantity: 20, unit: 'шт', currency: 'EUR', price: 8.5, discount: 15, discountAmount: 1.275, priceAfter: 7.225, supplier: 'Legrand Rus', status: 'Закуплено' },
+    ]);
+    setNextId(105);
+    setUsdRate(90);
+    setEurRate(98);
+    setTableName('Спецификация оборудования');
+    setFilterVendor('');
+    setFilterSku('');
+  };
+
+  const exportToExcel = () => {
+    const sheetData: any[][] = [['Вендор', 'Артикул', 'Наименование', 'Кол-во', 'Ед.', 'Валюта', 'Цена за ед.', 'Скидка %', 'Сумма скидки', 'Цена после скидки', 'Общая сумма (руб)', 'Поставщик', 'Статус']];
+    for (const row of rows) {
+      if (row.type === 'section') {
+        sheetData.push([`=== ${row.title} ===`, '', '', '', '', '', '', '', '', '', '', '', '']);
+      } else {
+        const totalRub = getTotalRub(row);
+        const sym = currencySymbols[row.currency];
+        sheetData.push([row.vendor, row.sku, row.name, row.quantity, row.unit, row.currency, row.price, row.discount, `${sym} ${formatNumber(row.discountAmount)}`, `${sym} ${formatNumber(row.priceAfter)}`, `${formatNumber(totalRub)} ₽`, row.supplier, row.status]);
+      }
+    }
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Спецификация');
+    XLSX.writeFile(wb, `specification_${Date.now()}.xlsx`);
+  };
+
+  const deleteSelected = () => {
+    setRows(rows.filter(r => !selectedIds.includes(r.id)));
+    setSelectedIds([]);
+  };
+
+  // ==========================================================================
+  // ИЗМЕНЕНИЕ ШИРИНЫ СТОЛБЦОВ
+  // ==========================================================================
+
+  const startResize = (colKey: string, startX: number, startWidth: number) => {
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      let newWidth = startWidth + (moveEvent.pageX - startX);
+      if (newWidth < 40) newWidth = 40;
+      setColumnWidths(prev => ({ ...prev, [colKey]: newWidth }));
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  // ==========================================================================
+  // РЕНДЕР
+  // ==========================================================================
+
+  const totals = computeTotals();
+  let dataCounter = 0;
 
   return (
     <div className="spec-page">
       <div className="spec-toolbar">
         <div className="spec-toolbar-row">
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>Спецификации</h1>
+          <input
+            type="text"
+            className="spec-table-name"
+            value={tableName}
+            onChange={e => setTableName(e.target.value)}
+          />
+          <div className="spec-rates">
+            <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
+            <label>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
+          </div>
+          <div className="spec-date">{new Date().toLocaleString()}</div>
+        </div>
+        <div className="spec-toolbar-row">
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div className="view-toggle" style={{ display: 'flex', gap: '8px', background: 'var(--spec-card-bg)', padding: '4px', borderRadius: '40px' }}>
-              <button 
-                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-                style={{ padding: '6px 16px', borderRadius: '40px', border: 'none', cursor: 'pointer', background: viewMode === 'grid' ? '#2563eb' : 'transparent', color: viewMode === 'grid' ? 'white' : 'var(--spec-text-primary)' }}
-              >
-                <i className="fas fa-th"></i> Сетка
-              </button>
-              <button 
-                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-                style={{ padding: '6px 16px', borderRadius: '40px', border: 'none', cursor: 'pointer', background: viewMode === 'list' ? '#2563eb' : 'transparent', color: viewMode === 'list' ? 'white' : 'var(--spec-text-primary)' }}
-              >
-                <i className="fas fa-list"></i> Список
-              </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                placeholder="Фильтр по вендору"
+                value={filterVendor}
+                onChange={e => setFilterVendor(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
+              />
+              <input
+                type="text"
+                placeholder="Фильтр по артикулу"
+                value={filterSku}
+                onChange={e => setFilterSku(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
+              />
             </div>
-            <button className="spec-button spec-button-primary" onClick={() => setShowCreateModal(true)}>
-              <i className="fas fa-plus"></i> Новая спецификация
-            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="spec-button" onClick={expandAll}><i className="fas fa-plus-square"></i> Развернуть всё</button>
+            <button className="spec-button" onClick={collapseAll}><i className="fas fa-minus-square"></i> Свернуть всё</button>
+            <button className="spec-button spec-button-primary" onClick={addSection}><i className="fas fa-layer-group"></i> Раздел</button>
+            <button className="spec-button" onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
+            <button className="spec-button spec-button-danger" onClick={resetDemo}><i className="fas fa-undo-alt"></i> Сброс</button>
           </div>
         </div>
       </div>
 
-      {viewMode === 'grid' && (
-        <div className="specs-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
-          {specifications.map(spec => (
-            <div 
-              key={spec.id} 
-              className="spec-card" 
-              onClick={() => handleOpenSpec(spec.id)}
-              style={{ background: 'var(--spec-bg-solid)', borderRadius: '20px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid var(--spec-border-light)' }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{spec.name}</span>
-                <span style={{ background: '#eef2ff', padding: '2px 10px', borderRadius: '40px', fontSize: '0.7rem', color: '#2563eb' }}>{getItemsCount(spec)} поз.</span>
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--spec-text-secondary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <i className="fas fa-folder"></i> {getProjectDisplay(spec.projectId)}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--spec-text-muted)', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--spec-border-light)' }}>
-                <span><i className="far fa-calendar-alt"></i> {new Date(spec.createdAt).toLocaleDateString('ru-RU')}</span>
-                <span><i className="fas fa-ruble-sign"></i> {getTotalSum(spec)} ₽</span>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'flex-end' }}>
-                <button className="spec-button spec-button-danger" onClick={(e) => handleDeleteSpec(spec.id, e)} style={{ padding: '4px 10px' }}>
-                  <i className="fas fa-trash-alt"></i> Удалить
-                </button>
-              </div>
-            </div>
-          ))}
-          {specifications.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--spec-text-secondary)' }}>
-              <i className="fas fa-file-alt" style={{ fontSize: '3rem', opacity: 0.5 }}></i>
-              <p>Нет спецификаций. Создайте первую!</p>
-            </div>
-          )}
+      {selectedIds.length > 0 && (
+        <div style={{ background: 'var(--spec-accent-glow)', borderRadius: '12px', padding: '8px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <span style={{ color: 'var(--spec-text-primary)' }}>Выбрано: {selectedIds.length}</span>
+          <button className="spec-button spec-button-danger" onClick={deleteSelected}><i className="fas fa-trash-alt"></i> Удалить выбранные</button>
         </div>
       )}
 
-      {viewMode === 'list' && (
-        <div className="spec-table-container" style={{ overflowX: 'auto' }}>
-          <table className="spec-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: '12px' }}>Название</th>
-                <th style={{ textAlign: 'left', padding: '12px' }}>Проект</th>
-                <th style={{ textAlign: 'left', padding: '12px' }}>Дата создания</th>
-                <th style={{ textAlign: 'right', padding: '12px' }}>Позиций</th>
-                <th style={{ textAlign: 'right', padding: '12px' }}>Сумма (руб)</th>
-                <th style={{ textAlign: 'center', padding: '12px', width: '80px' }}>Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {specifications.map(spec => (
-                <tr key={spec.id} style={{ cursor: 'pointer' }} onClick={() => handleOpenSpec(spec.id)}>
-                  <td style={{ padding: '12px', fontWeight: 500 }}>{spec.name}</td>
-                  <td style={{ padding: '12px', fontSize: '0.8rem' }}>{getProjectDisplay(spec.projectId)}</td>
-                  <td style={{ padding: '12px', fontSize: '0.8rem' }}>{new Date(spec.createdAt).toLocaleDateString('ru-RU')}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontSize: '0.8rem' }}>{getItemsCount(spec)}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontSize: '0.8rem' }}>{getTotalSum(spec)} ₽</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button className="spec-button spec-button-danger" onClick={(e) => handleDeleteSpec(spec.id, e)} style={{ padding: '4px 10px' }}>
-                      <i className="fas fa-trash-alt"></i>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {specifications.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--spec-text-secondary)' }}>
-                    <i className="fas fa-file-alt" style={{ fontSize: '2rem', opacity: 0.5 }}></i>
-                    <p>Нет спецификаций. Создайте первую!</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <div className="spec-informers">
+        <div className="spec-informer" style={{ borderLeftColor: '#10b981' }} title="Сумма без скидок (цена × количество × курс)">
+          <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Валовая сумма (сумма продажи)</div>
+          <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{formatNumber(totals.totalGrossRub)} ₽</div>
+          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Количество, шт: {formatNumber(totals.totalQty)}</div>
         </div>
-      )}
-
-      {showCreateModal && (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="modal" style={{ background: 'var(--spec-bg-solid)', borderRadius: '24px', width: '90%', maxWidth: '500px', padding: '24px' }}>
-            <h3 style={{ marginBottom: '20px', fontSize: '1.3rem' }}>Новая спецификация</h3>
-            <div className="modal-field" style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--spec-text-secondary)', marginBottom: '4px' }}>Название спецификации</label>
-              <input
-                type="text"
-                value={newSpecName}
-                onChange={e => setNewSpecName(e.target.value)}
-                placeholder="Например: Основное оборудование"
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--spec-border-light)', borderRadius: '12px', fontSize: '0.85rem', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
-              />
-            </div>
-            <div className="modal-field" style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--spec-text-secondary)', marginBottom: '4px' }}>Привязать к проекту</label>
-              <select
-                value={selectedProjectId}
-                onChange={e => setSelectedProjectId(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--spec-border-light)', borderRadius: '12px', fontSize: '0.85rem', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
-              >
-                <option value="">— Выберите проект —</option>
-                {projects.map(project => (
-                  <option key={project.id} value={project.id}>{project.shortId} {project.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
-              <button className="spec-button" onClick={() => setShowCreateModal(false)}>Отмена</button>
-              <button className="spec-button spec-button-primary" onClick={handleCreateSpec}>Создать</button>
-            </div>
+        <div className="spec-informer" style={{ borderLeftColor: '#3b82f6' }} title="Сумма после скидок (цена со скидкой × количество × курс)">
+          <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Сумма закупки (после скидки)</div>
+          <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{formatNumber(totals.totalRub)} ₽</div>
+          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Скидка всего: {formatNumber(totals.totalDiscountRub)} ₽</div>
+        </div>
+        <div className="spec-informer" style={{ borderLeftColor: '#f59e0b' }} title="(Валовая сумма − Общая сумма) / Валовая сумма × 100%">
+          <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Маржинальность</div>
+          <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{totals.marginPercent.toFixed(1)}%</div>
+          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>от валовой суммы</div>
+        </div>
+        {Object.entries(totals.byCurrency).map(([curr, data]) => (
+          <div key={curr} className="spec-informer" style={{ borderLeftColor: currencyColors[curr] || '#3b82f6' }}>
+            <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>{curr}</div>
+            <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{currencySymbols[curr]} {formatNumber(data.net)}</div>
+            <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Валовая: {currencySymbols[curr]} {formatNumber(data.gross)}</div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
+      <div className="spec-table-container">
+        <table className="spec-table">
+          <thead>
+            <tr>
+              {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountAmount', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
+                <th key={col} style={{ width: columnWidths[col] }}>
+                  {col === 'drag' && <i className="fas fa-grip-vertical spec-drag-handle" style={{ color: '#cbd5e1' }}></i>}
+                  {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} />}
+                  {col === 'num' && '#'}
+                  {col === 'vendor' && 'Вендор'}
+                  {col === 'sku' && 'Артикул'}
+                  {col === 'name' && 'Наименование (описание)'}
+                  {col === 'qty' && 'Количество'}
+                  {col === 'unit' && 'Ед. изм.'}
+                  {col === 'currency' && 'Валюта'}
+                  {col === 'price' && 'Цена за ед.'}
+                  {col === 'discount' && 'Скидка (%)'}
+                  {col === 'discountAmount' && 'Сумма скидки'}
+                  {col === 'priceAfter' && 'Цена за вычетом скидки'}
+                  {col === 'totalRub' && 'Общая сумма (руб)'}
+                  {col === 'supplier' && 'Поставщик'}
+                  {col === 'status' && 'Статус'}
+                  {col === 'actions' && 'Действия'}
+                  <div className="resize-handle" onMouseDown={(e) => { e.preventDefault(); startResize(col, e.pageX, columnWidths[col]); }}></div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody ref={tableBodyRef}>
+            {rows.map((row, idx, array) => {
+              if (row.type === 'section') {
+                return (
+                  <React.Fragment key={row.id}>
+                    <tr className="spec-section-row" data-id={row.id}>
+                      <td className="spec-drag-handle"><i className="fas fa-grip-vertical"></i></td>
+                      <td className="checkbox-col"></td>
+                      <td colSpan={16} style={{ padding: '10px 8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ flex: 1, textAlign: 'center' }}>
+                            <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)} style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--spec-text-primary)' }}>{row.title}</span>
+                          </div>
+                          <div className="spec-section-actions">
+                            <button className="btn-collapse" onClick={() => toggleSection(row.id)} title={row.collapsed ? "Развернуть" : "Свернуть"}>
+                              <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'}`}></i>
+                            </button>
+                            <button className="btn-add-row" onClick={() => addDataRowAfterId(row.id)} title="Добавить строку">
+                              <i className="fas fa-plus-circle"></i>
+                            </button>
+                            <button className="btn-delete-section" onClick={() => deleteRow(row.id)} title="Удалить раздел">
+                              <i className="fas fa-trash-alt"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                );
+              } else if (row.type === 'data') {
+                const visible = isDataRowVisible(row);
+                if (visible) dataCounter++;
+                const totalRub = getTotalRub(row);
+                const sym = currencySymbols[row.currency];
+                let sectionCollapsed = false;
+                for (let i = idx - 1; i >= 0; i--) {
+                  if (array[i].type === 'section') {
+                    sectionCollapsed = (array[i] as SectionRow).collapsed;
+                    break;
+                  }
+                }
+                if (sectionCollapsed) return null;
+                return (
+                  <tr key={row.id} className={`spec-data-row ${!visible ? 'spec-filtered-out' : ''}`} data-id={row.id}>
+                    <td className="spec-drag-handle"><i className="fas fa-grip-vertical"></i></td>
+                    <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
+                    <td className="spec-text-center">{visible ? dataCounter : ''}</td>
+                    <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
+                    <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
+                    <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
+                    <td className="spec-text-center">
+                      <input
+                        type="number"
+                        value={row.quantity}
+                        onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        <option>шт</option><option>м</option><option>уп.</option>
+                      </select>
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        {currencies.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </td>
+                    <td className="spec-text-right">
+                      <input
+                        type="number"
+                        step="any"
+                        value={row.price}
+                        onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)}
+                        style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <input
+                        type="number"
+                        step="any"
+                        value={row.discount}
+                        onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{sym} {formatNumber(row.discountAmount)}</td>
+                    <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{sym} {formatNumber(row.priceAfter)}</td>
+                    <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{formatNumber(totalRub)} ₽</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <input
+                        type="text"
+                        value={row.supplier}
+                        onChange={e => updateDataField(row.id, 'supplier', e.target.value)}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        {statuses.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td className="spec-action-buttons">
+                      <button className="btn-add-row" onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже">
+                        <i className="fas fa-plus-circle"></i>
+                      </button>
+                      <button className="btn-duplicate-row" onClick={() => duplicateRow(row.id)} title="Дублировать строку">
+                        <i className="fas fa-copy"></i>
+                      </button>
+                      <button className="btn-delete-row" onClick={() => deleteRow(row.id)} title="Удалить строку">
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              }
+              return null;
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
