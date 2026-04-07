@@ -1,0 +1,244 @@
+/* Изолированные стили для страницы спецификации */
+.spec-page {
+  --spec-bg-panel: rgba(255, 255, 255, 0.85);
+  --spec-bg-solid: #ffffff;
+  --spec-text-primary: #1a2c3e;
+  --spec-text-secondary: #4b6a8a;
+  --spec-border-light: rgba(203, 213, 225, 0.5);
+  --spec-card-bg: rgba(249, 252, 255, 0.8);
+  --spec-accent: #2563eb;
+  --spec-accent-glow: rgba(37, 99, 235, 0.2);
+  --spec-danger: #dc2626;
+}
+
+body.dark .spec-page {
+  --spec-bg-panel: rgba(30, 41, 59, 0.85);
+  --spec-bg-solid: #1e293b;
+  --spec-text-primary: #e2e8f0;
+  --spec-text-secondary: #94a3b8;
+  --spec-border-light: rgba(71, 85, 105, 0.5);
+  --spec-card-bg: rgba(30, 41, 59, 0.7);
+}
+
+.spec-page {
+  padding: 20px;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-page, linear-gradient(135deg, #f6f9fc 0%, #edf2f9 100%));
+  min-height: 100vh;
+}
+
+/* Тулбар */
+.spec-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  background: var(--spec-bg-panel);
+  backdrop-filter: blur(12px);
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--spec-border-light);
+}
+
+.spec-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.spec-table-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+  flex: 1;
+  color: var(--spec-text-primary);
+}
+
+.spec-rates {
+  background: var(--spec-card-bg);
+  padding: 6px 12px;
+  border-radius: 24px;
+  display: flex;
+  gap: 12px;
+}
+
+.spec-rates label {
+  color: var(--spec-text-secondary);
+  font-size: 0.75rem;
+}
+
+.spec-rates input {
+  width: 70px;
+  margin-left: 4px;
+  background: var(--spec-bg-solid);
+  color: var(--spec-text-primary);
+  border: 1px solid var(--spec-border-light);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.spec-date {
+  font-size: 0.75rem;
+  color: var(--spec-text-secondary);
+}
+
+.spec-button {
+  background: var(--spec-card-bg);
+  border: 1px solid var(--spec-border-light);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--spec-text-primary);
+  transition: all 0.2s;
+}
+
+.spec-button-primary {
+  background: #3b82f6;
+  color: white;
+  border: none;
+}
+
+.spec-button-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Информеры */
+.spec-informers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.spec-informer {
+  flex: 1 1 200px;
+  background: var(--spec-bg-solid);
+  border-radius: 16px;
+  padding: 12px 24px;
+  border-left: 4px solid;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Контейнер таблицы с прокруткой */
+.spec-table-container {
+  overflow-x: auto;
+  background: var(--spec-bg-panel);
+  border-radius: 16px;
+  border: 1px solid var(--spec-border-light);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Таблица */
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: max-content;
+  font-size: 0.8rem;
+}
+
+.spec-table th,
+.spec-table td {
+  padding: 10px 8px;
+  background-color: var(--spec-bg-solid);
+  color: var(--spec-text-primary);
+  border-right: 1px solid var(--spec-border-light);
+}
+
+.spec-table th:last-child,
+.spec-table td:last-child {
+  border-right: none;
+}
+
+.spec-table th {
+  background: var(--spec-card-bg);
+  color: var(--spec-text-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-weight: 600;
+}
+
+/* Обводка активной ячейки (при фокусе на input/select) */
+.spec-table input:focus,
+.spec-table select:focus {
+  outline: 2px solid var(--spec-accent);
+  outline-offset: 0;
+  border-radius: 4px;
+}
+
+/* Выравнивания */
+.spec-text-right {
+  text-align: right;
+  padding-right: 12px;
+}
+.spec-text-center {
+  text-align: center;
+}
+
+/* Drag handle */
+.spec-drag-handle {
+  cursor: grab;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+/* Строки данных */
+.spec-data-row {
+  cursor: grab;
+  transition: background-color 0.15s;
+}
+.spec-data-row:hover {
+  background-color: #e0f2fe !important;
+}
+body.dark .spec-data-row:hover {
+  background-color: #1e293b !important;
+}
+
+/* Строки разделов */
+.spec-section-row {
+  background-color: var(--spec-card-bg);
+  font-weight: 600;
+  border-top: 1px solid var(--spec-border-light);
+  border-bottom: 1px solid var(--spec-border-light);
+  cursor: pointer;
+}
+.spec-section-row:hover {
+  background-color: rgba(37,99,235,0.1);
+}
+
+/* Кнопки действий */
+.spec-action-buttons button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: #cbd5e1;
+  transition: color 0.2s;
+}
+.spec-action-buttons button:hover {
+  color: var(--spec-accent);
+}
+
+/* Скрытие отфильтрованных строк */
+.spec-filtered-out {
+  display: none;
+}
+
+/* Итоговая строка (tfoot) */
+.spec-table tfoot tr {
+  background-color: var(--spec-card-bg);
+  border-top: 3px double var(--spec-accent);
+  font-weight: 700;
+}
+.spec-table tfoot td {
+  background-color: var(--spec-card-bg);
+  padding: 12px 8px;
+}
