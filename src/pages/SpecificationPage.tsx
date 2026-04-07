@@ -209,11 +209,7 @@ export const SpecificationPage: React.FC = () => {
     setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, collapsed: !r.collapsed } : r));
   };
 
-  const toggleSectionTotals = (id: number) => {
-    setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, showTotals: !r.showTotals } : r));
-  };
-
-  const updateSectionTitle = (id: number, title: string) => {
+ const updateSectionTitle = (id: number, title: string) => {
     setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, title } : r));
   };
 
