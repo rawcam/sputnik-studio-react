@@ -1,0 +1,139 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Row } from '../pages/SpecificationPage'; // импортируем тип строк из существующей страницы
+
+// Тип для спецификации (хранится в Redux и localStorage)
+export interface Specification {
+  id: string;
+  name: string;
+  projectId: string | null;      // ID проекта из projectsSlice
+  projectShortId?: string;       // для быстрого отображения (дублируется)
+  projectName?: string;          // для быстрого отображения
+  createdAt: string;
+  updatedAt: string;
+  rows: Row[];                   // данные спецификации (те же rows, что в SpecificationPage)
+}
+
+interface SpecificationsState {
+  list: Specification[];
+  currentSpecId: string | null;  // ID открытой в данный момент спецификации
+}
+
+// Загрузка из localStorage при инициализации
+const loadInitialState = (): SpecificationsState => {
+  const saved = localStorage.getItem('specifications_data');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      return {
+        list: parsed.list || [],
+        currentSpecId: parsed.currentSpecId || null,
+      };
+    } catch (e) {}
+  }
+  return { list: [], currentSpecId: null };
+};
+
+const initialState: SpecificationsState = loadInitialState();
+
+const specificationsSlice = createSlice({
+  name: 'specifications',
+  initialState,
+  reducers: {
+    // Установить весь список (при загрузке)
+    setSpecifications: (state, action: PayloadAction<Specification[]>) => {
+      state.list = action.payload;
+    },
+
+    // Добавить новую спецификацию
+    addSpecification: (state, action: PayloadAction<Omit<Specification, 'id' | 'createdAt' | 'updatedAt'>>) => {
+      const newId = Date.now().toString();
+      const now = new Date().toISOString();
+      const newSpec: Specification = {
+        ...action.payload,
+        id: newId,
+        createdAt: now,
+        updatedAt: now,
+        rows: action.payload.rows || [],
+      };
+      state.list.push(newSpec);
+      // Сохраняем в localStorage
+      localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+    },
+
+    // Обновить существующую спецификацию
+    updateSpecification: (state, action: PayloadAction<{ id: string; updates: Partial<Omit<Specification, 'id' | 'createdAt'>> }>) => {
+      const { id, updates } = action.payload;
+      const index = state.list.findIndex(s => s.id === id);
+      if (index !== -1) {
+        state.list[index] = {
+          ...state.list[index],
+          ...updates,
+          updatedAt: new Date().toISOString(),
+        };
+        localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+      }
+    },
+
+    // Удалить спецификацию
+    deleteSpecification: (state, action: PayloadAction<string>) => {
+      state.list = state.list.filter(s => s.id !== action.payload);
+      if (state.currentSpecId === action.payload) {
+        state.currentSpecId = null;
+      }
+      localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+    },
+
+    // Установить текущую открытую спецификацию
+    setCurrentSpecId: (state, action: PayloadAction<string | null>) => {
+      state.currentSpecId = action.payload;
+      localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+    },
+
+    // Обновить rows конкретной спецификации (при редактировании таблицы)
+    updateSpecificationRows: (state, action: PayloadAction<{ id: string; rows: Row[] }>) => {
+      const { id, rows } = action.payload;
+      const index = state.list.findIndex(s => s.id === id);
+      if (index !== -1) {
+        state.list[index].rows = rows;
+        state.list[index].updatedAt = new Date().toISOString();
+        localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+      }
+    },
+
+    // Перенос старых данных из старого ключа localStorage (для обратной совместимости)
+    migrateFromOldStorage: (state) => {
+      const oldData = localStorage.getItem('specification_data_v17');
+      if (oldData && state.list.length === 0) {
+        try {
+          const parsed = JSON.parse(oldData);
+          const rows = parsed.rows || [];
+          if (rows.length > 0) {
+            const now = new Date().toISOString();
+            const migratedSpec: Specification = {
+              id: 'legacy',
+              name: 'Старая спецификация',
+              projectId: null,
+              createdAt: now,
+              updatedAt: now,
+              rows: rows,
+            };
+            state.list.push(migratedSpec);
+            localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
+          }
+        } catch (e) {}
+      }
+    },
+  },
+});
+
+export const {
+  setSpecifications,
+  addSpecification,
+  updateSpecification,
+  deleteSpecification,
+  setCurrentSpecId,
+  updateSpecificationRows,
+  migrateFromOldStorage,
+} = specificationsSlice.actions;
+
+export default specificationsSlice.reducer;
