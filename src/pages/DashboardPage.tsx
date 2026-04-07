@@ -18,34 +18,28 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { loadProjects, initDemoData } = useProjectsDb()
-  const { hasRole, user } = useAuth()
+  const { user } = useAuth() // убрали hasRole
   const projects = useSelector((state: RootState) => state.projects.list)
   const visibleWidgets = useSelector((state: RootState) => state.widgets.visibleWidgets)
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
   const [loading, setLoading] = useState(true)
 
-  // Инициализация проектов и виджетов при загрузке страницы
   useEffect(() => {
     const init = async () => {
       setLoading(true)
-      // 1. Инициализируем демо-данные (если база пуста)
       await initDemoData()
-      // 2. Загружаем проекты из базы в Redux
       await loadProjects()
       setLoading(false)
     }
     init()
   }, [initDemoData, loadProjects])
 
-  // После загрузки проектов и если роль определена, применяем пресет виджетов,
-  // но только если виджеты ещё не были сохранены пользователем (проверяем наличие в localStorage)
   useEffect(() => {
     if (loading) return
     if (!user) return
 
     const savedVisible = localStorage.getItem('visibleWidgets')
     if (!savedVisible) {
-      // Если пользовательские настройки виджетов отсутствуют, применяем пресет для текущей роли
       dispatch(resetToRolePreset(user.role))
     }
   }, [loading, user, dispatch])
