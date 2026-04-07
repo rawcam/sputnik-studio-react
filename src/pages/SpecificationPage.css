@@ -320,3 +320,27 @@ body.dark .spec-data-row:hover {
 .spec-table td {
   overflow: hidden;
 }
+/* Закрепление шапки таблицы */
+.spec-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.spec-table th {
+  position: sticky;
+  top: 0;
+  background: var(--spec-card-bg); /* фон должен быть непрозрачным или с бэкдропом */
+  z-index: 20;
+}
+
+/* Важно: у контейнера не должно быть transform, иначе sticky ломается */
+.spec-table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  background: var(--spec-bg-panel);
+  border-radius: 16px;
+  border: 1px solid var(--spec-border-light);
+  max-height: 70vh;
+  position: relative;
+}
