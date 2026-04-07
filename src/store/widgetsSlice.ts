@@ -23,6 +23,15 @@ const defaultVisibleForRole: Record<string, WidgetId[]> = {
   logist: ['service', 'carousel'],
 }
 
+// Функция для получения роли из localStorage (если auth ещё не загружен)
+const getRoleFromStorage = (): string => {
+  const role = localStorage.getItem('userRole')
+  if (role && ['director', 'pm', 'engineer', 'designer', 'logist'].includes(role)) {
+    return role
+  }
+  return 'director'
+}
+
 const loadInitialState = (): WidgetsState => {
   const savedVisible = localStorage.getItem('visibleWidgets')
   const savedMode = localStorage.getItem('widgetsDisplayMode') as DisplayMode | null
@@ -33,8 +42,11 @@ const loadInitialState = (): WidgetsState => {
       visible = JSON.parse(savedVisible)
     } catch { /* ignore */ }
   }
+  
+  // Если сохранённых настроек нет, используем пресет для текущей роли из localStorage
   if (!visible.length) {
-    visible = [...defaultVisibleForRole.director]
+    const role = getRoleFromStorage()
+    visible = [...(defaultVisibleForRole[role] || defaultVisibleForRole.director)]
   }
 
   return {
