@@ -4,7 +4,6 @@ import { DashboardPage } from './pages/DashboardPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { CalculationsPage } from './pages/CalculationsPage'
 import { SpecificationPage } from './pages/SpecificationPage'
-import { SpecificationsListPage } from './pages/SpecificationsListPage'
 import './styles/global.css'
 
 function App() {
@@ -19,8 +18,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/calculations" element={<CalculationsPage />} />
-              <Route path="/specifications" element={<SpecificationsListPage />} />
-              <Route path="/specification/:id" element={<SpecificationPage />} />
+              <Route path="/specification" element={<SpecificationPage />} />
             </Routes>
           </main>
         </div>
