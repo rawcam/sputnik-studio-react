@@ -16,10 +16,10 @@ interface DataRow {
   quantity: number;
   unit: string;
   currency: string;
-  price: number;          // Цена за единицу (без скидки) в валюте
-  discount: number;      // Скидка в процентах
-  discountAmount: number; // Сумма скидки на единицу в валюте
-  priceAfter: number;     // Цена за единицу после скидки в валюте
+  price: number;
+  discount: number;
+  discountAmount: number;
+  priceAfter: number;
   supplier: string;
   status: string;
 }
@@ -29,7 +29,7 @@ interface SectionRow {
   type: 'section';
   title: string;
   collapsed: boolean;
-  showTotals: boolean;    // временно не используется
+  showTotals: boolean;
 }
 
 type Row = DataRow | SectionRow;
@@ -114,15 +114,10 @@ export const SpecificationPage: React.FC = () => {
     return 1;
   };
 
-  // Валовая сумма (без скидки) в рублях: price * quantity * курс
   const getGrossRub = (row: DataRow) => row.price * row.quantity * getRate(row.currency);
-
-  // Общая сумма (после скидки) в рублях: priceAfter * quantity * курс
   const getTotalRub = (row: DataRow) => (row.priceAfter || 0) * row.quantity * getRate(row.currency);
-
   const formatNumber = (num: number): string => Math.round(num).toLocaleString('ru-RU');
 
-  // Пересчёт скидок и цен после скидки для всех строк данных
   const updateCalculations = () => {
     setRows(prev =>
       prev.map(row => {
@@ -139,14 +134,12 @@ export const SpecificationPage: React.FC = () => {
     updateCalculations();
   }, []);
 
-  // Фильтрация строк по вендору и артикулу
   const isDataRowVisible = (row: DataRow) => {
     const vendorMatch = filterVendor === '' || row.vendor.toLowerCase().includes(filterVendor.toLowerCase());
     const skuMatch = filterSku === '' || row.sku.toLowerCase().includes(filterSku.toLowerCase());
     return vendorMatch && skuMatch;
   };
 
-  // Вычисление общих итогов по всем видимым строкам
   const computeTotals = () => {
     let totalGrossRub = 0, totalRub = 0, totalQty = 0, totalDiscountRub = 0;
     const byCurrency: Record<string, { gross: number; net: number; qty: number }> = {};
@@ -216,6 +209,10 @@ export const SpecificationPage: React.FC = () => {
     setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, collapsed: !r.collapsed } : r));
   };
 
+  const toggleSectionTotals = (id: number) => {
+    setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, showTotals: !r.showTotals } : r));
+  };
+
   const updateSectionTitle = (id: number, title: string) => {
     setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, title } : r));
   };
@@ -234,6 +231,30 @@ export const SpecificationPage: React.FC = () => {
       }
       return r;
     }));
+  };
+
+  // Обработчик изменения количества через колесо мыши
+  const handleWheelQuantity = (id: number, e: React.WheelEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const step = 1;
+    const delta = e.deltaY > 0 ? -step : step;
+    const currentRow = rows.find(r => r.type === 'data' && r.id === id) as DataRow | undefined;
+    if (currentRow) {
+      const newValue = Math.max(0, currentRow.quantity + delta);
+      updateDataField(id, 'quantity', newValue);
+    }
+  };
+
+  // Обработчик изменения скидки через колесо мыши
+  const handleWheelDiscount = (id: number, e: React.WheelEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const step = 1;
+    const delta = e.deltaY > 0 ? -step : step;
+    const currentRow = rows.find(r => r.type === 'data' && r.id === id) as DataRow | undefined;
+    if (currentRow) {
+      const newValue = Math.max(0, Math.min(100, currentRow.discount + delta));
+      updateDataField(id, 'discount', newValue);
+    }
   };
 
   const expandAll = () => setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: false } : r));
@@ -392,16 +413,16 @@ export const SpecificationPage: React.FC = () => {
       {/* Информеры */}
       <div className="spec-informers">
         <div className="spec-informer" style={{ borderLeftColor: '#10b981' }} title="Сумма без скидок (цена × количество × курс)">
-          <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Валовая сумма (руб)</div>
+          <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Валовая сумма (сумма продажи)</div>
           <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{formatNumber(totals.totalGrossRub)} ₽</div>
-          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Количество, шт.: {formatNumber(totals.totalQty)}</div>
+          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Количество, шт: {formatNumber(totals.totalQty)}</div>
         </div>
         <div className="spec-informer" style={{ borderLeftColor: '#3b82f6' }} title="Сумма после скидок (цена со скидкой × количество × курс)">
           <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Сумма закупки (после скидки)</div>
           <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{formatNumber(totals.totalRub)} ₽</div>
           <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Скидка всего: {formatNumber(totals.totalDiscountRub)} ₽</div>
         </div>
-        <div className="spec-informer" style={{ borderLeftColor: '#f59e0b' }} title="(Валовая сумма − Сумма закупки) / Валовая сумма × 100%">
+        <div className="spec-informer" style={{ borderLeftColor: '#f59e0b' }} title="(Валовая сумма − Общая сумма) / Валовая сумма × 100%">
           <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Маржинальность</div>
           <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{totals.marginPercent.toFixed(1)}%</div>
           <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>от валовой суммы</div>
@@ -469,8 +490,8 @@ export const SpecificationPage: React.FC = () => {
                             </button>
                           </div>
                         </div>
-                       </td>
-                     </tr>
+                      </td>
+                    </tr>
                   </React.Fragment>
                 );
               } else if (row.type === 'data') {
@@ -478,7 +499,6 @@ export const SpecificationPage: React.FC = () => {
                 if (visible) dataCounter++;
                 const totalRub = getTotalRub(row);
                 const sym = currencySymbols[row.currency];
-                // Определяем, свернут ли раздел, к которому принадлежит строка
                 let sectionCollapsed = false;
                 for (let i = idx - 1; i >= 0; i--) {
                   if (array[i].type === 'section') {
@@ -495,16 +515,62 @@ export const SpecificationPage: React.FC = () => {
                     <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
                     <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
                     <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
-                    <td className="spec-text-center"><input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
-                    <td className="spec-text-center"><select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}><option>шт</option><option>м</option><option>уп.</option></select></td>
-                    <td className="spec-text-center"><select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>{currencies.map(c => <option key={c}>{c}</option>)}</select></td>
-                    <td className="spec-text-right"><input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
-                    <td className="spec-text-center"><input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
+                    <td className="spec-text-center">
+                      <input
+                        type="number"
+                        value={row.quantity}
+                        onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)}
+                        onWheel={e => handleWheelQuantity(row.id, e)}
+                        title="Используйте колёсико мыши для изменения количества"
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        <option>шт</option><option>м</option><option>уп.</option>
+                      </select>
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        {currencies.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </td>
+                    <td className="spec-text-right">
+                      <input
+                        type="number"
+                        step="any"
+                        value={row.price}
+                        onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)}
+                        style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <input
+                        type="number"
+                        step="any"
+                        value={row.discount}
+                        onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)}
+                        onWheel={e => handleWheelDiscount(row.id, e)}
+                        title="Используйте колёсико мыши для изменения скидки"
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
                     <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{sym} {formatNumber(row.discountAmount)}</td>
                     <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{sym} {formatNumber(row.priceAfter)}</td>
                     <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{formatNumber(totalRub)} ₽</td>
-                    <td style={{ textAlign: 'center' }}><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--spec-text-primary)' }} /></td>
-                    <td className="spec-text-center"><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
+                    <td style={{ textAlign: 'center' }}>
+                      <input
+                        type="text"
+                        value={row.supplier}
+                        onChange={e => updateDataField(row.id, 'supplier', e.target.value)}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        {statuses.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </td>
                     <td className="spec-action-buttons">
                       <button className="btn-add-row" onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже">
                         <i className="fas fa-plus-circle"></i>
