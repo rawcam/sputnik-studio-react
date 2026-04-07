@@ -6,7 +6,7 @@ function App() {
   return (
     <HashRouter>
       <div className="app">
-        {/* <Topbar /> */}
+        <Topbar />
         <div className="app-layout">
           <main className="main-content">
             <Routes>
