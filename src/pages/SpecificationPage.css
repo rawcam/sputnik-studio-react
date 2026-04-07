@@ -312,3 +312,11 @@ body.dark .spec-data-row:hover {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+.spec-table input[type="number"] {
+  width: 100%;
+  min-width: 40px;
+  box-sizing: border-box;
+}
+.spec-table td {
+  overflow: hidden;
+}
