@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import { setProjects, addProject, updateProject, deleteProject, Project, seedDemoProjects } from '../store/projectsSlice'
 import { db } from '../db'
@@ -8,7 +9,7 @@ export const useProjectsDb = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     setLoading(true)
     try {
       const projects = await db.projects.toArray()
@@ -18,9 +19,9 @@ export const useProjectsDb = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [dispatch])
 
-  const addProjectToDb = async (project: Omit<Project, 'id' | 'shortId'>) => {
+  const addProjectToDb = useCallback(async (project: Omit<Project, 'id' | 'shortId'>) => {
     setLoading(true)
     try {
       const existing = await db.projects.toArray()
@@ -46,9 +47,9 @@ export const useProjectsDb = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [dispatch])
 
-  const updateProjectInDb = async (project: Project) => {
+  const updateProjectInDb = useCallback(async (project: Project) => {
     setLoading(true)
     try {
       await db.projects.update(project.id, project)
@@ -58,9 +59,9 @@ export const useProjectsDb = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [dispatch])
 
-  const deleteProjectFromDb = async (id: string) => {
+  const deleteProjectFromDb = useCallback(async (id: string) => {
     setLoading(true)
     try {
       await db.projects.delete(id)
@@ -70,9 +71,9 @@ export const useProjectsDb = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [dispatch])
 
-  const initDemoData = async () => {
+  const initDemoData = useCallback(async () => {
     const count = await db.projects.count()
     if (count === 0) {
       const demos = seedDemoProjects()
@@ -81,7 +82,7 @@ export const useProjectsDb = () => {
       }
       await loadProjects()
     }
-  }
+  }, [addProjectToDb, loadProjects])
 
   return {
     loading,
