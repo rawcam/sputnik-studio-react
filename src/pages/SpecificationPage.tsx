@@ -267,33 +267,51 @@ export const SpecificationPage: React.FC = () => {
   };
 
   // ==========================================================================
-  // DRAG-AND-DROP
+  // DRAG-AND-DROP (исправленная версия)
   // ==========================================================================
 
   useEffect(() => {
     if (!tableBodyRef.current) return;
+    
     if (sortableRef.current) {
-      try { sortableRef.current.destroy(); } catch (e) {}
+      try {
+        sortableRef.current.destroy();
+      } catch (e) {
+        console.warn('Sortable destroy error:', e);
+      }
       sortableRef.current = null;
     }
-    sortableRef.current = new Sortable(tableBodyRef.current, {
-      handle: '.spec-data-row .spec-drag-handle',
-      animation: 150,
-      onEnd: () => {
-        if (!tableBodyRef.current) return;
-        const domRows = Array.from(tableBodyRef.current.children);
-        const newRowsOrder: Row[] = [];
-        for (const dom of domRows) {
-          const id = Number(dom.getAttribute('data-id'));
-          const found = rows.find(r => r.id === id);
-          if (found) newRowsOrder.push(found);
+    
+    const timer = setTimeout(() => {
+      if (tableBodyRef.current && typeof Sortable !== 'undefined') {
+        try {
+          sortableRef.current = new Sortable(tableBodyRef.current, {
+            handle: '.spec-data-row .spec-drag-handle',
+            animation: 150,
+            onEnd: () => {
+              if (!tableBodyRef.current) return;
+              const domRows = Array.from(tableBodyRef.current.children);
+              const newRowsOrder: Row[] = [];
+              for (const dom of domRows) {
+                const id = Number(dom.getAttribute('data-id'));
+                const found = rows.find(r => r.id === id);
+                if (found) newRowsOrder.push(found);
+              }
+              if (newRowsOrder.length === rows.length) setRows(newRowsOrder);
+            },
+          });
+        } catch (e) {
+          console.error('Sortable init error:', e);
         }
-        if (newRowsOrder.length === rows.length) setRows(newRowsOrder);
-      },
-    });
+      }
+    }, 50);
+    
     return () => {
+      clearTimeout(timer);
       if (sortableRef.current) {
-        try { sortableRef.current.destroy(); } catch (e) {}
+        try {
+          sortableRef.current.destroy();
+        } catch (e) {}
         sortableRef.current = null;
       }
     };
