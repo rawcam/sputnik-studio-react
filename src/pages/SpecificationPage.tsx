@@ -1,9 +1,9 @@
-// src/pages/SpecificationPage.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { updateSpecificationRows, updateSpecification } from '../store/specificationsSlice';
+import { setUsdRate, setEurRate } from '../store/currencySlice';
 import Sortable from 'sortablejs';
 import * as XLSX from 'xlsx';
 import './SpecificationPage.css';
@@ -45,13 +45,13 @@ export const SpecificationPage: React.FC = () => {
   const dispatch = useDispatch();
   const specifications = useSelector((state: RootState) => state.specifications.list);
   const projects = useSelector((state: RootState) => state.projects.list);
+  const usdRate = useSelector((state: RootState) => state.currency.usdRate);
+  const eurRate = useSelector((state: RootState) => state.currency.eurRate);
 
   const currentSpec = id ? specifications.find(s => s.id === id) : null;
 
   const [rows, setRows] = useState<Row[]>([]);
   const [nextId, setNextId] = useState(105);
-  const [usdRate, setUsdRate] = useState(90);
-  const [eurRate, setEurRate] = useState(98);
   const [tableName, setTableName] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -150,7 +150,7 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
-  // ========== Вспомогательные функции (без изменений) ==========
+  // ========== Вспомогательные функции ==========
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
     if (currency === 'EUR') return eurRate;
@@ -280,8 +280,6 @@ export const SpecificationPage: React.FC = () => {
       { id: 104, type: 'data', vendor: 'Legrand', sku: 'Valena', name: 'Розетка двойная', quantity: 20, unit: 'шт', currency: 'EUR', price: 8.5, discount: 15, discountAmount: 1.275, priceAfter: 7.225, supplier: 'Legrand Rus', status: 'Закуплено' },
     ]);
     setNextId(105);
-    setUsdRate(90);
-    setEurRate(98);
     setTableName('');
     setSelectedProjectId(null);
   };
@@ -322,7 +320,7 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Клавиатурная навигация (исправленная, с перемещением по столбцам)
+  // Клавиатурная навигация
   const getFocusableElements = useCallback(() => {
     if (!tableBodyRef.current) return [];
     return Array.from(
@@ -417,8 +415,8 @@ export const SpecificationPage: React.FC = () => {
             placeholder="Название спецификации"
           />
           <div className="spec-rates">
-            <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
-            <label>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
+            <label>USD → RUB <input type="number" value={usdRate} onChange={e => dispatch(setUsdRate(parseFloat(e.target.value) || 0))} step="0.1" /></label>
+            <label>EUR → RUB <input type="number" value={eurRate} onChange={e => dispatch(setEurRate(parseFloat(e.target.value) || 0))} step="0.1" /></label>
           </div>
           <div className="spec-date">{new Date().toLocaleString()}</div>
         </div>
@@ -519,7 +517,7 @@ export const SpecificationPage: React.FC = () => {
                   <div className="resize-handle" onMouseDown={(e) => { e.preventDefault(); startResize(col, e.pageX, columnWidths[col]); }}></div>
                 </th>
               ))}
-            </tr>
+            <tr>
           </thead>
           <tbody ref={tableBodyRef}>
             {rows.map((row, idx, array) => {
