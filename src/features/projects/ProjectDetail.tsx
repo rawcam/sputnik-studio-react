@@ -1,155 +1,209 @@
-import React, { useState } from 'react'
-import { Project, ProjectStatus, ProjectCategory, IncomeItem, ExpenseItem } from '../../store/projectsSlice'
-import { useFinance } from '../../hooks/useFinance'
-import { useProjectsDb } from '../../hooks/useProjectsDb'
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { Project, ProjectStatus, ProjectCategory, IncomeItem, ExpenseItem } from '../../store/projectsSlice';
+import { useFinance } from '../../hooks/useFinance';
+import { useProjectsDb } from '../../hooks/useProjectsDb';
+import { RootState } from '../../store';
+import { updateSpecification, deleteSpecification, addSpecification } from '../../store/specificationsSlice';
+import { getSpecTotalRub } from '../../utils/specificationUtils';
 
 interface ProjectDetailProps {
-  project: Project
-  onBack: () => void
+  project: Project;
+  onBack: () => void;
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
-  const { updateProject: updateProjectInDb } = useProjectsDb()
-  const { getProjectMetrics } = useFinance()
-  const metrics = getProjectMetrics(project.id)
-  const [activeTab, setActiveTab] = useState<'info' | 'finances' | 'service' | 'roadmap'>('info')
-  const [editedProject, setEditedProject] = useState<Project>(project)
-  const [saving, setSaving] = useState(false)
+  const { updateProject: updateProjectInDb } = useProjectsDb();
+  const { getProjectMetrics } = useFinance();
+  const metrics = getProjectMetrics(project.id);
+  const [activeTab, setActiveTab] = useState<'info' | 'finances' | 'service' | 'roadmap' | 'specs'>('info');
+  const [editedProject, setEditedProject] = useState<Project>(project);
+  const [saving, setSaving] = useState(false);
 
-  // Временные поля для новых элементов
-  const [newMeeting, setNewMeeting] = useState({ date: new Date().toISOString().slice(0,10), subject: '' })
-  const [newPurchase, setNewPurchase] = useState({ name: '', status: 'awaiting_payment', date: new Date().toISOString().slice(0,10) })
-  const [newIncome, setNewIncome] = useState({ date: new Date().toISOString().slice(0,10), amount: 0 })
-  const [newExpense, setNewExpense] = useState({ date: new Date().toISOString().slice(0,10), amount: 0, type: 'purchase' as const })
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const specifications = useSelector((state: RootState) => state.specifications.list);
+  const { usdRate, eurRate } = useSelector((state: RootState) => state.currency);
+
+  const projectSpecs = specifications.filter(spec => spec.projectId === project.id);
+
+  // Временные поля для новых элементов (оставлены без изменений)
+  const [newMeeting, setNewMeeting] = useState({ date: new Date().toISOString().slice(0,10), subject: '' });
+  const [newPurchase, setNewPurchase] = useState({ name: '', status: 'awaiting_payment', date: new Date().toISOString().slice(0,10) });
+  const [newIncome, setNewIncome] = useState({ date: new Date().toISOString().slice(0,10), amount: 0 });
+  const [newExpense, setNewExpense] = useState({ date: new Date().toISOString().slice(0,10), amount: 0, type: 'purchase' as const });
   const [newService, setNewService] = useState({
     date: new Date().toISOString().slice(0,10),
     type: '',
     status: 'planned' as const,
     responsible: '',
     cost: 0
-  })
+  });
 
+  // Обработчики для спецификаций
+  const handleOpenSpec = (id: string) => {
+    navigate(`/specification/${id}`);
+  };
+
+  const handleUnlinkSpec = (id: string) => {
+    if (confirm('Открепить спецификацию от проекта? Она останется в общем списке без привязки.')) {
+      dispatch(updateSpecification({ id, updates: { projectId: null } }));
+    }
+  };
+
+  const handleDeleteSpec = (id: string) => {
+    if (confirm('Удалить спецификацию? Это действие необратимо.')) {
+      dispatch(deleteSpecification(id));
+    }
+  };
+
+  const handleDuplicateSpec = (spec: any) => {
+    const newId = Date.now().toString();
+    const now = new Date().toISOString();
+    const newSpec = {
+      ...spec,
+      id: newId,
+      name: `${spec.name} (копия)`,
+      projectId: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    dispatch(addSpecification(newSpec));
+    navigate(`/specification/${newId}`);
+  };
+
+  const handleCreateSpecForProject = () => {
+    const newId = Date.now().toString();
+    const now = new Date().toISOString();
+    dispatch(addSpecification({
+      id: newId,
+      name: `Новая спецификация для проекта ${project.shortId}`,
+      projectId: null,
+      createdAt: now,
+      updatedAt: now,
+      rows: [],
+    }));
+    navigate(`/specification/${newId}`);
+  };
+
+  // Обработчики для других вкладок
   const handleChange = (field: keyof Project, value: any) => {
-    setEditedProject(prev => ({ ...prev, [field]: value }))
-  }
+    setEditedProject(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSave = async () => {
-    setSaving(true)
+    setSaving(true);
     try {
-      await updateProjectInDb(editedProject)
-      alert('Сохранено')
+      await updateProjectInDb(editedProject);
+      alert('Сохранено');
     } catch (err) {
-      console.error(err)
-      alert('Ошибка сохранения')
+      console.error(err);
+      alert('Ошибка сохранения');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
-  // Встречи
   const addMeeting = () => {
-    if (!newMeeting.subject.trim()) return
+    if (!newMeeting.subject.trim()) return;
     setEditedProject(prev => ({
       ...prev,
       meetings: [...prev.meetings, { date: newMeeting.date, subject: newMeeting.subject }]
-    }))
-    setNewMeeting({ date: new Date().toISOString().slice(0,10), subject: '' })
-  }
+    }));
+    setNewMeeting({ date: new Date().toISOString().slice(0,10), subject: '' });
+  };
 
   const removeMeeting = (index: number) => {
     setEditedProject(prev => ({
       ...prev,
       meetings: prev.meetings.filter((_, i) => i !== index)
-    }))
-  }
+    }));
+  };
 
-  // Закупки
   const addPurchase = () => {
-    if (!newPurchase.name.trim()) return
+    if (!newPurchase.name.trim()) return;
     setEditedProject(prev => ({
       ...prev,
       purchases: [...prev.purchases, { name: newPurchase.name, status: newPurchase.status, date: newPurchase.date }]
-    }))
-    setNewPurchase({ name: '', status: 'awaiting_payment', date: new Date().toISOString().slice(0,10) })
-  }
+    }));
+    setNewPurchase({ name: '', status: 'awaiting_payment', date: new Date().toISOString().slice(0,10) });
+  };
 
   const removePurchase = (index: number) => {
     setEditedProject(prev => ({
       ...prev,
       purchases: prev.purchases.filter((_, i) => i !== index)
-    }))
-  }
+    }));
+  };
 
-  // Доходы
   const addIncome = () => {
-    if (newIncome.amount <= 0) return
+    if (newIncome.amount <= 0) return;
     setEditedProject(prev => ({
       ...prev,
       incomeSchedule: [...prev.incomeSchedule, { date: newIncome.date, amount: newIncome.amount, paid: false }]
-    }))
-    setNewIncome({ date: new Date().toISOString().slice(0,10), amount: 0 })
-  }
+    }));
+    setNewIncome({ date: new Date().toISOString().slice(0,10), amount: 0 });
+  };
 
   const updateIncome = (index: number, field: keyof IncomeItem, value: any) => {
-    const newIncomes = [...editedProject.incomeSchedule]
-    newIncomes[index] = { ...newIncomes[index], [field]: value }
+    const newIncomes = [...editedProject.incomeSchedule];
+    newIncomes[index] = { ...newIncomes[index], [field]: value };
     if (field === 'paid') {
-      const actualIncome = newIncomes.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0)
-      setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes, actualIncome }))
+      const actualIncome = newIncomes.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0);
+      setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes, actualIncome }));
     } else {
-      setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes }))
+      setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes }));
     }
-  }
+  };
 
   const removeIncome = (index: number) => {
-    const newIncomes = editedProject.incomeSchedule.filter((_, i) => i !== index)
-    const actualIncome = newIncomes.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0)
-    setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes, actualIncome }))
-  }
+    const newIncomes = editedProject.incomeSchedule.filter((_, i) => i !== index);
+    const actualIncome = newIncomes.filter(i => i.paid).reduce((sum, i) => sum + i.amount, 0);
+    setEditedProject(prev => ({ ...prev, incomeSchedule: newIncomes, actualIncome }));
+  };
 
-  // Расходы
   const addExpense = () => {
-    if (newExpense.amount <= 0) return
+    if (newExpense.amount <= 0) return;
     setEditedProject(prev => ({
       ...prev,
       expenseSchedule: [...prev.expenseSchedule, { date: newExpense.date, amount: newExpense.amount, type: newExpense.type, paid: false }]
-    }))
-    setNewExpense({ date: new Date().toISOString().slice(0,10), amount: 0, type: 'purchase' })
-  }
+    }));
+    setNewExpense({ date: new Date().toISOString().slice(0,10), amount: 0, type: 'purchase' });
+  };
 
   const updateExpense = (index: number, field: keyof ExpenseItem, value: any) => {
-    const newExpenses = [...editedProject.expenseSchedule]
-    newExpenses[index] = { ...newExpenses[index], [field]: value }
+    const newExpenses = [...editedProject.expenseSchedule];
+    newExpenses[index] = { ...newExpenses[index], [field]: value };
     if (field === 'paid') {
-      const actualExpenses = newExpenses.filter(e => e.paid).reduce((sum, e) => sum + e.amount, 0)
-      setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses, actualExpenses }))
+      const actualExpenses = newExpenses.filter(e => e.paid).reduce((sum, e) => sum + e.amount, 0);
+      setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses, actualExpenses }));
     } else {
-      setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses }))
+      setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses }));
     }
-  }
+  };
 
   const removeExpense = (index: number) => {
-    const newExpenses = editedProject.expenseSchedule.filter((_, i) => i !== index)
-    const actualExpenses = newExpenses.filter(e => e.paid).reduce((sum, e) => sum + e.amount, 0)
-    setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses, actualExpenses }))
-  }
+    const newExpenses = editedProject.expenseSchedule.filter((_, i) => i !== index);
+    const actualExpenses = newExpenses.filter(e => e.paid).reduce((sum, e) => sum + e.amount, 0);
+    setEditedProject(prev => ({ ...prev, expenseSchedule: newExpenses, actualExpenses }));
+  };
 
-  // Сервисные работы
   const addService = () => {
-    if (!newService.type.trim()) return
-    const newId = Date.now().toString()
+    if (!newService.type.trim()) return;
+    const newId = Date.now().toString();
     setEditedProject(prev => ({
       ...prev,
       serviceVisits: [...prev.serviceVisits, { ...newService, id: newId }]
-    }))
+    }));
     setNewService({
       date: new Date().toISOString().slice(0,10),
       type: '',
       status: 'planned',
       responsible: '',
       cost: 0
-    })
-  }
+    });
+  };
 
   const statusColors: Record<string, string> = {
     presale: '#f59e0b',
@@ -157,7 +211,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
     ready: '#10b981',
     construction: '#8b5cf6',
     done: '#6b7280',
-  }
+  };
 
   const purchaseStatusOptions = [
     { value: 'awaiting_payment', label: 'Ожидает оплаты' },
@@ -168,14 +222,14 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
     { value: 'delivered', label: 'Доставлено' },
     { value: 'cancelled', label: 'Отменено' },
     { value: 'out_of_stock', label: 'Нет в наличии' },
-  ]
+  ];
 
   const expenseTypeOptions = [
     { value: 'purchase', label: 'Закупка оборудования' },
     { value: 'salary', label: 'Зарплата' },
     { value: 'subcontractor', label: 'Подрядчики' },
     { value: 'rent', label: 'Аренда' },
-  ]
+  ];
 
   return (
     <div className="project-detail-card">
@@ -195,6 +249,9 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
         </button>
         <button className={activeTab === 'roadmap' ? 'active' : ''} onClick={() => setActiveTab('roadmap')}>
           Дорожная карта
+        </button>
+        <button className={activeTab === 'specs' ? 'active' : ''} onClick={() => setActiveTab('specs')}>
+          Спецификации
         </button>
       </div>
 
@@ -250,21 +307,20 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             </div>
           </div>
 
-          {/* Встречи */}
           <div className="detail-section">
             <h4>Встречи</h4>
             <div className="detail-list">
               {editedProject.meetings.map((meeting, idx) => (
                 <div key={idx} className="list-item">
                   <input type="date" value={meeting.date} onChange={e => {
-                    const newMeetings = [...editedProject.meetings]
-                    newMeetings[idx].date = e.target.value
-                    setEditedProject(prev => ({ ...prev, meetings: newMeetings }))
+                    const newMeetings = [...editedProject.meetings];
+                    newMeetings[idx].date = e.target.value;
+                    setEditedProject(prev => ({ ...prev, meetings: newMeetings }));
                   }} />
                   <input type="text" value={meeting.subject} onChange={e => {
-                    const newMeetings = [...editedProject.meetings]
-                    newMeetings[idx].subject = e.target.value
-                    setEditedProject(prev => ({ ...prev, meetings: newMeetings }))
+                    const newMeetings = [...editedProject.meetings];
+                    newMeetings[idx].subject = e.target.value;
+                    setEditedProject(prev => ({ ...prev, meetings: newMeetings }));
                   }} placeholder="Тема встречи" />
                   <button className="remove-item" onClick={() => removeMeeting(idx)}><i className="fas fa-trash-alt"></i></button>
                 </div>
@@ -277,28 +333,27 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             </div>
           </div>
 
-          {/* Закупки */}
           <div className="detail-section">
             <h4>Закупки</h4>
             <div className="detail-list">
               {editedProject.purchases.map((purchase, idx) => (
                 <div key={idx} className="list-item">
                   <input type="text" value={purchase.name} onChange={e => {
-                    const newPurchases = [...editedProject.purchases]
-                    newPurchases[idx].name = e.target.value
-                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
+                    const newPurchases = [...editedProject.purchases];
+                    newPurchases[idx].name = e.target.value;
+                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }));
                   }} placeholder="Наименование" />
                   <select value={purchase.status} onChange={e => {
-                    const newPurchases = [...editedProject.purchases]
-                    newPurchases[idx].status = e.target.value
-                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
+                    const newPurchases = [...editedProject.purchases];
+                    newPurchases[idx].status = e.target.value;
+                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }));
                   }}>
                     {purchaseStatusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                   </select>
                   <input type="date" value={purchase.date} onChange={e => {
-                    const newPurchases = [...editedProject.purchases]
-                    newPurchases[idx].date = e.target.value
-                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }))
+                    const newPurchases = [...editedProject.purchases];
+                    newPurchases[idx].date = e.target.value;
+                    setEditedProject(prev => ({ ...prev, purchases: newPurchases }));
                   }} />
                   <button className="remove-item" onClick={() => removePurchase(idx)}><i className="fas fa-trash-alt"></i></button>
                 </div>
@@ -318,7 +373,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
 
       {activeTab === 'finances' && (
         <div>
-          {/* Доходы */}
           <div className="detail-section">
             <h4>Доходы (поступления)</h4>
             <div className="detail-list">
@@ -338,7 +392,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             </div>
           </div>
 
-          {/* Расходы */}
           <div className="detail-section">
             <h4>Расходы (затраты)</h4>
             <div className="detail-list">
@@ -364,7 +417,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             </div>
           </div>
 
-          {/* Финансовая аналитика */}
           {metrics && (
             <div className="detail-section">
               <h4>Аналитика</h4>
@@ -388,37 +440,37 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             {editedProject.serviceVisits.map((visit, idx) => (
               <div key={visit.id} className="list-item">
                 <input type="date" value={visit.date} onChange={e => {
-                  const newVisits = [...editedProject.serviceVisits]
-                  newVisits[idx].date = e.target.value
-                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                  const newVisits = [...editedProject.serviceVisits];
+                  newVisits[idx].date = e.target.value;
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }));
                 }} />
                 <input type="text" value={visit.type} onChange={e => {
-                  const newVisits = [...editedProject.serviceVisits]
-                  newVisits[idx].type = e.target.value
-                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                  const newVisits = [...editedProject.serviceVisits];
+                  newVisits[idx].type = e.target.value;
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }));
                 }} placeholder="Тип работ" />
                 <select value={visit.status} onChange={e => {
-                  const newVisits = [...editedProject.serviceVisits]
-                  newVisits[idx].status = e.target.value as any
-                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                  const newVisits = [...editedProject.serviceVisits];
+                  newVisits[idx].status = e.target.value as any;
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }));
                 }}>
                   <option value="planned">Запланировано</option>
                   <option value="completed">Выполнено</option>
                   <option value="cancelled">Отменено</option>
                 </select>
                 <input type="text" value={visit.responsible} onChange={e => {
-                  const newVisits = [...editedProject.serviceVisits]
-                  newVisits[idx].responsible = e.target.value
-                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                  const newVisits = [...editedProject.serviceVisits];
+                  newVisits[idx].responsible = e.target.value;
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }));
                 }} placeholder="Ответственный" />
                 <input type="number" value={visit.cost || ''} onChange={e => {
-                  const newVisits = [...editedProject.serviceVisits]
-                  newVisits[idx].cost = e.target.value ? Number(e.target.value) : undefined
-                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                  const newVisits = [...editedProject.serviceVisits];
+                  newVisits[idx].cost = e.target.value ? Number(e.target.value) : undefined;
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }));
                 }} placeholder="Стоимость" />
                 <button className="remove-item" onClick={() => {
-                  const newVisits = editedProject.serviceVisits.filter((_, i) => i !== idx)
-                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }))
+                  const newVisits = editedProject.serviceVisits.filter((_, i) => i !== idx);
+                  setEditedProject(prev => ({ ...prev, serviceVisits: newVisits }));
                 }}>
                   <i className="fas fa-trash-alt"></i>
                 </button>
@@ -460,9 +512,9 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                       type="date"
                       value={item.date}
                       onChange={e => {
-                        const newPlanned = [...editedProject.roadmapPlanned]
-                        newPlanned[idx].date = e.target.value
-                        setEditedProject(prev => ({ ...prev, roadmapPlanned: newPlanned }))
+                        const newPlanned = [...editedProject.roadmapPlanned];
+                        newPlanned[idx].date = e.target.value;
+                        setEditedProject(prev => ({ ...prev, roadmapPlanned: newPlanned }));
                       }}
                     />
                   </td>
@@ -471,16 +523,61 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
                       type="date"
                       value={editedProject.roadmapActual[idx]?.date || ''}
                       onChange={e => {
-                        const newActual = [...editedProject.roadmapActual]
-                        newActual[idx] = { status: item.status, date: e.target.value }
-                        setEditedProject(prev => ({ ...prev, roadmapActual: newActual }))
+                        const newActual = [...editedProject.roadmapActual];
+                        newActual[idx] = { status: item.status, date: e.target.value };
+                        setEditedProject(prev => ({ ...prev, roadmapActual: newActual }));
                       }}
                     />
-                  </td>
+                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {activeTab === 'specs' && (
+        <div className="detail-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3>Спецификации проекта</h3>
+            <button className="btn-primary" onClick={handleCreateSpecForProject}>
+              <i className="fas fa-plus"></i> Создать спецификацию
+            </button>
+          </div>
+          {projectSpecs.length === 0 ? (
+            <p>Нет привязанных спецификаций.</p>
+          ) : (
+            <div className="specs-list">
+              {projectSpecs.map(spec => {
+                const totalSum = getSpecTotalRub(spec.rows, usdRate, eurRate);
+                const itemsCount = spec.rows.filter(r => r.type === 'data').length;
+                return (
+                  <div key={spec.id} className="spec-item" style={{ background: 'var(--card-bg)', borderRadius: '16px', padding: '12px 16px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{spec.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {itemsCount} поз. | Сумма: {Math.round(totalSum).toLocaleString()} ₽
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn-secondary btn-sm" onClick={() => handleOpenSpec(spec.id)} title="Открыть">
+                        <i className="fas fa-eye"></i>
+                      </button>
+                      <button className="btn-secondary btn-sm" onClick={() => handleDuplicateSpec(spec)} title="Дублировать">
+                        <i className="fas fa-copy"></i>
+                      </button>
+                      <button className="btn-secondary btn-sm" onClick={() => handleUnlinkSpec(spec.id)} title="Открепить от проекта">
+                        <i className="fas fa-unlink"></i>
+                      </button>
+                      <button className="btn-danger btn-sm" onClick={() => handleDeleteSpec(spec.id)} title="Удалить">
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -490,5 +587,5 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
         </button>
       </div>
     </div>
-  )
-}
+  );
+};
