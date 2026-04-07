@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
@@ -18,13 +18,16 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { loadProjects, initDemoData } = useProjectsDb()
-  const { user } = useAuth() // убрали hasRole
+  const { user } = useAuth()
   const projects = useSelector((state: RootState) => state.projects.list)
   const visibleWidgets = useSelector((state: RootState) => state.widgets.visibleWidgets)
   const displayMode = useSelector((state: RootState) => state.widgets.displayMode)
   const [loading, setLoading] = useState(true)
+  const initialized = useRef(false)
 
   useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
     const init = async () => {
       setLoading(true)
       await initDemoData()
@@ -32,8 +35,9 @@ export const DashboardPage: React.FC = () => {
       setLoading(false)
     }
     init()
-  }, [initDemoData, loadProjects])
+  }, [initDemoData, loadProjects]) // зависимости оставляем, но флаг не даёт повторного вызова
 
+  // После загрузки проектов и если роль определена, применяем пресет виджетов
   useEffect(() => {
     if (loading) return
     if (!user) return
