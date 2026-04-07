@@ -1,11 +1,25 @@
-import { HashRouter } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+// import { Topbar } from './components/layout/Topbar'
+import './styles/global.css'
 
 function App() {
   return (
     <HashRouter>
-      <div>
-        <h1>Тест</h1>
-        <p>Приложение работает</p>
+      <div className="app">
+        {/* <Topbar /> */}
+        <div className="app-layout">
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<div>Дашборд (заглушка)</div>} />
+              <Route path="/projects" element={<div>Проекты (заглушка)</div>} />
+              <Route path="/calculations" element={<div>Расчёты (заглушка)</div>} />
+              <Route path="/specifications" element={<div>Спецификации (заглушка)</div>} />
+              <Route path="/specification/:id" element={<div>Спецификация (заглушка)</div>} />
+              <Route path="/specification" element={<div>Новая спецификация (заглушка)</div>} />
+            </Routes>
+          </main>
+        </div>
       </div>
     </HashRouter>
   )
