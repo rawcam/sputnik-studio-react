@@ -284,3 +284,22 @@ body.dark .spec-data-row:hover {
 .spec-filtered-out {
   display: none;
 }
+/* Изменение ширины столбцов */
+.spec-table th {
+  position: relative;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  background-color: transparent;
+  z-index: 15;
+}
+
+.resize-handle:hover {
+  background-color: #94a3b8;
+}
