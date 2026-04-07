@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { updateSpecificationRows } from '../store/specificationsSlice';
+import { updateSpecificationRows, updateSpecification } from '../store/specificationsSlice';
 import * as XLSX from 'xlsx';
 import './SpecificationPage.css';
-
-// ============================================================================
-// ТИПЫ
-// ============================================================================
 
 export interface DataRow {
   id: number;
@@ -36,21 +32,14 @@ export interface SectionRow {
 
 export type Row = DataRow | SectionRow;
 
-// ============================================================================
-// КОНСТАНТЫ
-// ============================================================================
-
 const statuses = ['Замена', 'Получено КП', 'Закуплено'];
 const currencies = ['RUB', 'USD', 'EUR'];
 const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
 const currencyColors: Record<string, string> = { RUB: '#3b82f6', USD: '#10b981', EUR: '#f59e0b' };
 
-// ============================================================================
-// КОМПОНЕНТ
-// ============================================================================
-
 export const SpecificationPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const specifications = useSelector((state: RootState) => state.specifications.list);
   const projects = useSelector((state: RootState) => state.projects.list);
@@ -61,13 +50,12 @@ export const SpecificationPage: React.FC = () => {
   const [nextId, setNextId] = useState(105);
   const [usdRate, setUsdRate] = useState(90);
   const [eurRate, setEurRate] = useState(98);
-  const [tableName, setTableName] = useState('Спецификация оборудования');
+  const [tableName, setTableName] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [filterVendor, setFilterVendor] = useState('');
   const [filterSku, setFilterSku] = useState('');
 
-  const tableContainerRef = useRef<HTMLDivElement>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem('spec_column_widths');
@@ -79,10 +67,7 @@ export const SpecificationPage: React.FC = () => {
     };
   });
 
-  // ==========================================================================
-  // ЗАГРУЗКА / СОХРАНЕНИЕ
-  // ==========================================================================
-
+  // Загрузка спецификации из Redux
   useEffect(() => {
     if (currentSpec) {
       setRows(currentSpec.rows);
@@ -90,17 +75,34 @@ export const SpecificationPage: React.FC = () => {
       setSelectedProjectId(currentSpec.projectId);
       const maxId = currentSpec.rows.reduce((max, row) => Math.max(max, row.id), 0);
       setNextId(maxId + 1);
-    } else {
+    } else if (id === undefined) {
+      // Новая спецификация (без id) – создаём пустую
       resetDemo();
       setSelectedProjectId(null);
+      setTableName('');
+    } else {
+      navigate('/specifications');
     }
-  }, [currentSpec]);
+  }, [currentSpec, id]);
 
+  // Автосохранение строк и метаданных
   useEffect(() => {
     if (currentSpec && rows.length > 0) {
       dispatch(updateSpecificationRows({ id: currentSpec.id, rows }));
     }
   }, [rows, currentSpec]);
+
+  useEffect(() => {
+    if (currentSpec && tableName !== currentSpec.name) {
+      dispatch(updateSpecification({ id: currentSpec.id, updates: { name: tableName } }));
+    }
+  }, [tableName, currentSpec]);
+
+  useEffect(() => {
+    if (currentSpec && selectedProjectId !== currentSpec.projectId) {
+      dispatch(updateSpecification({ id: currentSpec.id, updates: { projectId: selectedProjectId } }));
+    }
+  }, [selectedProjectId, currentSpec]);
 
   useEffect(() => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
@@ -245,7 +247,7 @@ export const SpecificationPage: React.FC = () => {
     setNextId(105);
     setUsdRate(90);
     setEurRate(98);
-    setTableName('Спецификация оборудования');
+    setTableName('');
     setSelectedProjectId(null);
   };
 
@@ -286,48 +288,88 @@ export const SpecificationPage: React.FC = () => {
   };
 
   // ==========================================================================
-  // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+  // КЛАВИАТУРНАЯ НАВИГАЦИЯ (исправленная)
   // ==========================================================================
 
   const getFocusableElements = useCallback(() => {
     if (!tableBodyRef.current) return [];
-    // Все инпуты и селекты внутри строк данных (исключаем заголовки и разделы)
-    const elements = Array.from(
+    return Array.from(
       tableBodyRef.current.querySelectorAll('.spec-data-row input, .spec-data-row select')
     ) as HTMLElement[];
-    return elements;
   }, []);
+
+  const getColumnIndex = (el: HTMLElement): number => {
+    const cell = el.closest('td');
+    if (!cell) return -1;
+    const row = cell.parentElement as HTMLTableRowElement;
+    if (!row) return -1;
+    return Array.from(row.cells).indexOf(cell);
+  };
 
   const handleTableKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('.spec-data-row')) return; // только внутри строк данных
+      if (!target.closest('.spec-data-row')) return;
 
       const focusable = getFocusableElements();
       const currentIndex = focusable.indexOf(target);
       if (currentIndex === -1) return;
 
+      const currentCol = getColumnIndex(target);
+      if (currentCol === -1) return;
+
+      const rowsCount = focusable.reduce((acc, el) => {
+        const col = getColumnIndex(el);
+        if (col === currentCol) acc++;
+        return acc;
+      }, 0);
+
+      const getNextInColumn = (direction: 'up' | 'down'): HTMLElement | null => {
+        let found = false;
+        let next: HTMLElement | null = null;
+        for (let i = 0; i < focusable.length; i++) {
+          const el = focusable[i];
+          const col = getColumnIndex(el);
+          if (col === currentCol) {
+            if (direction === 'down' && found && !next) next = el;
+            if (el === target) found = true;
+            if (direction === 'up' && !found && i < currentIndex) next = el;
+          }
+        }
+        return next;
+      };
+
       let nextIndex = currentIndex;
       switch (e.key) {
         case 'ArrowRight':
           nextIndex = currentIndex + 1;
+          if (nextIndex >= focusable.length) nextIndex = 0;
           break;
         case 'ArrowLeft':
           nextIndex = currentIndex - 1;
+          if (nextIndex < 0) nextIndex = focusable.length - 1;
           break;
-        case 'ArrowDown':
-          // Перемещение вниз: ищем следующий элемент с тем же столбцом (примерно)
-          // Упрощённо: переходим к следующему по порядку
-          nextIndex = currentIndex + 1;
-          break;
-        case 'ArrowUp':
-          nextIndex = currentIndex - 1;
-          break;
+        case 'ArrowDown': {
+          const next = getNextInColumn('down');
+          if (next) {
+            e.preventDefault();
+            next.focus();
+          }
+          return;
+        }
+        case 'ArrowUp': {
+          const prev = getNextInColumn('up');
+          if (prev) {
+            e.preventDefault();
+            prev.focus();
+          }
+          return;
+        }
         default:
           return;
       }
 
-      if (nextIndex >= 0 && nextIndex < focusable.length) {
+      if (nextIndex !== currentIndex && nextIndex >= 0 && nextIndex < focusable.length) {
         e.preventDefault();
         focusable[nextIndex].focus();
       }
@@ -351,6 +393,7 @@ export const SpecificationPage: React.FC = () => {
             className="spec-table-name"
             value={tableName}
             onChange={e => setTableName(e.target.value)}
+            placeholder="Название спецификации"
           />
           <div className="spec-rates">
             <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
@@ -429,7 +472,7 @@ export const SpecificationPage: React.FC = () => {
         ))}
       </div>
 
-      <div className="spec-table-container" ref={tableContainerRef}>
+      <div className="spec-table-container">
         <table className="spec-table">
           <thead>
             <tr>
