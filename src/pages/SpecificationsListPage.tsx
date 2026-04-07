@@ -1,10 +1,12 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
+import { addSpecification } from '../store/specificationsSlice';
 
 export const SpecificationsListPage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const specifications = useSelector((state: RootState) => state.specifications.list);
   const projects = useSelector((state: RootState) => state.projects.list);
 
@@ -14,12 +16,26 @@ export const SpecificationsListPage: React.FC = () => {
     return project ? `${project.shortId} ${project.name}` : '—';
   };
 
+  const handleCreateNew = () => {
+    const newId = Date.now().toString();
+    const now = new Date().toISOString();
+    dispatch(addSpecification({
+      id: newId,
+      name: 'Новая спецификация',
+      projectId: null,
+      createdAt: now,
+      updatedAt: now,
+      rows: [],
+    }));
+    navigate(`/specification/${newId}`);
+  };
+
   return (
     <div className="spec-page">
       <div className="spec-toolbar">
         <div className="spec-toolbar-row">
           <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>Спецификации</h1>
-          <button className="spec-button spec-button-primary" onClick={() => navigate('/specification')}>
+          <button className="spec-button spec-button-primary" onClick={handleCreateNew}>
             <i className="fas fa-plus"></i> Новая спецификация
           </button>
         </div>
