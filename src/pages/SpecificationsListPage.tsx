@@ -9,7 +9,6 @@ import {
   migrateFromOldStorage,
   Specification 
 } from '../store/specificationsSlice';
-import { Project } from '../store/projectsSlice';
 
 export const SpecificationsListPage: React.FC = () => {
   const dispatch = useDispatch();
