@@ -1,7 +1,8 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Topbar } from './components/layout/Topbar'
 import { DashboardPage } from './pages/DashboardPage'
-import { ProjectsPage } from './pages/ProjectsPage';
+import { ProjectsPage } from './pages/ProjectsPage'
+import { CalculationsPage } from './pages/CalculationsPage';
 import './styles/global.css'
 
 function App() {
