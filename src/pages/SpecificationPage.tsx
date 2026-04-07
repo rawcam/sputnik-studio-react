@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { updateSpecificationRows } from '../store/specificationsSlice';
 import * as XLSX from 'xlsx';
 import './SpecificationPage.css';
+
+// ============================================================================
+// ТИПЫ
+// ============================================================================
 
 export interface DataRow {
   id: number;
@@ -32,10 +36,18 @@ export interface SectionRow {
 
 export type Row = DataRow | SectionRow;
 
+// ============================================================================
+// КОНСТАНТЫ
+// ============================================================================
+
 const statuses = ['Замена', 'Получено КП', 'Закуплено'];
 const currencies = ['RUB', 'USD', 'EUR'];
 const currencySymbols: Record<string, string> = { RUB: '₽', USD: '$', EUR: '€' };
 const currencyColors: Record<string, string> = { RUB: '#3b82f6', USD: '#10b981', EUR: '#f59e0b' };
+
+// ============================================================================
+// КОМПОНЕНТ
+// ============================================================================
 
 export const SpecificationPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -55,8 +67,8 @@ export const SpecificationPage: React.FC = () => {
   const [filterVendor, setFilterVendor] = useState('');
   const [filterSku, setFilterSku] = useState('');
 
+  const tableContainerRef = useRef<HTMLDivElement>(null);
   const tableBodyRef = useRef<HTMLTableSectionElement>(null);
-
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem('spec_column_widths');
     return saved ? JSON.parse(saved) : {
@@ -66,6 +78,10 @@ export const SpecificationPage: React.FC = () => {
       supplier: 140, status: 120, actions: 100,
     };
   });
+
+  // ==========================================================================
+  // ЗАГРУЗКА / СОХРАНЕНИЕ
+  // ==========================================================================
 
   useEffect(() => {
     if (currentSpec) {
@@ -89,6 +105,10 @@ export const SpecificationPage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('spec_column_widths', JSON.stringify(columnWidths));
   }, [columnWidths]);
+
+  // ==========================================================================
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // ==========================================================================
 
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
@@ -143,6 +163,10 @@ export const SpecificationPage: React.FC = () => {
     const marginPercent = totalGrossRub === 0 ? 0 : ((totalGrossRub - totalRub) / totalGrossRub) * 100;
     return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
+
+  // ==========================================================================
+  // ОПЕРАЦИИ С ДАННЫМИ
+  // ==========================================================================
 
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
@@ -261,14 +285,73 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
+  // ==========================================================================
+  // КЛАВИАТУРНАЯ НАВИГАЦИЯ
+  // ==========================================================================
+
+  const getFocusableElements = useCallback(() => {
+    if (!tableBodyRef.current) return [];
+    // Все инпуты и селекты внутри строк данных (исключаем заголовки и разделы)
+    const elements = Array.from(
+      tableBodyRef.current.querySelectorAll('.spec-data-row input, .spec-data-row select')
+    ) as HTMLElement[];
+    return elements;
+  }, []);
+
+  const handleTableKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.spec-data-row')) return; // только внутри строк данных
+
+      const focusable = getFocusableElements();
+      const currentIndex = focusable.indexOf(target);
+      if (currentIndex === -1) return;
+
+      let nextIndex = currentIndex;
+      switch (e.key) {
+        case 'ArrowRight':
+          nextIndex = currentIndex + 1;
+          break;
+        case 'ArrowLeft':
+          nextIndex = currentIndex - 1;
+          break;
+        case 'ArrowDown':
+          // Перемещение вниз: ищем следующий элемент с тем же столбцом (примерно)
+          // Упрощённо: переходим к следующему по порядку
+          nextIndex = currentIndex + 1;
+          break;
+        case 'ArrowUp':
+          nextIndex = currentIndex - 1;
+          break;
+        default:
+          return;
+      }
+
+      if (nextIndex >= 0 && nextIndex < focusable.length) {
+        e.preventDefault();
+        focusable[nextIndex].focus();
+      }
+    },
+    [getFocusableElements]
+  );
+
+  // ==========================================================================
+  // РЕНДЕР
+  // ==========================================================================
+
   const totals = computeTotals();
   let dataCounter = 0;
 
   return (
-    <div className="spec-page">
+    <div className="spec-page" onKeyDown={handleTableKeyDown}>
       <div className="spec-toolbar">
         <div className="spec-toolbar-row">
-          <input type="text" className="spec-table-name" value={tableName} onChange={e => setTableName(e.target.value)} />
+          <input
+            type="text"
+            className="spec-table-name"
+            value={tableName}
+            onChange={e => setTableName(e.target.value)}
+          />
           <div className="spec-rates">
             <label>USD → RUB <input type="number" value={usdRate} onChange={e => setUsdRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
             <label>EUR → RUB <input type="number" value={eurRate} onChange={e => setEurRate(parseFloat(e.target.value) || 0)} step="0.1" /></label>
@@ -278,8 +361,20 @@ export const SpecificationPage: React.FC = () => {
         <div className="spec-toolbar-row">
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="text" placeholder="Фильтр по вендору" value={filterVendor} onChange={e => setFilterVendor(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }} />
-              <input type="text" placeholder="Фильтр по артикулу" value={filterSku} onChange={e => setFilterSku(e.target.value)} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }} />
+              <input
+                type="text"
+                placeholder="Фильтр по вендору"
+                value={filterVendor}
+                onChange={e => setFilterVendor(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
+              />
+              <input
+                type="text"
+                placeholder="Фильтр по артикулу"
+                value={filterSku}
+                onChange={e => setFilterSku(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', width: '140px', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
+              />
             </div>
             <select
               value={selectedProjectId || ''}
@@ -334,7 +429,7 @@ export const SpecificationPage: React.FC = () => {
         ))}
       </div>
 
-      <div className="spec-table-container">
+      <div className="spec-table-container" ref={tableContainerRef}>
         <table className="spec-table">
           <thead>
             <tr>
