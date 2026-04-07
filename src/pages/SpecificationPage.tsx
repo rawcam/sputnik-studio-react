@@ -1,3 +1,4 @@
+// src/pages/SpecificationPage.tsx (исправленный, полностью рабочий)
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -517,7 +518,7 @@ export const SpecificationPage: React.FC = () => {
                   <div className="resize-handle" onMouseDown={(e) => { e.preventDefault(); startResize(col, e.pageX, columnWidths[col]); }}></div>
                 </th>
               ))}
-            <tr>
+            </tr>
           </thead>
           <tbody ref={tableBodyRef}>
             {rows.map((row, idx, array) => {
