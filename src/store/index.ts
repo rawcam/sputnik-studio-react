@@ -14,6 +14,7 @@ import soundReducer from './soundSlice'
 import vcReducer from './vcSlice'
 import ergoReducer from './ergoSlice'
 import powerReducer from './powerSlice'
+import specificationsReducer from './specificationsSlice'  // <-- НОВЫЙ ИМПОРТ
 
 export const store = configureStore({
   reducer: {
@@ -32,6 +33,7 @@ export const store = configureStore({
     vc: vcReducer,
     ergo: ergoReducer,
     power: powerReducer,
+    specifications: specificationsReducer,  // <-- НОВЫЙ РЕДЬЮСЕР
   },
 })
 
