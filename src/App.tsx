@@ -15,7 +15,7 @@ function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
-              <Route path="/calculations" element={<div>Расчёты (CalculationsPage)</div>} />
+              <Route path="/calculations" element={<CalculationsPage />} />
               <Route path="/specifications" element={<div>Спецификации (заглушка)</div>} />
               <Route path="/specification/:id" element={<div>Спецификация (заглушка)</div>} />
               <Route path="/specification" element={<div>Новая спецификация (заглушка)</div>} />
