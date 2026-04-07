@@ -1,3 +1,4 @@
+// src/App.tsx
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Topbar } from './components/layout/Topbar'
 import { DashboardPage } from './pages/DashboardPage'
@@ -20,6 +21,7 @@ function App() {
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/calculations" element={<CalculationsPage />} />
               <Route path="/specifications" element={<SpecificationsListPage />} />
+              <Route path="/specification/:id" element={<SpecificationPage />} />
               <Route path="/specification" element={<SpecificationPage />} />
             </Routes>
           </main>
