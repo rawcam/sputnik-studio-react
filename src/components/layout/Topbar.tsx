@@ -16,7 +16,7 @@ export const Topbar: React.FC = () => {
     { path: '/dashboard', label: 'Главная' },
     { path: '/projects', label: 'Проекты' },
     { path: '/calculations', label: 'Расчёты' },
-    { path: '/specification', label: 'Спецификация' }
+    { path: '/specifications', label: 'Спецификации' }
   ]
 
   const getRoleLabel = (role: string) => {
