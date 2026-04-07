@@ -7,7 +7,7 @@ import './SpecificationPage.css';
 // ТИПЫ
 // ============================================================================
 
-interface DataRow {
+export interface DataRow {
   id: number;
   type: 'data';
   vendor: string;
@@ -24,14 +24,14 @@ interface DataRow {
   status: string;
 }
 
-interface SectionRow {
+export interface SectionRow {
   id: number;
   type: 'section';
   title: string;
   collapsed: boolean;
 }
 
-type Row = DataRow | SectionRow;
+export type Row = DataRow | SectionRow;
 
 // ============================================================================
 // КОНСТАНТЫ
