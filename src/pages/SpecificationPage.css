@@ -303,3 +303,12 @@ body.dark .spec-data-row:hover {
 .resize-handle:hover {
   background-color: #94a3b8;
 }
+.spec-table input[type="number"]::-webkit-inner-spin-button,
+.spec-table input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.spec-table input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
