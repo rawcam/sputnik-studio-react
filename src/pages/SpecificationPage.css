@@ -131,11 +131,12 @@ body.dark .spec-page {
 /* Контейнер таблицы с прокруткой */
 .spec-table-container {
   overflow-x: auto;
+  overflow-y: auto;
   background: var(--spec-bg-panel);
   border-radius: 16px;
   border: 1px solid var(--spec-border-light);
   max-height: 70vh;
-  overflow-y: auto;
+  position: relative;
 }
 
 /* Таблица */
@@ -144,16 +145,20 @@ body.dark .spec-page {
   border-collapse: collapse;
   min-width: max-content;
   font-size: 0.8rem;
+  table-layout: fixed;
 }
 
 /* Горизонтальные и вертикальные границы */
 .spec-table th,
 .spec-table td {
-  padding: 10px 8px;
+  padding: 8px 6px;
   background-color: var(--spec-bg-solid);
   color: var(--spec-text-primary);
   border-right: 1px solid var(--spec-border-light);
   border-bottom: 1px solid var(--spec-border-light);
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Убираем правую границу у последнего столбца */
@@ -162,22 +167,28 @@ body.dark .spec-page {
   border-right: none;
 }
 
-/* Убираем нижнюю границу у последней строки (кроме tfoot) – tfoot удалён, но оставим для последней строки данных */
+/* Убираем нижнюю границу у последней строки tbody */
 .spec-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Заголовки */
-.spec-table th {
-  background: var(--spec-card-bg);
-  color: var(--spec-text-secondary);
+/* Заголовки - закрепляем */
+.spec-table thead {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
+}
+
+.spec-table th {
+  position: sticky;
+  top: 0;
+  background: var(--spec-card-bg);
+  color: var(--spec-text-secondary);
+  z-index: 20;
   font-weight: 600;
 }
 
-/* Обводка активной ячейки (при фокусе на input/select) */
+/* Обводка активной ячейки */
 .spec-table input:focus,
 .spec-table select:focus {
   outline: 2px solid var(--spec-accent);
@@ -185,10 +196,40 @@ body.dark .spec-page {
   border-radius: 4px;
 }
 
+/* Убираем стрелки у number полей */
+.spec-table input[type="number"]::-webkit-inner-spin-button,
+.spec-table input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.spec-table input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  min-width: 0;
+  width: 100%;
+}
+
+/* Базовые стили для инпутов */
+.spec-table input,
+.spec-table select {
+  background: transparent;
+  border: none;
+  font-size: 0.8rem;
+  outline: none;
+  padding: 4px 0;
+  font-family: inherit;
+  color: var(--spec-text-primary);
+}
+
+.spec-table input {
+  width: 100%;
+  min-width: 40px;
+}
+
 /* Выравнивания */
 .spec-text-right {
   text-align: right;
-  padding-right: 12px;
+  padding-right: 8px;
 }
 .spec-text-center {
   text-align: center;
@@ -242,7 +283,6 @@ body.dark .spec-data-row:hover {
   color: #cbd5e1;
   transition: color 0.2s;
 }
-/* Цвета кнопок при наведении */
 .spec-action-buttons .btn-add-row:hover {
   color: var(--spec-success);
 }
@@ -253,7 +293,7 @@ body.dark .spec-data-row:hover {
   color: var(--spec-danger);
 }
 
-/* Кнопки действий в разделе – появляются при наведении на строку раздела */
+/* Кнопки действий в разделе – появляются при наведении */
 .spec-section-actions {
   white-space: nowrap;
   opacity: 0;
@@ -284,11 +324,13 @@ body.dark .spec-data-row:hover {
 .spec-filtered-out {
   display: none;
 }
-/* Изменение ширины столбцов */
-.spec-table th {
-  position: relative;
+
+/* Скрываем старые итоги по разделам */
+.section-totals-row {
+  display: none;
 }
 
+/* Изменение ширины столбцов */
 .resize-handle {
   position: absolute;
   right: 0;
@@ -299,48 +341,9 @@ body.dark .spec-data-row:hover {
   background-color: transparent;
   z-index: 15;
 }
-
 .resize-handle:hover {
   background-color: #94a3b8;
 }
-.spec-table input[type="number"]::-webkit-inner-spin-button,
-.spec-table input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.spec-table input[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-.spec-table input[type="number"] {
-  width: 100%;
-  min-width: 40px;
-  box-sizing: border-box;
-}
-.spec-table td {
-  overflow: hidden;
-}
-/* Закрепление шапки таблицы */
-.spec-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
 .spec-table th {
-  position: sticky;
-  top: 0;
-  background: var(--spec-card-bg); /* фон должен быть непрозрачным или с бэкдропом */
-  z-index: 20;
-}
-
-/* Важно: у контейнера не должно быть transform, иначе sticky ломается */
-.spec-table-container {
-  overflow-x: auto;
-  overflow-y: auto;
-  background: var(--spec-bg-panel);
-  border-radius: 16px;
-  border: 1px solid var(--spec-border-light);
-  max-height: 70vh;
   position: relative;
 }
