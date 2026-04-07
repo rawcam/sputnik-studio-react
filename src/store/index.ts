@@ -1,4 +1,3 @@
-// src/store/index.ts
 import { configureStore } from '@reduxjs/toolkit'
 import themeReducer from './themeSlice'
 import uiReducer from './uiSlice'
@@ -16,6 +15,7 @@ import vcReducer from './vcSlice'
 import ergoReducer from './ergoSlice'
 import powerReducer from './powerSlice'
 import specificationsReducer from './specificationsSlice'
+import currencyReducer from './currencySlice'
 
 export const store = configureStore({
   reducer: {
@@ -35,6 +35,7 @@ export const store = configureStore({
     ergo: ergoReducer,
     power: powerReducer,
     specifications: specificationsReducer,
+    currency: currencyReducer,
   },
 })
 
