@@ -1,4 +1,4 @@
-/* Изолированные стили для страницы спецификации */
+/* src/pages/SpecificationPage.css */
 .spec-page {
   --spec-bg-panel: rgba(255, 255, 255, 0.85);
   --spec-bg-solid: #ffffff;
@@ -29,7 +29,6 @@ body.dark .spec-page {
   min-height: 100vh;
 }
 
-/* Тулбар */
 .spec-toolbar {
   display: flex;
   flex-direction: column;
@@ -110,7 +109,6 @@ body.dark .spec-page {
   color: #b91c1c;
 }
 
-/* ===== ИНФОРМЕРЫ (карточки с итогами) – возвращаем прежний вид ===== */
 .spec-informers {
   display: flex;
   flex-wrap: wrap;
@@ -126,7 +124,6 @@ body.dark .spec-page {
   padding: 12px 24px;
   border-left: 4px solid;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  transition: all 0.2s;
 }
 
 .spec-informer .label {
@@ -149,7 +146,6 @@ body.dark .spec-page {
   margin-top: 4px;
 }
 
-/* Контейнер таблицы с прокруткой */
 .spec-table-container {
   overflow-x: auto;
   overflow-y: auto;
@@ -160,16 +156,13 @@ body.dark .spec-page {
   position: relative;
 }
 
-/* Таблица */
 .spec-table {
   width: 100%;
-  border-collapse: collapse;
-  min-width: max-content;
-  font-size: 0.8rem;
   table-layout: auto;
+  border-collapse: collapse;
+  font-size: 0.8rem;
 }
 
-/* Горизонтальные и вертикальные границы */
 .spec-table th,
 .spec-table td {
   padding: 8px 6px;
@@ -189,7 +182,6 @@ body.dark .spec-page {
   border-bottom: none;
 }
 
-/* Заголовки - закрепляем */
 .spec-table thead {
   position: sticky;
   top: 0;
@@ -205,7 +197,6 @@ body.dark .spec-page {
   font-weight: 600;
 }
 
-/* Обводка активной ячейки */
 .spec-table input:focus,
 .spec-table select:focus {
   outline: 2px solid var(--spec-accent);
@@ -213,7 +204,6 @@ body.dark .spec-page {
   border-radius: 4px;
 }
 
-/* Убираем стрелки у number полей */
 .spec-table input[type="number"]::-webkit-inner-spin-button,
 .spec-table input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -226,7 +216,6 @@ body.dark .spec-page {
   width: 100%;
 }
 
-/* Базовые стили для инпутов */
 .spec-table input,
 .spec-table select {
   background: transparent;
@@ -243,23 +232,20 @@ body.dark .spec-page {
   min-width: 40px;
 }
 
-/* Выравнивания */
 .spec-text-right {
   text-align: right;
-  padding-right: 8px;
+  padding-right: 12px;
 }
 .spec-text-center {
   text-align: center;
 }
 
-/* Drag handle */
 .spec-drag-handle {
   cursor: grab;
   color: #cbd5e1;
   text-align: center;
 }
 
-/* Строки данных */
 .spec-data-row {
   transition: background-color 0.15s;
   cursor: default;
@@ -271,7 +257,6 @@ body.dark .spec-data-row:hover {
   background-color: #1e293b !important;
 }
 
-/* Строки разделов */
 .spec-section-row {
   background-color: var(--spec-card-bg);
   font-weight: 600;
@@ -283,7 +268,6 @@ body.dark .spec-data-row:hover {
   background-color: rgba(37,99,235,0.1);
 }
 
-/* Кнопки действий в строках данных – появляются при наведении */
 .spec-action-buttons {
   white-space: nowrap;
   opacity: 0;
@@ -310,7 +294,6 @@ body.dark .spec-data-row:hover {
   color: var(--spec-danger);
 }
 
-/* Кнопки действий в разделе – появляются при наведении */
 .spec-section-actions {
   white-space: nowrap;
   opacity: 0;
@@ -337,17 +320,14 @@ body.dark .spec-data-row:hover {
   color: var(--spec-danger);
 }
 
-/* Скрытие отфильтрованных строк */
 .spec-filtered-out {
   display: none;
 }
 
-/* Скрываем старые итоги по разделам */
 .section-totals-row {
   display: none;
 }
 
-/* Изменение ширины столбцов */
 .resize-handle {
   position: absolute;
   right: 0;
@@ -363,4 +343,11 @@ body.dark .spec-data-row:hover {
 }
 .spec-table th {
   position: relative;
+}
+
+/* Для последней колонки – ширина по содержимому, чтобы не было белого поля */
+.spec-table th:last-child,
+.spec-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
 }
