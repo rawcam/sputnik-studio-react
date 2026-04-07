@@ -444,4 +444,112 @@ export const SpecificationPage: React.FC = () => {
                           </div>
                           <div className="spec-section-actions">
                             <button className="btn-collapse" onClick={() => toggleSection(row.id)} title={row.collapsed ? "Развернуть" : "Свернуть"}>
-                              <i className={`fas
+                              <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'}`}></i>
+                            </button>
+                            <button className="btn-add-row" onClick={() => addDataRowAfterId(row.id)} title="Добавить строку">
+                              <i className="fas fa-plus-circle"></i>
+                            </button>
+                            <button className="btn-delete-section" onClick={() => deleteRow(row.id)} title="Удалить раздел">
+                              <i className="fas fa-trash-alt"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </React.Fragment>
+                );
+              } else if (row.type === 'data') {
+                const visible = isDataRowVisible(row);
+                if (visible) dataCounter++;
+                const totalRub = getTotalRub(row);
+                const sym = currencySymbols[row.currency];
+                let sectionCollapsed = false;
+                for (let i = idx - 1; i >= 0; i--) {
+                  if (array[i].type === 'section') {
+                    sectionCollapsed = (array[i] as SectionRow).collapsed;
+                    break;
+                  }
+                }
+                if (sectionCollapsed) return null;
+                return (
+                  <tr key={row.id} className={`spec-data-row ${!visible ? 'spec-filtered-out' : ''}`} data-id={row.id}>
+                    <td className="spec-drag-handle"><i className="fas fa-grip-vertical"></i></td>
+                    <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
+                    <td className="spec-text-center">{visible ? dataCounter : ''}</td>
+                    <td><input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
+                    <td className="word-break"><input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
+                    <td className="word-break"><input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }} /></td>
+                    <td className="spec-text-center">
+                      <input
+                        type="number"
+                        value={row.quantity}
+                        onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        <option>шт</option><option>м</option><option>уп.</option>
+                      </select>
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        {currencies.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </td>
+                    <td className="spec-text-right">
+                      <input
+                        type="number"
+                        step="any"
+                        value={row.price}
+                        onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)}
+                        style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <input
+                        type="number"
+                        step="any"
+                        value={row.discount}
+                        onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{sym} {formatNumber(row.discountAmount)}</td>
+                    <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{sym} {formatNumber(row.priceAfter)}</td>
+                    <td className="spec-text-right readonly-cell" style={{ background: 'var(--spec-card-bg)', fontWeight: 500, color: 'var(--spec-text-primary)' }}>{formatNumber(totalRub)} ₽</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <input
+                        type="text"
+                        value={row.supplier}
+                        onChange={e => updateDataField(row.id, 'supplier', e.target.value)}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--spec-text-primary)' }}
+                      />
+                    </td>
+                    <td className="spec-text-center">
+                      <select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>
+                        {statuses.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td className="spec-action-buttons">
+                      <button className="btn-add-row" onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже">
+                        <i className="fas fa-plus-circle"></i>
+                      </button>
+                      <button className="btn-duplicate-row" onClick={() => duplicateRow(row.id)} title="Дублировать строку">
+                        <i className="fas fa-copy"></i>
+                      </button>
+                      <button className="btn-delete-row" onClick={() => deleteRow(row.id)} title="Удалить строку">
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </td>
+                  <tr>
+                );
+              }
+              return null;
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
