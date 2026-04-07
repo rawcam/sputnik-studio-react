@@ -74,7 +74,7 @@ export const SpecificationPage: React.FC = () => {
   // ==========================================================================
 
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v16');
+    const saved = localStorage.getItem('specification_data_v17');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -93,7 +93,7 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v16', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v17', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
@@ -542,7 +542,7 @@ export const SpecificationPage: React.FC = () => {
                         <i className="fas fa-trash-alt"></i>
                       </button>
                     </td>
-                  <tr>
+                  </tr>
                 );
               }
               return null;
