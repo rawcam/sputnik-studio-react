@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sortable from 'sortablejs';
 import * as XLSX from 'xlsx';
-import './SpecificationPage.css'; // изолированные стили
+import './SpecificationPage.css';
 
 // ============================================================================
 // ТИПЫ
@@ -78,7 +78,7 @@ export const SpecificationPage: React.FC = () => {
   // ==========================================================================
 
   useEffect(() => {
-    const saved = localStorage.getItem('specification_data_v14');
+    const saved = localStorage.getItem('specification_data_v15');
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -97,7 +97,7 @@ export const SpecificationPage: React.FC = () => {
 
   useEffect(() => {
     if (rows.length === 0) return;
-    localStorage.setItem('specification_data_v14', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
+    localStorage.setItem('specification_data_v15', JSON.stringify({ rows, nextId, usdRate, eurRate, tableName }));
   }, [rows, nextId, usdRate, eurRate, tableName]);
 
   useEffect(() => {
@@ -214,10 +214,6 @@ export const SpecificationPage: React.FC = () => {
 
   const toggleSection = (id: number) => {
     setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, collapsed: !r.collapsed } : r));
-  };
-
-  const toggleSectionTotals = (id: number) => {
-    setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, showTotals: !r.showTotals } : r));
   };
 
   const updateSectionTitle = (id: number, title: string) => {
@@ -398,14 +394,14 @@ export const SpecificationPage: React.FC = () => {
         <div className="spec-informer" style={{ borderLeftColor: '#10b981' }} title="Сумма без скидок (цена × количество × курс)">
           <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Валовая сумма (руб)</div>
           <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{formatNumber(totals.totalGrossRub)} ₽</div>
-          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Количество: {formatNumber(totals.totalQty)} шт.</div>
+          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Количество, шт.: {formatNumber(totals.totalQty)}</div>
         </div>
         <div className="spec-informer" style={{ borderLeftColor: '#3b82f6' }} title="Сумма после скидок (цена со скидкой × количество × курс)">
-          <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Общая сумма (руб)</div>
+          <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Сумма закупки (после скидки)</div>
           <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{formatNumber(totals.totalRub)} ₽</div>
-          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Скидка: {formatNumber(totals.totalDiscountRub)} ₽</div>
+          <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>Скидка всего: {formatNumber(totals.totalDiscountRub)} ₽</div>
         </div>
-        <div className="spec-informer" style={{ borderLeftColor: '#f59e0b' }} title="(Валовая сумма − Общая сумма) / Валовая сумма × 100%">
+        <div className="spec-informer" style={{ borderLeftColor: '#f59e0b' }} title="(Валовая сумма − Сумма закупки) / Валовая сумма × 100%">
           <div className="label" style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--spec-text-secondary)' }}>Маржинальность</div>
           <div className="value" style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--spec-text-primary)' }}>{totals.marginPercent.toFixed(1)}%</div>
           <div className="sub" style={{ fontSize: '0.7rem', color: 'var(--spec-text-secondary)' }}>от валовой суммы</div>
@@ -459,17 +455,22 @@ export const SpecificationPage: React.FC = () => {
                       <td colSpan={16} style={{ padding: '10px 8px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ flex: 1, textAlign: 'center' }}>
-                            <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'} collapse-icon`} onClick={() => toggleSection(row.id)} style={{ cursor: 'pointer', marginRight: '8px', color: '#cbd5e1' }}></i>
                             <span contentEditable suppressContentEditableWarning onBlur={e => updateSectionTitle(row.id, e.currentTarget.innerText)} style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--spec-text-primary)' }}>{row.title}</span>
-                            <i className="fas fa-chart-line" onClick={() => toggleSectionTotals(row.id)} style={{ cursor: 'pointer', marginLeft: '12px', color: row.showTotals ? '#3b82f6' : '#cbd5e1' }} title="Показать/скрыть итоги по разделу"></i>
                           </div>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => addDataRowAfterId(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#cbd5e1' }} title="Добавить строку"><i className="fas fa-plus-circle"></i></button>
-                            <button onClick={() => deleteRow(row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#cbd5e1' }} title="Удалить раздел"><i className="fas fa-trash-alt"></i></button>
+                          <div className="spec-section-actions">
+                            <button className="btn-collapse" onClick={() => toggleSection(row.id)} title={row.collapsed ? "Развернуть" : "Свернуть"}>
+                              <i className={`fas ${row.collapsed ? 'fa-plus-square' : 'fa-minus-square'}`}></i>
+                            </button>
+                            <button className="btn-add-row" onClick={() => addDataRowAfterId(row.id)} title="Добавить строку">
+                              <i className="fas fa-plus-circle"></i>
+                            </button>
+                            <button className="btn-delete-section" onClick={() => deleteRow(row.id)} title="Удалить раздел">
+                              <i className="fas fa-trash-alt"></i>
+                            </button>
                           </div>
                         </div>
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   </React.Fragment>
                 );
               } else if (row.type === 'data') {
@@ -505,9 +506,15 @@ export const SpecificationPage: React.FC = () => {
                     <td style={{ textAlign: 'center' }}><input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center', color: 'var(--spec-text-primary)' }} /></td>
                     <td className="spec-text-center"><select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}>{statuses.map(s => <option key={s}>{s}</option>)}</select></td>
                     <td className="spec-action-buttons">
-                      <button onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже"><i className="fas fa-plus-circle"></i></button>
-                      <button onClick={() => duplicateRow(row.id)} title="Дублировать строку"><i className="fas fa-copy"></i></button>
-                      <button onClick={() => deleteRow(row.id)} title="Удалить строку"><i className="fas fa-trash-alt"></i></button>
+                      <button className="btn-add-row" onClick={() => addDataRowAfterId(row.id)} title="Добавить строку ниже">
+                        <i className="fas fa-plus-circle"></i>
+                      </button>
+                      <button className="btn-duplicate-row" onClick={() => duplicateRow(row.id)} title="Дублировать строку">
+                        <i className="fas fa-copy"></i>
+                      </button>
+                      <button className="btn-delete-row" onClick={() => deleteRow(row.id)} title="Удалить строку">
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
                     </td>
                   </tr>
                 );
@@ -515,17 +522,6 @@ export const SpecificationPage: React.FC = () => {
               return null;
             })}
           </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={6} className="spec-text-right" style={{ padding: '12px 8px', fontWeight: 700 }}>Итого по всем разделам:</td>
-              <td className="spec-text-center" style={{ fontWeight: 700 }}>{formatNumber(totals.totalQty)}</td>
-              <td colSpan={4} style={{ padding: '12px 8px' }}></td>
-              <td className="spec-text-right" style={{ fontWeight: 700 }}>{formatNumber(totals.totalDiscountRub)} ₽</td>
-              <td className="spec-text-right" style={{ fontWeight: 700 }}>{formatNumber(totals.totalGrossRub)} ₽</td>
-              <td className="spec-text-right" style={{ fontWeight: 700 }}>{formatNumber(totals.totalRub)} ₽</td>
-              <td colSpan={3} style={{ padding: '12px 8px' }}></td>
-            </tr>
-          </tfoot>
         </table>
       </div>
     </div>
