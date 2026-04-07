@@ -37,6 +37,7 @@ const specificationsSlice = createSlice({
   reducers: {
     setSpecifications: (state, action: PayloadAction<Specification[]>) => {
       state.list = action.payload;
+      localStorage.setItem('specifications_data', JSON.stringify({ list: state.list, currentSpecId: state.currentSpecId }));
     },
     addSpecification: (state, action: PayloadAction<Specification>) => {
       state.list.push(action.payload);
