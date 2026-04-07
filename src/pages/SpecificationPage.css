@@ -162,7 +162,7 @@ body.dark .spec-page {
   border-right: none;
 }
 
-/* Убираем нижнюю границу у последней строки (кроме tfoot) – но tfoot будет отдельно */
+/* Убираем нижнюю границу у последней строки (кроме tfoot) – tfoot удалён, но оставим для последней строки данных */
 .spec-table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -283,16 +283,4 @@ body.dark .spec-data-row:hover {
 /* Скрытие отфильтрованных строк */
 .spec-filtered-out {
   display: none;
-}
-
-/* Итоговая строка (tfoot) */
-.spec-table tfoot tr {
-  background-color: var(--spec-card-bg);
-  border-top: 3px double var(--spec-accent);
-  font-weight: 700;
-}
-.spec-table tfoot td {
-  background-color: var(--spec-card-bg);
-  padding: 12px 8px;
-  border-bottom: none;
 }
