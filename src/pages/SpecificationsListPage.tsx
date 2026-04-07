@@ -69,8 +69,6 @@ export const SpecificationsListPage: React.FC = () => {
   };
 
   const getTotalSum = (spec: Specification) => {
-    // Простой подсчёт суммы (цена * количество) для демо
-    // В реальности нужно пересчитывать с учётом валют и скидок
     let sum = 0;
     for (const row of spec.rows) {
       if (row.type === 'data') {
@@ -109,7 +107,6 @@ export const SpecificationsListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Режим сетки */}
       {viewMode === 'grid' && (
         <div className="specs-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
           {specifications.map(spec => (
@@ -148,7 +145,6 @@ export const SpecificationsListPage: React.FC = () => {
         </div>
       )}
 
-      {/* Режим списка */}
       {viewMode === 'list' && (
         <div className="spec-table-container" style={{ overflowX: 'auto' }}>
           <table className="spec-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -190,7 +186,6 @@ export const SpecificationsListPage: React.FC = () => {
         </div>
       )}
 
-      {/* Модальное окно создания спецификации */}
       {showCreateModal && (
         <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="modal" style={{ background: 'var(--spec-bg-solid)', borderRadius: '24px', width: '90%', maxWidth: '500px', padding: '24px' }}>
