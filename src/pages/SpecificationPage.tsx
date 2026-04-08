@@ -525,7 +525,7 @@ export const SpecificationPage: React.FC = () => {
                   <div className="resize-handle" onMouseDown={(e) => { e.preventDefault(); startResize(col, e.pageX, columnWidths[col]); }}></div>
                 </th>
               ))}
-            </table>
+            </tr>
           </thead>
           <tbody ref={tableBodyRef}>
             {rows.map((row, idx, array) => {
@@ -682,7 +682,7 @@ export const SpecificationPage: React.FC = () => {
                       <button className="btn-duplicate-row" onClick={() => duplicateRow(row.id)} title="Дублировать строку"><i className="fas fa-copy"></i></button>
                       <button className="btn-delete-row" onClick={() => deleteRow(row.id)} title="Удалить строку"><i className="fas fa-trash-alt"></i></button>
                     </td>
-                  </td>
+                  </tr>
                 );
               }
               return null;
