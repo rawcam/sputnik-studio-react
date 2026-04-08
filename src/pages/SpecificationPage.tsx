@@ -204,7 +204,7 @@ export const SpecificationPage: React.FC = () => {
     return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
 
-  // Операции с данными
+  // Операции с данними
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -320,7 +320,7 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Клавиатурная навигация (без изменений)
+  // Клавиатурная навигация
   const getFocusableElements = useCallback(() => {
     if (!tableBodyRef.current) return [];
     return Array.from(
@@ -597,9 +597,10 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.quantity === 0) {
-                            e.target.setSelectionRange(0, 0);
+                            setTimeout(() => e.target.setSelectionRange(0, 0), 0);
                           }
                         }}
+                        onWheel={(e) => e.preventDefault()}
                         style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
@@ -629,9 +630,10 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.price === 0) {
-                            e.target.setSelectionRange(0, 0);
+                            setTimeout(() => e.target.setSelectionRange(0, 0), 0);
                           }
                         }}
+                        onWheel={(e) => e.preventDefault()}
                         style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
@@ -643,9 +645,10 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.discount === 0) {
-                            e.target.setSelectionRange(0, 0);
+                            setTimeout(() => e.target.setSelectionRange(0, 0), 0);
                           }
                         }}
+                        onWheel={(e) => e.preventDefault()}
                         style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
