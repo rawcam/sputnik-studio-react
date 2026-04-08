@@ -525,7 +525,7 @@ export const SpecificationPage: React.FC = () => {
                   <div className="resize-handle" onMouseDown={(e) => { e.preventDefault(); startResize(col, e.pageX, columnWidths[col]); }}></div>
                 </th>
               ))}
-            </tr>
+            </table>
           </thead>
           <tbody ref={tableBodyRef}>
             {rows.map((row, idx, array) => {
@@ -605,7 +605,7 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.quantity === 0) {
-                            requestAnimationFrame(() => e.target.setSelectionRange(0, 0));
+                            e.target.select();
                           }
                         }}
                         style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
@@ -637,7 +637,7 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.price === 0) {
-                            requestAnimationFrame(() => e.target.setSelectionRange(0, 0));
+                            e.target.select();
                           }
                         }}
                         style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
@@ -651,7 +651,7 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.discount === 0) {
-                            requestAnimationFrame(() => e.target.setSelectionRange(0, 0));
+                            e.target.select();
                           }
                         }}
                         style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
@@ -682,7 +682,7 @@ export const SpecificationPage: React.FC = () => {
                       <button className="btn-duplicate-row" onClick={() => duplicateRow(row.id)} title="Дублировать строку"><i className="fas fa-copy"></i></button>
                       <button className="btn-delete-row" onClick={() => deleteRow(row.id)} title="Удалить строку"><i className="fas fa-trash-alt"></i></button>
                     </td>
-                  </tr>
+                  </td>
                 );
               }
               return null;
