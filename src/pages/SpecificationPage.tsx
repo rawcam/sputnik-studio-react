@@ -150,6 +150,14 @@ export const SpecificationPage: React.FC = () => {
     };
   }, [rows]);
 
+  // Глобальный обработчик для отключения изменения значений колёсиком мыши на числовых полях
+  const handleWheelPrevent = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('input[type="number"]')) {
+      e.preventDefault();
+    }
+  }, []);
+
   // ========== Вспомогательные функции ==========
   const getRate = (currency: string) => {
     if (currency === 'USD') return usdRate;
@@ -204,7 +212,7 @@ export const SpecificationPage: React.FC = () => {
     return { totalGrossRub, totalRub, totalDiscountRub, totalQty, marginPercent, byCurrency };
   };
 
-  // Операции с данними
+  // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
     const index = rows.findIndex(r => r.id === afterId);
     if (index === -1) return;
@@ -404,7 +412,7 @@ export const SpecificationPage: React.FC = () => {
   let dataCounter = 0;
 
   return (
-    <div className="spec-page" onKeyDown={handleTableKeyDown}>
+    <div className="spec-page" onKeyDown={handleTableKeyDown} onWheel={handleWheelPrevent}>
       <div className="spec-toolbar">
         <div className="spec-toolbar-row">
           <input
@@ -597,10 +605,9 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.quantity === 0) {
-                            setTimeout(() => e.target.setSelectionRange(0, 0), 0);
+                            requestAnimationFrame(() => e.target.setSelectionRange(0, 0));
                           }
                         }}
-                        onWheel={(e) => e.preventDefault()}
                         style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
@@ -630,10 +637,9 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.price === 0) {
-                            setTimeout(() => e.target.setSelectionRange(0, 0), 0);
+                            requestAnimationFrame(() => e.target.setSelectionRange(0, 0));
                           }
                         }}
-                        onWheel={(e) => e.preventDefault()}
                         style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
@@ -645,10 +651,9 @@ export const SpecificationPage: React.FC = () => {
                         onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)}
                         onFocus={(e) => {
                           if (row.discount === 0) {
-                            setTimeout(() => e.target.setSelectionRange(0, 0), 0);
+                            requestAnimationFrame(() => e.target.setSelectionRange(0, 0));
                           }
                         }}
-                        onWheel={(e) => e.preventDefault()}
                         style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
                       />
                     </td>
