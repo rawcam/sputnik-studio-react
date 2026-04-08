@@ -1,4 +1,3 @@
-// src/pages/SpecificationPage.tsx (исправленный, полностью рабочий)
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -321,7 +320,7 @@ export const SpecificationPage: React.FC = () => {
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Клавиатурная навигация
+  // Клавиатурная навигация (без изменений)
   const getFocusableElements = useCallback(() => {
     if (!tableBodyRef.current) return [];
     return Array.from(
@@ -568,41 +567,105 @@ export const SpecificationPage: React.FC = () => {
                     <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
                     <td className="spec-text-center">{visible ? dataCounter : ''}</td>
                     <td className="spec-text-center">
-                      <input type="text" value={row.vendor} onChange={e => updateDataField(row.id, 'vendor', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }} />
+                      <input
+                        type="text"
+                        value={row.vendor}
+                        onChange={e => updateDataField(row.id, 'vendor', e.target.value)}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }}
+                      />
                     </td>
                     <td className="spec-text-center word-break">
-                      <input type="text" value={row.sku} onChange={e => updateDataField(row.id, 'sku', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }} />
+                      <input
+                        type="text"
+                        value={row.sku}
+                        onChange={e => updateDataField(row.id, 'sku', e.target.value)}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }}
+                      />
                     </td>
                     <td className="word-break">
-                      <input type="text" value={row.name} onChange={e => updateDataField(row.id, 'name', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'left' }} />
+                      <input
+                        type="text"
+                        value={row.name}
+                        onChange={e => updateDataField(row.id, 'name', e.target.value)}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'left' }}
+                      />
                     </td>
                     <td className="spec-text-center">
-                      <input type="number" value={row.quantity} onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} />
+                      <input
+                        type="number"
+                        value={row.quantity}
+                        onChange={e => updateDataField(row.id, 'quantity', parseInt(e.target.value) || 0)}
+                        onFocus={(e) => {
+                          if (row.quantity === 0) {
+                            e.target.setSelectionRange(0, 0);
+                          }
+                        }}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
                     </td>
                     <td className="spec-text-center">
-                      <select value={row.unit} onChange={e => updateDataField(row.id, 'unit', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
+                      <select
+                        value={row.unit}
+                        onChange={e => updateDataField(row.id, 'unit', e.target.value)}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      >
                         <option>шт</option><option>м</option><option>уп.</option>
                       </select>
                     </td>
                     <td className="spec-text-center">
-                      <select value={row.currency} onChange={e => updateDataField(row.id, 'currency', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
+                      <select
+                        value={row.currency}
+                        onChange={e => updateDataField(row.id, 'currency', e.target.value)}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      >
                         {currencies.map(c => <option key={c}>{c}</option>)}
                       </select>
                     </td>
                     <td className="spec-text-right">
-                      <input type="number" step="any" value={row.price} onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none' }} />
+                      <input
+                        type="number"
+                        step="any"
+                        value={row.price}
+                        onChange={e => updateDataField(row.id, 'price', parseFloat(e.target.value) || 0)}
+                        onFocus={(e) => {
+                          if (row.price === 0) {
+                            e.target.setSelectionRange(0, 0);
+                          }
+                        }}
+                        style={{ width: '100%', textAlign: 'right', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
                     </td>
                     <td className="spec-text-center">
-                      <input type="number" step="any" value={row.discount} onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }} />
+                      <input
+                        type="number"
+                        step="any"
+                        value={row.discount}
+                        onChange={e => updateDataField(row.id, 'discount', parseFloat(e.target.value) || 0)}
+                        onFocus={(e) => {
+                          if (row.discount === 0) {
+                            e.target.setSelectionRange(0, 0);
+                          }
+                        }}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      />
                     </td>
                     <td className="spec-text-right readonly-cell">{sym} {formatNumber(row.discountAmount)}</td>
                     <td className="spec-text-right readonly-cell">{sym} {formatNumber(row.priceAfter)}</td>
                     <td className="spec-text-right readonly-cell">{formatNumber(totalRub)} ₽</td>
                     <td className="spec-text-center">
-                      <input type="text" value={row.supplier} onChange={e => updateDataField(row.id, 'supplier', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }} />
+                      <input
+                        type="text"
+                        value={row.supplier}
+                        onChange={e => updateDataField(row.id, 'supplier', e.target.value)}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', textAlign: 'center' }}
+                      />
                     </td>
                     <td className="spec-text-center">
-                      <select value={row.status} onChange={e => updateDataField(row.id, 'status', e.target.value)} style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none' }}>
+                      <select
+                        value={row.status}
+                        onChange={e => updateDataField(row.id, 'status', e.target.value)}
+                        style={{ width: '100%', textAlign: 'center', background: 'transparent', border: 'none', outline: 'none', color: 'var(--spec-text-primary)' }}
+                      >
                         {statuses.map(s => <option key={s}>{s}</option>)}
                       </select>
                     </td>
