@@ -1,26 +1,37 @@
-/* Скрываем хендлы по умолчанию, показываем при наведении на ноду */
-.react-flow__node:hover .react-flow__handle {
-  opacity: 1 !important;
-}
-.react-flow__handle {
+/* ... существующие стили ... */
+
+/* Скрываем контрол ресайза, показываем при наведении на ноду */
+.react-flow__node .react-flow__resize-control {
   opacity: 0;
-  transition: opacity 0.15s ease;
-  background-color: #2563eb;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1px solid white;
+  transition: opacity 0.2s;
 }
-/* Для удобства можно сделать зону клика больше */
-.react-flow__handle::after {
-  content: '';
+.react-flow__node:hover .react-flow__resize-control {
+  opacity: 1;
+}
+
+/* Стили для меню настроек */
+.settings-menu {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  top: -2px;
-  left: -2px;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 200px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-/* Настройки сетки (будут меняться динамически через React, но базовые стили) */
-.react-flow__background {
-  background-color: #f9fafb;
+.settings-menu label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.settings-menu select, .settings-menu input {
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
 }
