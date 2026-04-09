@@ -2,19 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from 'reactflow';
 import { DeviceNodeData, ConnectorType, ProtocolType } from '../../types/flowTypes';
 
-// Вспомогательная функция: цвет хендла по типу разъёма и протоколу
+// Цвет хендла по типу разъёма и протоколу
 const getConnectorColor = (connector: ConnectorType, protocol: ProtocolType): string => {
-  if (connector === 'HDMI') return '#f97316';       // оранжевый
-  if (connector === 'DisplayPort') return '#1e293b'; // тёмно-синий
+  if (connector === 'HDMI') return '#f97316';
+  if (connector === 'DisplayPort') return '#1e293b';
   if (connector === 'DVI') return '#94a3b8';
   if (connector === 'RJ45') {
-    if (protocol === 'Dante' || protocol === 'AES67') return '#10b981'; // зелёный
-    return '#3b82f6'; // синий для Ethernet
+    if (protocol === 'Dante' || protocol === 'AES67') return '#10b981';
+    return '#3b82f6';
   }
   if (connector === 'XLR' || connector === 'TRS' || connector === 'Phoenix3' || connector === 'Phoenix5')
-    return '#64748b'; // серый для аудио
-  if (connector === 'PowerCON' || connector === 'IEC') return '#ef4444'; // красный для питания
-  return '#2563eb'; // по умолчанию
+    return '#64748b';
+  if (connector === 'PowerCON' || connector === 'IEC') return '#ef4444';
+  return '#2563eb';
 };
 
 const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
@@ -58,7 +58,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     );
   };
 
-  // Вычисляем максимальное количество строк для высоты
   const maxRows = Math.max(data.inputs.length, data.outputs.length);
 
   return (
@@ -78,7 +77,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         height: data.height || 'auto',
       }}
     >
-      {/* Заголовок ноды */}
+      {/* Заголовок */}
       <div
         style={{
           fontWeight: 'bold',
@@ -96,69 +95,92 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         </span>
       </div>
 
-      {/* Таблица входов и выходов */}
-      <div style={{ fontSize: '10px', lineHeight: '1.4', color: '#334155' }}>
-        {Array.from({ length: maxRows }).map((_, rowIndex) => (
-          <div key={rowIndex} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '20px' }}>
-            {/* Левая сторона — входы */}
-            <div style={{ flex: 1, textAlign: 'left', paddingRight: '8px' }}>
-              {data.inputs[rowIndex] && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {data.inputs[rowIndex].name}
-                  </span>
-                  {/* Хендл для входа */}
-                  <Handle
-                    type="target"
-                    position={Position.Left}
-                    id={data.inputs[rowIndex].id}
-                    style={{
-                      background: getConnectorColor(data.inputs[rowIndex].connector, data.inputs[rowIndex].protocol),
-                      width: '10px',
-                      height: '10px',
-                      border: '1px solid white',
-                      position: 'relative',
-                      left: '-8px',
-                      top: 'auto',
-                      transform: 'none',
-                    }}
-                  />
-                </div>
-              )}
+      {/* Таблица интерфейсов */}
+      <div style={{ fontSize: '10px', lineHeight: '1.5', color: '#334155' }}>
+        {Array.from({ length: maxRows }).map((_, rowIndex) => {
+          const input = data.inputs[rowIndex];
+          const output = data.outputs[rowIndex];
+          const rowHeight = 20; // px
+          const topOffset = 40 + rowIndex * rowHeight; // 40px — примерно высота заголовка + отступы
+
+          return (
+            <div
+              key={rowIndex}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                minHeight: rowHeight,
+                position: 'relative',
+              }}
+            >
+              {/* Вход (слева) */}
+              <div style={{ flex: 1, textAlign: 'left', paddingRight: '8px' }}>
+                {input && (
+                  <>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {input.name}
+                    </span>
+                    <Handle
+                      type="target"
+                      position={Position.Left}
+                      id={input.id}
+                      style={{
+                        background: getConnectorColor(input.connector, input.protocol),
+                        width: '10px',
+                        height: '10px',
+                        border: '1px solid white',
+                        position: 'absolute',
+                        left: '-7px',
+                        top: `${topOffset}px`,
+                        transform: 'translateY(-50%)',
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+
+              {/* Выход (справа) */}
+              <div style={{ flex: 1, textAlign: 'right', paddingLeft: '8px' }}>
+                {output && (
+                  <>
+                    <Handle
+                      type="source"
+                      position={Position.Right}
+                      id={output.id}
+                      style={{
+                        background: getConnectorColor(output.connector, output.protocol),
+                        width: '10px',
+                        height: '10px',
+                        border: '1px solid white',
+                        position: 'absolute',
+                        right: '-7px',
+                        top: `${topOffset}px`,
+                        transform: 'translateY(-50%)',
+                      }}
+                    />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {output.name}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
-            {/* Правая сторона — выходы */}
-            <div style={{ flex: 1, textAlign: 'right', paddingLeft: '8px' }}>
-              {data.outputs[rowIndex] && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-                  {/* Хендл для выхода */}
-                  <Handle
-                    type="source"
-                    position={Position.Right}
-                    id={data.outputs[rowIndex].id}
-                    style={{
-                      background: getConnectorColor(data.outputs[rowIndex].connector, data.outputs[rowIndex].protocol),
-                      width: '10px',
-                      height: '10px',
-                      border: '1px solid white',
-                      position: 'relative',
-                      right: '-8px',
-                      top: 'auto',
-                      transform: 'none',
-                    }}
-                  />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {data.outputs[rowIndex].name}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Дополнительная информация (мощность, PoE) */}
+      {/* Суммарная информация */}
       {(data.totalPowerConsumption || data.totalPoEConsumption) && (
-        <div style={{ marginTop: '6px', fontSize: '9px', color: '#64748b', borderTop: '1px solid #e2e8f0', paddingTop: '4px' }}>
+        <div
+          style={{
+            marginTop: '6px',
+            fontSize: '9px',
+            color: '#64748b',
+            borderTop: '1px solid #e2e8f0',
+            paddingTop: '4px',
+          }}
+        >
           {data.totalPowerConsumption && <span>⚡ {data.totalPowerConsumption} Вт </span>}
           {data.totalPoEConsumption && <span>🔌 PoE: {data.totalPoEConsumption} Вт</span>}
         </div>
