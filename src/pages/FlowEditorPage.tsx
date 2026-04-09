@@ -18,8 +18,16 @@ import DeviceNode from '../components/flow/DeviceNode';
 import EditNodeModal from '../components/flow/EditNodeModal';
 import { useFlowSchemas } from '../hooks/useFlowSchemas';
 import { DeviceNodeData } from '../types/flowTypes';
+import './FlowEditorPage.css';
 
 const nodeTypes = { deviceNode: DeviceNode };
+
+// Предопределённые типы устройств
+const deviceTypes = [
+  { type: 'Источник', icon: 'fa-camera', defaultLatency: 5, defaultPower: 50 },
+  { type: 'Коммутатор', icon: 'fa-network-wired', defaultLatency: 2, defaultPower: 30, defaultPoe: '802.3at' },
+  { type: 'Дисплей', icon: 'fa-tv', defaultLatency: 8, defaultPower: 120 },
+];
 
 const FlowEditor: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState<DeviceNodeData>([]);
@@ -36,7 +44,7 @@ const FlowEditor: React.FC = () => {
   const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema } =
     useFlowSchemas();
 
-  // Загрузка начальной демо-схемы (если нет сохранённых)
+  // Загрузка начальной демо-схемы
   useEffect(() => {
     if (schemas.length === 0 && nodes.length === 0) {
       const demoNodes: Node<DeviceNodeData>[] = [
@@ -64,16 +72,17 @@ const FlowEditor: React.FC = () => {
     }
   }, [schemas]);
 
-  const addNode = (type: string, icon: string) => {
+  const addNode = (deviceType: typeof deviceTypes[0]) => {
     const newNode: Node<DeviceNodeData> = {
       id: Date.now().toString(),
       type: 'deviceNode',
       position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
       data: {
-        label: type,
-        icon,
-        latency: 0,
-        power: 0,
+        label: deviceType.type,
+        icon: deviceType.icon,
+        latency: deviceType.defaultLatency,
+        power: deviceType.defaultPower,
+        poe: deviceType.defaultPoe,
       },
     };
     setNodes((nds) => nds.concat(newNode));
@@ -211,9 +220,10 @@ const FlowEditor: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
+          gap: '8px',
         }}
       >
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <select
             value={currentSchemaId || ''}
             onChange={(e) => handleLoadSchema(e.target.value)}
@@ -274,46 +284,61 @@ const FlowEditor: React.FC = () => {
             📷 Экспорт SVG
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => addNode('Источник', 'fa-camera')}
-            style={{
-              background: '#f1f5f9',
-              border: '1px solid #cbd5e1',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
-          >
-            ➕ Источник
-          </button>
-          <button
-            onClick={() => addNode('Коммутатор', 'fa-network-wired')}
-            style={{
-              background: '#f1f5f9',
-              border: '1px solid #cbd5e1',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
-          >
-            ➕ Коммутатор
-          </button>
-          <button
-            onClick={() => addNode('Дисплей', 'fa-tv')}
-            style={{
-              background: '#f1f5f9',
-              border: '1px solid #cbd5e1',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
-          >
-            ➕ Дисплей
-          </button>
+
+        {/* Единая кнопка добавления с выпадающим меню */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <button
+              className="add-node-btn"
+              title="Добавить устройство"
+              onClick={(e) => {
+                const menu = document.getElementById('device-menu');
+                if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+                e.stopPropagation();
+              }}
+            >
+              ➕
+            </button>
+            <div
+              id="device-menu"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '4px',
+                background: 'white',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                display: 'none',
+                flexDirection: 'column',
+                zIndex: 100,
+                minWidth: '120px',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {deviceTypes.map((dt) => (
+                <button
+                  key={dt.type}
+                  onClick={() => {
+                    addNode(dt);
+                    document.getElementById('device-menu')!.style.display = 'none';
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    background: 'white',
+                    border: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                >
+                  <i className={dt.icon} style={{ marginRight: '8px', width: '16px' }}></i> {dt.type}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -334,7 +359,7 @@ const FlowEditor: React.FC = () => {
             snapGrid={[15, 15]}
             connectionLineStyle={{ stroke: '#2563eb', strokeWidth: 2 }}
           >
-            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+            <Background variant={BackgroundVariant.Lines} gap={15} size={1} color="#cbd5e1" />
             <Controls position="bottom-right" />
             <MiniMap position="bottom-left" />
           </ReactFlow>
