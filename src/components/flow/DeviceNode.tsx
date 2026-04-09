@@ -32,7 +32,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     }
   }, [isEditing]);
 
-  // Рендер хендлов: 2x2 пикселя, прозрачные, появляются при наведении (стили в CSS)
+  // Рендер хендлов: размеры управляются через CSS, здесь только позиционирование и цвет
   const renderHandles = (side: Position, count: number, positions: number[]) => {
     const handles = [];
     for (let i = 0; i < count; i++) {
@@ -40,8 +40,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       const sourceId = `source-${side}-${i}`;
       const targetId = `target-${side}-${i}`;
       let style: React.CSSProperties = {
-        width: 2,
-        height: 2,
         position: 'absolute',
         background: borderColor,
         opacity: 0,
@@ -75,10 +73,11 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     return handles;
   };
 
-  const leftHandles = renderHandles(Position.Left, 3, [0.25, 0.5, 0.75]);
-  const rightHandles = renderHandles(Position.Right, 3, [0.25, 0.5, 0.75]);
-  const topHandles = renderHandles(Position.Top, 2, [0.33, 0.66]);
-  const bottomHandles = renderHandles(Position.Bottom, 2, [0.33, 0.66]);
+  // Хендлы размещаем на границах: 0, 0.5, 1 для левой/правой сторон, 0, 1 для верхней/нижней
+  const leftHandles = renderHandles(Position.Left, 3, [0, 0.5, 1]);
+  const rightHandles = renderHandles(Position.Right, 3, [0, 0.5, 1]);
+  const topHandles = renderHandles(Position.Top, 2, [0, 1]);
+  const bottomHandles = renderHandles(Position.Bottom, 2, [0, 1]);
 
   return (
     <div
@@ -89,13 +88,14 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         padding: '8px 12px',
         minWidth: '160px',
         minHeight: '80px',
-        boxShadow: selected ? '0 0 0 2px #2563eb, 0 4px 12px rgba(0,0,0,0.15)' : '0 4px 6px rgba(0,0,0,0.1)',
+        boxShadow: selected
+          ? '0 0 0 2px #2563eb, 0 4px 12px rgba(0,0,0,0.15)'
+          : '0 4px 6px rgba(0,0,0,0.1)',
         cursor: 'grab',
         position: 'relative',
         width: data.width || 'auto',
         height: data.height || 'auto',
-        resize: 'both',
-        overflow: 'auto',
+        // Убираем resize и overflow, чтобы не мешать соединениям и не создавать скроллбары
       }}
     >
       {leftHandles}
@@ -111,7 +111,15 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         color={borderColor}
         style={{ background: 'transparent', border: 'none' }}
       />
-      <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div
+        style={{
+          fontWeight: 'bold',
+          marginBottom: '6px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+        }}
+      >
         <i className={data.icon} style={{ fontSize: '14px', width: '16px' }}></i>
         <span style={{ cursor: 'pointer' }} onClick={() => setIsEditing(true)}>
           {data.label}
