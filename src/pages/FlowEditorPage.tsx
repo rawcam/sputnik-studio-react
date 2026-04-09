@@ -396,7 +396,6 @@ const FlowEditor: React.FC = () => {
             onNodeContextMenu={onNodeContextMenu}
             fitView
             attributionPosition="bottom-left"
-            colorMode="light"
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             <Controls position="bottom-right" />
@@ -421,19 +420,25 @@ const FlowEditor: React.FC = () => {
         >
           <div
             onClick={() => handleContextMenuAction('edit')}
-            style={{ padding: '4px 12px', cursor: 'pointer', ':hover': { background: '#f0f0f0' } }}
+            style={{ padding: '4px 12px', cursor: 'pointer' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             ✏️ Редактировать
           </div>
           <div
             onClick={() => handleContextMenuAction('duplicate')}
-            style={{ padding: '4px 12px', cursor: 'pointer', ':hover': { background: '#f0f0f0' } }}
+            style={{ padding: '4px 12px', cursor: 'pointer' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             📋 Дублировать
           </div>
           <div
             onClick={() => handleContextMenuAction('delete')}
-            style={{ padding: '4px 12px', cursor: 'pointer', ':hover': { background: '#f0f0f0' } }}
+            style={{ padding: '4px 12px', cursor: 'pointer' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             🗑️ Удалить
           </div>
