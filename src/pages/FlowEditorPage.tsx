@@ -346,28 +346,68 @@ const FlowEditor: React.FC = () => {
       </div>
 
       {/* Основная область + боковая панель */}
-      <div style={{ flex: 1, display: 'flex' }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <ReactFlowProvider>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              nodeTypes={nodeTypes}
-              onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
-              onNodeContextMenu={onNodeContextMenu}
-              fitView
-              snapToGrid={gridSettings.snapToGrid}
-              snapGrid={gridSettings.snapGrid}
-            >
-              <Background variant={gridSettings.variant} gap={gridSettings.gap} color="#cbd5e1" />
-              <Controls />
-              <MiniMap />
-            </ReactFlow>
-          </ReactFlowProvider>
-        </div>
+            <div style={{ flex: 1, position: 'relative' }}>
+        <ReactFlowProvider>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
+            onNodeContextMenu={onNodeContextMenu}
+            fitView
+            snapToGrid={gridSettings.snapToGrid}
+            snapGrid={gridSettings.snapGrid}
+            onEdgesDelete={(deletedEdges) => setEdges((eds) => eds.filter(e => !deletedEdges.some(d => d.id === e.id)))}
+            edgeTypes={{
+              default: (props) => {
+                const { id, sourceX, sourceY, targetX, targetY, selected } = props;
+                const edge = edges.find(e => e.id === id);
+                const edgeLabel = edge?.label || edge?.data?.cableType || '';
+
+                const midX = (sourceX + targetX) / 2;
+                const midY = (sourceY + targetY) / 2;
+
+                return (
+                  <>
+                    <path
+                      id={id}
+                      className="react-flow__edge-path"
+                      d={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
+                      style={{ stroke: selected ? '#ef4444' : '#2563eb', strokeWidth: selected ? 3 : 2 }}
+                      markerEnd="url(#arrow)"
+                    />
+                    {edgeLabel && (
+                      <text x={midX} y={midY - 10} fill="#2563eb" fontSize="10" textAnchor="middle">
+                        {edgeLabel}
+                      </text>
+                    )}
+                    {selected && (
+                      <foreignObject x={midX - 12} y={midY - 12} width={24} height={24}>
+                        <button
+                          className="edge-delete-button nodrag"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEdges((eds) => eds.filter(e => e.id !== id));
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </foreignObject>
+                    )}
+                  </>
+                );
+              },
+            }}
+          >
+            <Background variant={gridSettings.variant} gap={gridSettings.gap} color="#cbd5e1" />
+            <Controls />
+            <MiniMap />
+          </ReactFlow>
+        </ReactFlowProvider>
+      </div>
         <div style={{ width: '260px', background: 'white', borderLeft: '1px solid #e2e8f0', overflowY: 'auto' }}>
           <InformerPanel nodes={nodes} edges={edges} />
         </div>
