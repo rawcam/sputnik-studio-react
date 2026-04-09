@@ -1,0 +1,26 @@
+/* Скрываем хендлы по умолчанию, показываем при наведении на ноду */
+.react-flow__node:hover .react-flow__handle {
+  opacity: 1 !important;
+}
+.react-flow__handle {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  background-color: #2563eb;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid white;
+}
+/* Для удобства можно сделать зону клика больше */
+.react-flow__handle::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  top: -2px;
+  left: -2px;
+}
+/* Настройки сетки (будут меняться динамически через React, но базовые стили) */
+.react-flow__background {
+  background-color: #f9fafb;
+}
