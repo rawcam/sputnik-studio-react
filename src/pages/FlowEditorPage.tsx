@@ -28,7 +28,6 @@ const deviceTypes = [
   { type: 'Дисплей', icon: 'fa-tv', defaultLatency: 8, defaultPower: 120 },
 ];
 
-// Загрузка настроек сетки из localStorage
 const loadGridSettings = () => {
   const saved = localStorage.getItem('flow_grid_settings');
   if (saved) {
@@ -59,7 +58,6 @@ const FlowEditor: React.FC = () => {
   const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema } =
     useFlowSchemas();
 
-  // Сохранение настроек сетки
   const saveGridSettings = (newSettings: any) => {
     setGridSettings(newSettings);
     localStorage.setItem('flow_grid_settings', JSON.stringify(newSettings));
@@ -77,7 +75,6 @@ const FlowEditor: React.FC = () => {
     saveGridSettings({ ...gridSettings, snapToGrid: snap });
   };
 
-  // Загрузка начальной демо-схемы
   useEffect(() => {
     if (schemas.length === 0 && nodes.length === 0) {
       const demoNodes: Node<DeviceNodeData>[] = [
@@ -189,6 +186,7 @@ const FlowEditor: React.FC = () => {
 
   const onConnect = useCallback(
     (params: Connection) => {
+      console.log('onConnect params:', params);
       if (params.source && params.target) {
         const newEdge: Edge = {
           id: `e-${params.source}-${params.target}-${Date.now()}`,
@@ -321,11 +319,7 @@ const FlowEditor: React.FC = () => {
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {/* Кнопка настроек сетки */}
           <div style={{ position: 'relative' }}>
-            <button
-              className="add-node-btn"
-              title="Настройки сетки"
-              onClick={() => setShowSettings(!showSettings)}
-            >
+            <button className="add-node-btn" title="Настройки сетки" onClick={() => setShowSettings(!showSettings)}>
               ⚙️
             </button>
             {showSettings && (
@@ -436,12 +430,7 @@ const FlowEditor: React.FC = () => {
             snapGrid={gridSettings.snapGrid}
             connectionLineStyle={{ stroke: '#2563eb', strokeWidth: 2 }}
           >
-            <Background
-              variant={gridSettings.variant}
-              gap={gridSettings.gap}
-              size={1}
-              color="#cbd5e1"
-            />
+            <Background variant={gridSettings.variant} gap={gridSettings.gap} size={1} color="#cbd5e1" />
             <Controls position="bottom-right" />
             <MiniMap position="bottom-left" />
           </ReactFlow>
@@ -489,12 +478,7 @@ const FlowEditor: React.FC = () => {
         </div>
       )}
 
-      <EditNodeModal
-        isOpen={showModal}
-        node={editingNode}
-        onClose={() => setShowModal(false)}
-        onSave={handleNodeUpdate}
-      />
+      <EditNodeModal isOpen={showModal} node={editingNode} onClose={() => setShowModal(false)} onSave={handleNodeUpdate} />
     </div>
   );
 };
