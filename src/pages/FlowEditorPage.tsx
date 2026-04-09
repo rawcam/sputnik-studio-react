@@ -17,7 +17,7 @@ import 'reactflow/dist/style.css';
 import DeviceNode from '../components/flow/DeviceNode';
 import EditNodeModal from '../components/flow/EditNodeModal';
 import { useFlowSchemas } from '../hooks/useFlowSchemas';
-import { DeviceNodeData, SavedSchema } from '../types/flowTypes';
+import { DeviceNodeData } from '../types/flowTypes';
 
 const nodeTypes = { deviceNode: DeviceNode };
 
