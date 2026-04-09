@@ -17,62 +17,68 @@ import 'reactflow/dist/style.css';
 import DeviceNode from '../components/flow/DeviceNode';
 import EditNodeModal from '../components/flow/EditNodeModal';
 import { useFlowSchemas } from '../hooks/useFlowSchemas';
-import { DeviceNodeData } from '../types/flowTypes';
+import { DeviceNodeData, SavedSchema } from '../types/flowTypes';
 
 const nodeTypes = { deviceNode: DeviceNode };
 
 const FlowEditor: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState<DeviceNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; nodeId: string | null }>({
-    visible: false, x: 0, y: 0, nodeId: null,
-  });
   const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; nodeId: string | null }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    nodeId: null,
+  });
 
-  const {
-    schemas,
-    currentSchemaId,
-    schemaName,
-    setSchemaName,
-    saveCurrentSchema,
-    loadSchema,
-    newSchema,
-  } = useFlowSchemas();
+  const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema } =
+    useFlowSchemas();
 
-  // Загрузка схемы при выборе
-  const handleLoadSchema = (id: string) => {
-    const data = loadSchema(id);
-    if (data) {
-      setNodes(data.nodes);
-      setEdges(data.edges);
+  // Загрузка начальной демо-схемы (если нет сохранённых)
+  useEffect(() => {
+    if (schemas.length === 0 && nodes.length === 0) {
+      const demoNodes: Node<DeviceNodeData>[] = [
+        {
+          id: '1',
+          type: 'deviceNode',
+          position: { x: 100, y: 100 },
+          data: { label: 'Источник', icon: 'fa-camera', latency: 5, power: 50 },
+        },
+        {
+          id: '2',
+          type: 'deviceNode',
+          position: { x: 400, y: 100 },
+          data: { label: 'Коммутатор', icon: 'fa-network-wired', latency: 2, power: 30, poe: '802.3at' },
+        },
+        {
+          id: '3',
+          type: 'deviceNode',
+          position: { x: 700, y: 100 },
+          data: { label: 'Дисплей', icon: 'fa-tv', latency: 8, power: 120 },
+        },
+      ];
+      setNodes(demoNodes);
+      setEdges([]);
     }
-  };
+  }, [schemas]);
 
-  // Создание новой схемы
-  const handleNewSchema = () => {
-    const { nodes: emptyNodes, edges: emptyEdges } = newSchema();
-    setNodes(emptyNodes);
-    setEdges(emptyEdges);
-  };
-
-  // Сохранение
-  const handleSave = () => {
-    saveCurrentSchema(nodes, edges);
-  };
-
-  // Добавление ноды
   const addNode = (type: string, icon: string) => {
     const newNode: Node<DeviceNodeData> = {
       id: Date.now().toString(),
       type: 'deviceNode',
       position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
-      data: { label: type, icon, latency: 0, power: 0 },
+      data: {
+        label: type,
+        icon,
+        latency: 0,
+        power: 0,
+      },
     };
     setNodes((nds) => nds.concat(newNode));
   };
 
-  // Двойной клик по ноде
   const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node<DeviceNodeData>) => {
     setEditingNode(node);
     setShowModal(true);
@@ -80,13 +86,14 @@ const FlowEditor: React.FC = () => {
 
   const handleNodeUpdate = (updatedData: Partial<DeviceNodeData>) => {
     if (editingNode) {
-      setNodes(nds => nds.map(n => n.id === editingNode.id ? { ...n, data: { ...n.data, ...updatedData } } : n));
+      setNodes((nds) =>
+        nds.map((n) => (n.id === editingNode.id ? { ...n, data: { ...n.data, ...updatedData } } : n))
+      );
       setShowModal(false);
       setEditingNode(null);
     }
   };
 
-  // Контекстное меню
   const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node<DeviceNodeData>) => {
     event.preventDefault();
     setContextMenu({ visible: true, x: event.clientX, y: event.clientY, nodeId: node.id });
@@ -99,15 +106,20 @@ const FlowEditor: React.FC = () => {
   const handleContextMenuAction = (action: string) => {
     if (contextMenu.nodeId) {
       if (action === 'delete') {
-        setNodes(nds => nds.filter(n => n.id !== contextMenu.nodeId));
+        setNodes((nds) => nds.filter((n) => n.id !== contextMenu.nodeId));
+        setEdges((eds) => eds.filter((e) => e.source !== contextMenu.nodeId && e.target !== contextMenu.nodeId));
       } else if (action === 'duplicate') {
-        const nodeToDuplicate = nodes.find(n => n.id === contextMenu.nodeId);
+        const nodeToDuplicate = nodes.find((n) => n.id === contextMenu.nodeId);
         if (nodeToDuplicate) {
-          const newNode = { ...nodeToDuplicate, id: Date.now().toString(), position: { x: nodeToDuplicate.position.x + 50, y: nodeToDuplicate.position.y + 50 } };
-          setNodes(nds => nds.concat(newNode));
+          const newNode = {
+            ...nodeToDuplicate,
+            id: Date.now().toString(),
+            position: { x: nodeToDuplicate.position.x + 50, y: nodeToDuplicate.position.y + 50 },
+          };
+          setNodes((nds) => nds.concat(newNode));
         }
       } else if (action === 'edit') {
-        const node = nodes.find(n => n.id === contextMenu.nodeId);
+        const node = nodes.find((n) => n.id === contextMenu.nodeId);
         if (node) {
           setEditingNode(node);
           setShowModal(true);
@@ -117,11 +129,10 @@ const FlowEditor: React.FC = () => {
     closeContextMenu();
   };
 
-  // Удаление выделенных элементов клавишей Delete
   const onKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Delete') {
-      setNodes((nds) => nds.filter(n => !n.selected));
-      setEdges((eds) => eds.filter(e => !e.selected));
+      setNodes((nds) => nds.filter((n) => !n.selected));
+      setEdges((eds) => eds.filter((e) => !e.selected));
     }
   }, []);
 
@@ -134,26 +145,27 @@ const FlowEditor: React.FC = () => {
     };
   }, [onKeyDown]);
 
-  // Создание соединений
-  const onConnect = useCallback((params: Connection) => {
-    if (params.source && params.target) {
-      const newEdge: Edge = {
-        id: `e-${params.source}-${params.target}-${Date.now()}`,
-        source: params.source,
-        target: params.target,
-        sourceHandle: params.sourceHandle,
-        targetHandle: params.targetHandle,
-        animated: true,
-        markerEnd: { type: MarkerType.ArrowClosed },
-        label: '🔌',
-        labelStyle: { fill: '#2563eb', fontWeight: 500 },
-        style: { stroke: '#2563eb', strokeWidth: 2 },
-      };
-      setEdges((eds) => addEdge(newEdge, eds));
-    }
-  }, [setEdges]);
+  const onConnect = useCallback(
+    (params: Connection) => {
+      if (params.source && params.target) {
+        const newEdge: Edge = {
+          id: `e-${params.source}-${params.target}-${Date.now()}`,
+          source: params.source,
+          target: params.target,
+          sourceHandle: params.sourceHandle,
+          targetHandle: params.targetHandle,
+          animated: true,
+          markerEnd: { type: MarkerType.ArrowClosed },
+          label: '🔌',
+          labelStyle: { fill: '#2563eb', fontWeight: 500 },
+          style: { stroke: '#2563eb', strokeWidth: 2 },
+        };
+        setEdges((eds) => addEdge(newEdge, eds));
+      }
+    },
+    [setEdges]
+  );
 
-  // Экспорт в SVG
   const exportSVG = async () => {
     const element = document.querySelector('.react-flow');
     if (element) {
@@ -170,10 +182,37 @@ const FlowEditor: React.FC = () => {
     }
   };
 
+  const handleLoadSchema = (id: string) => {
+    const schema = loadSchema(id);
+    if (schema) {
+      setNodes(schema.nodes);
+      setEdges(schema.edges);
+    }
+  };
+
+  const handleNewSchema = () => {
+    const { nodes: emptyNodes, edges: emptyEdges } = newSchema();
+    setNodes(emptyNodes);
+    setEdges(emptyEdges);
+  };
+
+  const handleSaveSchema = () => {
+    saveCurrentSchema(nodes, edges);
+  };
+
   return (
     <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', background: '#f5f7fb' }}>
-      {/* Панель инструментов */}
-      <div style={{ padding: '8px 16px', background: 'white', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div
+        style={{
+          padding: '8px 16px',
+          background: 'white',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <select
             value={currentSchemaId || ''}
@@ -181,7 +220,11 @@ const FlowEditor: React.FC = () => {
             style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: 'white', fontSize: '14px' }}
           >
             <option value="">-- Выберите схему --</option>
-            {schemas.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {schemas.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
           </select>
           <input
             type="text"
@@ -190,18 +233,90 @@ const FlowEditor: React.FC = () => {
             placeholder="Название схемы"
             style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', width: '200px' }}
           />
-          <button onClick={handleSave} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>💾 Сохранить</button>
-          <button onClick={handleNewSchema} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>📄 Новая</button>
-          <button onClick={exportSVG} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>📷 Экспорт SVG</button>
+          <button
+            onClick={handleSaveSchema}
+            style={{
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            💾 Сохранить
+          </button>
+          <button
+            onClick={handleNewSchema}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            📄 Новая
+          </button>
+          <button
+            onClick={exportSVG}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            📷 Экспорт SVG
+          </button>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => addNode('Источник', 'fa-camera')} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>➕ Источник</button>
-          <button onClick={() => addNode('Коммутатор', 'fa-network-wired')} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>➕ Коммутатор</button>
-          <button onClick={() => addNode('Дисплей', 'fa-tv')} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>➕ Дисплей</button>
+          <button
+            onClick={() => addNode('Источник', 'fa-camera')}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            ➕ Источник
+          </button>
+          <button
+            onClick={() => addNode('Коммутатор', 'fa-network-wired')}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            ➕ Коммутатор
+          </button>
+          <button
+            onClick={() => addNode('Дисплей', 'fa-tv')}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            ➕ Дисплей
+          </button>
         </div>
       </div>
 
-      {/* Холст React Flow */}
       <div style={{ flex: 1, position: 'relative' }}>
         <ReactFlowProvider>
           <ReactFlow
@@ -215,6 +330,9 @@ const FlowEditor: React.FC = () => {
             onNodeContextMenu={onNodeContextMenu}
             fitView
             attributionPosition="bottom-left"
+            snapToGrid={true}
+            snapGrid={[15, 15]}
+            connectionLineStyle={{ stroke: '#2563eb', strokeWidth: 2 }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             <Controls position="bottom-right" />
@@ -223,7 +341,6 @@ const FlowEditor: React.FC = () => {
         </ReactFlowProvider>
       </div>
 
-      {/* Контекстное меню */}
       {contextMenu.visible && (
         <div
           style={{
@@ -265,7 +382,6 @@ const FlowEditor: React.FC = () => {
         </div>
       )}
 
-      {/* Модальное окно редактирования */}
       <EditNodeModal
         isOpen={showModal}
         node={editingNode}
