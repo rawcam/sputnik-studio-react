@@ -5,6 +5,7 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { CalculationsPage } from './pages/CalculationsPage'
 import { SpecificationsListPage } from './pages/SpecificationsListPage'
 import { SpecificationPage } from './pages/SpecificationPage'
+import FlowEditorPage from './pages/FlowEditorPage'
 import './styles/global.css'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
               <Route path="/specifications" element={<SpecificationsListPage />} />
               <Route path="/specification/:id" element={<SpecificationPage />} />
               <Route path="/specification" element={<SpecificationPage />} />
+              <Route path="/flow-editor" element={<FlowEditorPage />} />
             </Routes>
           </main>
         </div>
