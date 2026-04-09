@@ -32,50 +32,56 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     }
   }, [isEditing]);
 
-  // Вспомогательная функция для создания хендлов на стороне
-  const renderHandles = (side: Position, count: number, offset: number[]) => {
+  // Функция для рендера хендлов на одной стороне
+  const renderHandles = (side: Position, count: number, positions: number[]) => {
     const handles = [];
     for (let i = 0; i < count; i++) {
-      const positionPercent = offset[i];
-      const idSuffix = `${side}-${i}`;
-      // Определяем стиль позиционирования в зависимости от стороны
-      let style: React.CSSProperties = { background: borderColor, width: 6, height: 6 };
+      const pos = positions[i];
+      const handleId = `${side}-${i}`;
+      let style: React.CSSProperties = {
+        background: borderColor,
+        width: 6,
+        height: 6,
+        opacity: 0.6,
+        transition: 'opacity 0.2s',
+        zIndex: 10,
+      };
       if (side === Position.Left || side === Position.Right) {
-        style.top = `${positionPercent * 100}%`;
+        style.top = `${pos * 100}%`;
         style.transform = 'translateY(-50%)';
       } else {
-        style.left = `${positionPercent * 100}%`;
+        style.left = `${pos * 100}%`;
         style.transform = 'translateX(-50%)';
       }
       style.position = 'absolute';
-      // Добавляем source и target хендлы для каждой точки
+      
       handles.push(
         <Handle
-          key={`source-${idSuffix}`}
+          key={`source-${handleId}`}
           type="source"
           position={side}
-          id={`source-${idSuffix}`}
+          id={`source-${handleId}`}
           style={style}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
         />,
         <Handle
-          key={`target-${idSuffix}`}
+          key={`target-${handleId}`}
           type="target"
           position={side}
-          id={`target-${idSuffix}`}
+          id={`target-${handleId}`}
           style={style}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
         />
       );
     }
     return handles;
   };
 
-  // Левая сторона: 3 точки (25%, 50%, 75%)
   const leftHandles = renderHandles(Position.Left, 3, [0.25, 0.5, 0.75]);
-  // Правая сторона: 3 точки
   const rightHandles = renderHandles(Position.Right, 3, [0.25, 0.5, 0.75]);
-  // Верхняя сторона: 2 точки (33%, 66%)
   const topHandles = renderHandles(Position.Top, 2, [0.33, 0.66]);
-  // Нижняя сторона: 2 точки
   const bottomHandles = renderHandles(Position.Bottom, 2, [0.33, 0.66]);
 
   return (
@@ -92,8 +98,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         position: 'relative',
         width: data.width || 'auto',
         height: data.height || 'auto',
-        resize: 'both',
-        overflow: 'auto',
       }}
     >
       {leftHandles}
@@ -107,6 +111,19 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         minHeight={80}
         color={borderColor}
         style={{ background: 'transparent', border: 'none' }}
+        onResizeStart={() => {
+          // При начале ресайза временно отключаем перемещение ноды
+          const nodeElement = document.querySelector(`[data-id="${id}"]`);
+          if (nodeElement) {
+            (nodeElement as HTMLElement).style.cursor = 'nw-resize';
+          }
+        }}
+        onResizeEnd={() => {
+          const nodeElement = document.querySelector(`[data-id="${id}"]`);
+          if (nodeElement) {
+            (nodeElement as HTMLElement).style.cursor = 'grab';
+          }
+        }}
       />
       <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
         <i className={data.icon} style={{ fontSize: '14px', width: '16px' }}></i>
