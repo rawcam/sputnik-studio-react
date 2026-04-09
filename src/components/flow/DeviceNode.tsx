@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from 'reactflow';
 import { DeviceNodeData, ConnectorType, ProtocolType } from '../../types/flowTypes';
 
-// Цвет хендла по типу разъёма и протоколу
 const getConnectorColor = (connector: ConnectorType, protocol: ProtocolType): string => {
   if (connector === 'HDMI') return '#f97316';
   if (connector === 'DisplayPort') return '#1e293b';
@@ -59,6 +58,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
   };
 
   const maxRows = Math.max(data.inputs.length, data.outputs.length);
+  const rowHeight = 22; // px
 
   return (
     <div
@@ -66,7 +66,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         background: 'white',
         border: `2px solid ${borderColor}`,
         borderRadius: '12px',
-        padding: '8px 12px',
+        padding: '8px 0 4px 0',
         minWidth: '180px',
         boxShadow: selected
           ? '0 0 0 2px #2563eb, 0 4px 12px rgba(0,0,0,0.15)'
@@ -86,7 +86,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
           alignItems: 'center',
           gap: '6px',
           borderBottom: '1px solid #e2e8f0',
-          paddingBottom: '4px',
+          padding: '0 12px 4px 12px',
         }}
       >
         <i className={data.icon} style={{ fontSize: '14px', width: '16px' }}></i>
@@ -95,13 +95,11 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         </span>
       </div>
 
-      {/* Таблица интерфейсов */}
-      <div style={{ fontSize: '10px', lineHeight: '1.5', color: '#334155' }}>
+      {/* Строки интерфейсов */}
+      <div style={{ fontSize: '10px', lineHeight: '1.4', color: '#334155', padding: '0 12px' }}>
         {Array.from({ length: maxRows }).map((_, rowIndex) => {
           const input = data.inputs[rowIndex];
           const output = data.outputs[rowIndex];
-          const rowHeight = 20; // px
-          const topOffset = 40 + rowIndex * rowHeight; // 40px — примерно высота заголовка + отступы
 
           return (
             <div
@@ -110,12 +108,12 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                minHeight: rowHeight,
+                height: rowHeight,
                 position: 'relative',
               }}
             >
-              {/* Вход (слева) */}
-              <div style={{ flex: 1, textAlign: 'left', paddingRight: '8px' }}>
+              {/* Вход (левая сторона) */}
+              <div style={{ flex: 1, textAlign: 'left' }}>
                 {input && (
                   <>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -127,12 +125,12 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       id={input.id}
                       style={{
                         background: getConnectorColor(input.connector, input.protocol),
-                        width: '10px',
-                        height: '10px',
-                        border: '1px solid white',
-                        position: 'absolute',
-                        left: '-7px',
-                        top: `${topOffset}px`,
+                        width: '12px',
+                        height: '4px',
+                        borderRadius: '2px',
+                        border: 'none',
+                        top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
+                        left: 0,
                         transform: 'translateY(-50%)',
                       }}
                     />
@@ -140,8 +138,8 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                 )}
               </div>
 
-              {/* Выход (справа) */}
-              <div style={{ flex: 1, textAlign: 'right', paddingLeft: '8px' }}>
+              {/* Выход (правая сторона) */}
+              <div style={{ flex: 1, textAlign: 'right' }}>
                 {output && (
                   <>
                     <Handle
@@ -150,12 +148,12 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       id={output.id}
                       style={{
                         background: getConnectorColor(output.connector, output.protocol),
-                        width: '10px',
-                        height: '10px',
-                        border: '1px solid white',
-                        position: 'absolute',
-                        right: '-7px',
-                        top: `${topOffset}px`,
+                        width: '12px',
+                        height: '4px',
+                        borderRadius: '2px',
+                        border: 'none',
+                        top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
+                        right: 0,
                         transform: 'translateY(-50%)',
                       }}
                     />
@@ -178,7 +176,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
             fontSize: '9px',
             color: '#64748b',
             borderTop: '1px solid #e2e8f0',
-            paddingTop: '4px',
+            padding: '4px 12px 0 12px',
           }}
         >
           {data.totalPowerConsumption && <span>⚡ {data.totalPowerConsumption} Вт </span>}
