@@ -32,7 +32,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     }
   }, [isEditing]);
 
-  // Функция для рендера хендлов на одной стороне
+  // Рендер хендлов (без inline-стилей opacity, полагаемся на CSS)
   const renderHandles = (side: Position, count: number, positions: number[]) => {
     const handles = [];
     for (let i = 0; i < count; i++) {
@@ -40,11 +40,9 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       const handleId = `${side}-${i}`;
       let style: React.CSSProperties = {
         background: borderColor,
-        width: 6,
-        height: 6,
-        opacity: 0.6,
-        transition: 'opacity 0.2s',
-        zIndex: 10,
+        width: 8,
+        height: 8,
+        position: 'absolute',
       };
       if (side === Position.Left || side === Position.Right) {
         style.top = `${pos * 100}%`;
@@ -53,8 +51,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         style.left = `${pos * 100}%`;
         style.transform = 'translateX(-50%)';
       }
-      style.position = 'absolute';
-      
       handles.push(
         <Handle
           key={`source-${handleId}`}
@@ -62,8 +58,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
           position={side}
           id={`source-${handleId}`}
           style={style}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
         />,
         <Handle
           key={`target-${handleId}`}
@@ -71,8 +65,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
           position={side}
           id={`target-${handleId}`}
           style={style}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
         />
       );
     }
@@ -109,21 +101,9 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         nodeId={id}
         minWidth={120}
         minHeight={80}
+        keepAspectRatio={false}
         color={borderColor}
         style={{ background: 'transparent', border: 'none' }}
-        onResizeStart={() => {
-          // При начале ресайза временно отключаем перемещение ноды
-          const nodeElement = document.querySelector(`[data-id="${id}"]`);
-          if (nodeElement) {
-            (nodeElement as HTMLElement).style.cursor = 'nw-resize';
-          }
-        }}
-        onResizeEnd={() => {
-          const nodeElement = document.querySelector(`[data-id="${id}"]`);
-          if (nodeElement) {
-            (nodeElement as HTMLElement).style.cursor = 'grab';
-          }
-        }}
       />
       <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
         <i className={data.icon} style={{ fontSize: '14px', width: '16px' }}></i>
