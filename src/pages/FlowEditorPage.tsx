@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -15,15 +15,21 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import DeviceNode from '../components/flow/DeviceNode';
+import EditNodeModal from '../components/flow/EditNodeModal';
 import { useFlowSchemas } from '../hooks/useFlowSchemas';
-import { DeviceNodeData, SavedSchema } from '../types/flowTypes';
-import { NodeTypes } from 'reactflow';
+import { DeviceNodeData } from '../types/flowTypes';
 
-const nodeTypes: NodeTypes = { deviceNode: DeviceNode };
+const nodeTypes = { deviceNode: DeviceNode };
 
 const FlowEditor: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState<DeviceNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; nodeId: string | null }>({
+    visible: false, x: 0, y: 0, nodeId: null,
+  });
+  const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
+  const [showModal, setShowModal] = useState(false);
+
   const {
     schemas,
     currentSchemaId,
@@ -31,7 +37,7 @@ const FlowEditor: React.FC = () => {
     setSchemaName,
     saveCurrentSchema,
     loadSchema,
-    newSchema: newEmptySchema,
+    newSchema,
   } = useFlowSchemas();
 
   // Загрузка схемы при выборе
@@ -43,9 +49,9 @@ const FlowEditor: React.FC = () => {
     }
   };
 
-  // Новая схема
+  // Создание новой схемы
   const handleNewSchema = () => {
-    const { nodes: emptyNodes, edges: emptyEdges } = newEmptySchema();
+    const { nodes: emptyNodes, edges: emptyEdges } = newSchema();
     setNodes(emptyNodes);
     setEdges(emptyEdges);
   };
@@ -61,17 +67,74 @@ const FlowEditor: React.FC = () => {
       id: Date.now().toString(),
       type: 'deviceNode',
       position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
-      data: {
-        label: type,
-        icon,
-        latency: 0,
-        power: 0,
-      },
+      data: { label: type, icon, latency: 0, power: 0 },
     };
     setNodes((nds) => nds.concat(newNode));
   };
 
-  // Создание ребра
+  // Двойной клик по ноде
+  const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node<DeviceNodeData>) => {
+    setEditingNode(node);
+    setShowModal(true);
+  }, []);
+
+  const handleNodeUpdate = (updatedData: Partial<DeviceNodeData>) => {
+    if (editingNode) {
+      setNodes(nds => nds.map(n => n.id === editingNode.id ? { ...n, data: { ...n.data, ...updatedData } } : n));
+      setShowModal(false);
+      setEditingNode(null);
+    }
+  };
+
+  // Контекстное меню
+  const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node<DeviceNodeData>) => {
+    event.preventDefault();
+    setContextMenu({ visible: true, x: event.clientX, y: event.clientY, nodeId: node.id });
+  }, []);
+
+  const closeContextMenu = () => {
+    setContextMenu({ visible: false, x: 0, y: 0, nodeId: null });
+  };
+
+  const handleContextMenuAction = (action: string) => {
+    if (contextMenu.nodeId) {
+      if (action === 'delete') {
+        setNodes(nds => nds.filter(n => n.id !== contextMenu.nodeId));
+      } else if (action === 'duplicate') {
+        const nodeToDuplicate = nodes.find(n => n.id === contextMenu.nodeId);
+        if (nodeToDuplicate) {
+          const newNode = { ...nodeToDuplicate, id: Date.now().toString(), position: { x: nodeToDuplicate.position.x + 50, y: nodeToDuplicate.position.y + 50 } };
+          setNodes(nds => nds.concat(newNode));
+        }
+      } else if (action === 'edit') {
+        const node = nodes.find(n => n.id === contextMenu.nodeId);
+        if (node) {
+          setEditingNode(node);
+          setShowModal(true);
+        }
+      }
+    }
+    closeContextMenu();
+  };
+
+  // Удаление выделенных элементов клавишей Delete
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Delete') {
+      setNodes((nds) => nds.filter(n => !n.selected));
+      setEdges((eds) => eds.filter(e => !e.selected));
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('click', closeContextMenu);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('click', closeContextMenu);
+    };
+  }, [onKeyDown]);
+
+  // Создание соединений
   const onConnect = useCallback((params: Connection) => {
     if (params.source && params.target) {
       const newEdge: Edge = {
@@ -90,7 +153,7 @@ const FlowEditor: React.FC = () => {
     }
   }, [setEdges]);
 
-  // Экспорт SVG
+  // Экспорт в SVG
   const exportSVG = async () => {
     const element = document.querySelector('.react-flow');
     if (element) {
@@ -109,6 +172,7 @@ const FlowEditor: React.FC = () => {
 
   return (
     <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', background: '#f5f7fb' }}>
+      {/* Панель инструментов */}
       <div style={{ padding: '8px 16px', background: 'white', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <select
@@ -137,6 +201,7 @@ const FlowEditor: React.FC = () => {
         </div>
       </div>
 
+      {/* Холст React Flow */}
       <div style={{ flex: 1, position: 'relative' }}>
         <ReactFlowProvider>
           <ReactFlow
@@ -146,6 +211,8 @@ const FlowEditor: React.FC = () => {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
+            onNodeDoubleClick={onNodeDoubleClick}
+            onNodeContextMenu={onNodeContextMenu}
             fitView
             attributionPosition="bottom-left"
           >
@@ -155,6 +222,56 @@ const FlowEditor: React.FC = () => {
           </ReactFlow>
         </ReactFlowProvider>
       </div>
+
+      {/* Контекстное меню */}
+      {contextMenu.visible && (
+        <div
+          style={{
+            position: 'fixed',
+            top: contextMenu.y,
+            left: contextMenu.x,
+            background: 'white',
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            padding: '4px 0',
+            zIndex: 1000,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          }}
+        >
+          <div
+            onClick={() => handleContextMenuAction('edit')}
+            style={{ padding: '6px 16px', cursor: 'pointer', fontSize: '14px' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+          >
+            ✏️ Редактировать
+          </div>
+          <div
+            onClick={() => handleContextMenuAction('duplicate')}
+            style={{ padding: '6px 16px', cursor: 'pointer', fontSize: '14px' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+          >
+            📋 Дублировать
+          </div>
+          <div
+            onClick={() => handleContextMenuAction('delete')}
+            style={{ padding: '6px 16px', cursor: 'pointer', fontSize: '14px' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+          >
+            🗑️ Удалить
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно редактирования */}
+      <EditNodeModal
+        isOpen={showModal}
+        node={editingNode}
+        onClose={() => setShowModal(false)}
+        onSave={handleNodeUpdate}
+      />
     </div>
   );
 };
