@@ -337,7 +337,7 @@ const FlowEditor: React.FC = () => {
         link.click();
       } catch (err) {
         console.error(err);
-        alert('Ошибка экспорта: ' + err.message);
+        alert('Ошибка экспорта: ' + (err as Error).message);
       }
     }
   };
