@@ -43,7 +43,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     );
   };
 
-  // Поиск интерфейса питания (не PoE)
   const powerInterface = [...data.inputs, ...data.outputs].find(
     (iface) =>
       (iface.connector === 'IEC' || iface.connector === 'PowerCON' || iface.protocol === 'Power') &&
@@ -118,7 +117,14 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       id={input.id}
                       style={{
                         background: borderColor,
+                        width: '14px',
+                        height: '2px',
+                        borderRadius: 0,
+                        border: 'none',
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
+                        left: -8,
+                        transform: 'translateY(-50%)',
+                        zIndex: 10,
                       }}
                     />
                   </>
@@ -135,7 +141,14 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       id={output.id}
                       style={{
                         background: borderColor,
+                        width: '14px',
+                        height: '2px',
+                        borderRadius: 0,
+                        border: 'none',
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
+                        right: -8,
+                        transform: 'translateY(-50%)',
+                        zIndex: 10,
                       }}
                     />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -149,7 +162,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         })}
       </div>
 
-      {/* Питание (AC/DC) — теперь в правом нижнем углу */}
+      {/* Питание (AC/DC) — справа */}
       {powerInterface && (
         <div
           style={{
