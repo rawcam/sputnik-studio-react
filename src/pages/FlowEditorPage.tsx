@@ -187,21 +187,21 @@ const FlowEditor: React.FC = () => {
   const onConnect = useCallback(
     (params: Connection) => {
       console.log('onConnect params:', params);
-      if (params.source && params.target) {
-        const newEdge: Edge = {
-          id: `e-${params.source}-${params.target}-${Date.now()}`,
-          source: params.source,
-          target: params.target,
-          sourceHandle: params.sourceHandle,
-          targetHandle: params.targetHandle,
-          animated: true,
-          markerEnd: { type: MarkerType.ArrowClosed },
-          label: '🔌',
-          labelStyle: { fill: '#2563eb', fontWeight: 500 },
-          style: { stroke: '#2563eb', strokeWidth: 2 },
-        };
-        setEdges((eds) => addEdge(newEdge, eds));
-      }
+      // Убедимся, что source и target заданы
+      if (!params.source || !params.target) return;
+      const newEdge: Edge = {
+        id: `e-${params.source}-${params.target}-${Date.now()}`,
+        source: params.source,
+        target: params.target,
+        sourceHandle: params.sourceHandle || undefined,
+        targetHandle: params.targetHandle || undefined,
+        animated: true,
+        markerEnd: { type: MarkerType.ArrowClosed },
+        label: '🔌',
+        labelStyle: { fill: '#2563eb', fontWeight: 500 },
+        style: { stroke: '#2563eb', strokeWidth: 2 },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
     },
     [setEdges]
   );
@@ -317,7 +317,6 @@ const FlowEditor: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {/* Кнопка настроек сетки */}
           <div style={{ position: 'relative' }}>
             <button className="add-node-btn" title="Настройки сетки" onClick={() => setShowSettings(!showSettings)}>
               ⚙️
@@ -357,7 +356,6 @@ const FlowEditor: React.FC = () => {
             )}
           </div>
 
-          {/* Кнопка добавления устройства */}
           <div style={{ position: 'relative' }}>
             <button
               className="add-node-btn"
