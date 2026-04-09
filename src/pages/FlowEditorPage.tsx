@@ -15,7 +15,6 @@ import ReactFlow, {
   NodeTypes,
   NodeProps,
   NodeResizeControl,
-  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
