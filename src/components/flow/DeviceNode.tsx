@@ -32,12 +32,13 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     }
   }, [isEditing]);
 
-  // Рендер хендлов (без inline-стилей opacity, полагаемся на CSS)
+  // Рендер хендлов с уникальными id
   const renderHandles = (side: Position, count: number, positions: number[]) => {
     const handles = [];
     for (let i = 0; i < count; i++) {
       const pos = positions[i];
-      const handleId = `${side}-${i}`;
+      const sourceId = `source-${side}-${i}`;
+      const targetId = `target-${side}-${i}`;
       let style: React.CSSProperties = {
         background: borderColor,
         width: 8,
@@ -53,17 +54,17 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       }
       handles.push(
         <Handle
-          key={`source-${handleId}`}
+          key={sourceId}
           type="source"
           position={side}
-          id={`source-${handleId}`}
+          id={sourceId}
           style={style}
         />,
         <Handle
-          key={`target-${handleId}`}
+          key={targetId}
           type="target"
           position={side}
-          id={`target-${handleId}`}
+          id={targetId}
           style={style}
         />
       );
@@ -90,6 +91,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         position: 'relative',
         width: data.width || 'auto',
         height: data.height || 'auto',
+        resize: 'both',
       }}
     >
       {leftHandles}
