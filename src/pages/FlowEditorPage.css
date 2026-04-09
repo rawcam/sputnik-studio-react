@@ -1,20 +1,21 @@
 /* Стили для редактора блок-схем */
-.react-flow__node:hover .react-flow__handle {
-  opacity: 1 !important;
-  width: 8px !important;
-  height: 8px !important;
-  background-color: #2563eb;
-  border: 1px solid white;
-}
+
+/* Хендлы — по умолчанию прозрачные, появляются при наведении на ноду */
 .react-flow__handle {
   opacity: 0;
-  transition: opacity 0.15s ease, width 0.1s ease, height 0.1s ease;
-  background-color: transparent;
-  width: 2px;
-  height: 2px;
+  transition: opacity 0.15s ease;
+  background-color: #2563eb;      /* базовый цвет, может быть переопределён в компоненте */
+  width: 8px;
+  height: 8px;
+  border: 1px solid white;
   z-index: 10;
 }
-/* Увеличиваем зону клика */
+
+.react-flow__node:hover .react-flow__handle {
+  opacity: 1;
+}
+
+/* Увеличиваем зону клика для хендлов */
 .react-flow__handle::after {
   content: '';
   position: absolute;
@@ -24,17 +25,21 @@
   left: -5px;
   background: transparent;
 }
+
 .react-flow__background {
   background-color: #f9fafb;
 }
-/* Контрол ресайза – скрыт, появляется при наведении на ноду */
+
+/* Контрол ресайза — скрыт, появляется при наведении на ноду */
 .react-flow__node .react-flow__resize-control {
   opacity: 0;
   transition: opacity 0.2s;
 }
+
 .react-flow__node:hover .react-flow__resize-control {
   opacity: 1;
 }
+
 /* Квадратная кнопка с иконкой */
 .add-node-btn {
   width: 32px;
@@ -50,10 +55,12 @@
   border: 1px solid #cbd5e1;
   transition: all 0.2s;
 }
+
 .add-node-btn:hover {
   background: #e2e8f0;
   border-color: #2563eb;
 }
+
 /* Меню настроек */
 .settings-menu {
   position: absolute;
@@ -66,14 +73,17 @@
   padding: 12px;
   min-width: 200px;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
 .settings-menu label {
   display: block;
   margin-bottom: 8px;
   font-size: 13px;
 }
-.settings-menu select, .settings-menu input {
+
+.settings-menu select,
+.settings-menu input {
   width: 100%;
   margin-top: 4px;
   padding: 4px;
