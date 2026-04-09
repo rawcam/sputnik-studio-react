@@ -50,9 +50,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       !iface.poe
   );
 
-  // Суммарная PoE мощность
   const totalPoE = data.totalPoEConsumption ?? 0;
-
   const maxRows = Math.max(data.inputs.length, data.outputs.length);
 
   return (
@@ -118,7 +116,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       type="target"
                       position={Position.Left}
                       id={input.id}
-                      className="handle-left"
                       style={{
                         background: borderColor,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
@@ -136,7 +133,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       type="source"
                       position={Position.Right}
                       id={output.id}
-                      className="handle-right"
                       style={{
                         background: borderColor,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
@@ -153,7 +149,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         })}
       </div>
 
-      {/* Питание (AC/DC, не PoE) */}
+      {/* Питание (AC/DC) — теперь в правом нижнем углу */}
       {powerInterface && (
         <div
           style={{
@@ -163,6 +159,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
             borderTop: '1px solid #e2e8f0',
             padding: '4px 12px 0 12px',
             display: 'flex',
+            justifyContent: 'flex-end',
             alignItems: 'center',
             gap: '4px',
           }}
@@ -172,8 +169,8 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         </div>
       )}
 
-      {/* PoE информация */}
-      {totalPoE > 0 && (
+      {/* PoE информация — тоже справа */}
+      {totalPoE > 0 && !powerInterface && (
         <div
           style={{
             marginTop: '6px',
@@ -182,6 +179,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
             borderTop: '1px solid #e2e8f0',
             padding: '4px 12px 0 12px',
             display: 'flex',
+            justifyContent: 'flex-end',
             alignItems: 'center',
             gap: '4px',
           }}
