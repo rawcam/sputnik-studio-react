@@ -34,7 +34,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
   }, [isEditing]);
 
   // Обработчик изменения размера — сохраняет новые размеры в data ноды
-  const handleResize = (event: any, params: { width: number; height: number }) => {
+  const handleResize = (_event: any, params: { width: number; height: number }) => {
     setNodes((nds) =>
       nds.map((n) =>
         n.id === id
