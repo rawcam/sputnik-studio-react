@@ -33,7 +33,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     }
   }, [isEditing]);
 
-  // Обработчик изменения размера — сохраняет новые размеры в data ноды
   const handleResize = (_event: any, params: { width: number; height: number }) => {
     setNodes((nds) =>
       nds.map((n) =>
@@ -44,51 +43,8 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     );
   };
 
-  // Рендер хендлов — без инлайн opacity, только позиционирование и цвет фона
-  const renderHandles = (side: Position, count: number, positions: number[]) => {
-    const handles = [];
-    for (let i = 0; i < count; i++) {
-      const pos = positions[i];
-      const sourceId = `source-${side}-${i}`;
-      const targetId = `target-${side}-${i}`;
-      let style: React.CSSProperties = {
-        position: 'absolute',
-        background: borderColor,
-        transition: 'opacity 0.15s ease',
-        zIndex: 10,
-      };
-      if (side === Position.Left || side === Position.Right) {
-        style.top = `${pos * 100}%`;
-        style.transform = 'translateY(-50%)';
-      } else {
-        style.left = `${pos * 100}%`;
-        style.transform = 'translateX(-50%)';
-      }
-      handles.push(
-        <Handle
-          key={sourceId}
-          type="source"
-          position={side}
-          id={sourceId}
-          style={style}
-        />,
-        <Handle
-          key={targetId}
-          type="target"
-          position={side}
-          id={targetId}
-          style={style}
-        />
-      );
-    }
-    return handles;
-  };
-
-  const leftHandles = renderHandles(Position.Left, 3, [0, 0.5, 1]);
-  const rightHandles = renderHandles(Position.Right, 3, [0, 0.5, 1]);
-  const topHandles = renderHandles(Position.Top, 2, [0, 1]);
-  const bottomHandles = renderHandles(Position.Bottom, 2, [0, 1]);
-
+  // Временно используем стандартные хендлы React Flow без кастомных позиций
+  // Это гарантирует работоспособность соединений.
   return (
     <div
       style={{
@@ -107,11 +63,17 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         height: data.height || 'auto',
       }}
     >
-      {leftHandles}
-      {rightHandles}
-      {topHandles}
-      {bottomHandles}
+      {/* Стандартные хендлы по всем сторонам */}
+      <Handle type="target" position={Position.Left} id="left" />
+      <Handle type="source" position={Position.Left} id="left" />
+      <Handle type="target" position={Position.Right} id="right" />
+      <Handle type="source" position={Position.Right} id="right" />
+      <Handle type="target" position={Position.Top} id="top" />
+      <Handle type="source" position={Position.Top} id="top" />
+      <Handle type="target" position={Position.Bottom} id="bottom" />
+      <Handle type="source" position={Position.Bottom} id="bottom" />
 
+      {/* Контрол ресайза */}
       <NodeResizeControl
         nodeId={id}
         minWidth={120}
