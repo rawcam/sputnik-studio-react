@@ -22,18 +22,33 @@ import './FlowEditorPage.css';
 
 const nodeTypes = { deviceNode: DeviceNode };
 
-// Предопределённые типы устройств
 const deviceTypes = [
   { type: 'Источник', icon: 'fa-camera', defaultLatency: 5, defaultPower: 50 },
   { type: 'Коммутатор', icon: 'fa-network-wired', defaultLatency: 2, defaultPower: 30, defaultPoe: '802.3at' },
   { type: 'Дисплей', icon: 'fa-tv', defaultLatency: 8, defaultPower: 120 },
 ];
 
+// Загрузка настроек сетки из localStorage
+const loadGridSettings = () => {
+  const saved = localStorage.getItem('flow_grid_settings');
+  if (saved) {
+    return JSON.parse(saved);
+  }
+  return {
+    variant: BackgroundVariant.Dots,
+    gap: 15,
+    snapToGrid: true,
+    snapGrid: [15, 15],
+  };
+};
+
 const FlowEditor: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState<DeviceNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [gridSettings, setGridSettings] = useState(loadGridSettings());
   const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; nodeId: string | null }>({
     visible: false,
     x: 0,
@@ -43,6 +58,24 @@ const FlowEditor: React.FC = () => {
 
   const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema } =
     useFlowSchemas();
+
+  // Сохранение настроек сетки
+  const saveGridSettings = (newSettings: any) => {
+    setGridSettings(newSettings);
+    localStorage.setItem('flow_grid_settings', JSON.stringify(newSettings));
+  };
+
+  const updateGridVariant = (variant: BackgroundVariant) => {
+    saveGridSettings({ ...gridSettings, variant });
+  };
+
+  const updateGridGap = (gap: number) => {
+    saveGridSettings({ ...gridSettings, gap, snapGrid: [gap, gap] });
+  };
+
+  const updateSnapToGrid = (snap: boolean) => {
+    saveGridSettings({ ...gridSettings, snapToGrid: snap });
+  };
 
   // Загрузка начальной демо-схемы
   useEffect(() => {
@@ -285,8 +318,52 @@ const FlowEditor: React.FC = () => {
           </button>
         </div>
 
-        {/* Единая кнопка добавления с выпадающим меню */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {/* Кнопка настроек сетки */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="add-node-btn"
+              title="Настройки сетки"
+              onClick={() => setShowSettings(!showSettings)}
+            >
+              ⚙️
+            </button>
+            {showSettings && (
+              <div className="settings-menu" onClick={(e) => e.stopPropagation()}>
+                <label>
+                  Вид сетки:
+                  <select
+                    value={gridSettings.variant}
+                    onChange={(e) => updateGridVariant(e.target.value as BackgroundVariant)}
+                  >
+                    <option value={BackgroundVariant.Dots}>Точки</option>
+                    <option value={BackgroundVariant.Lines}>Линии</option>
+                  </select>
+                </label>
+                <label>
+                  Размер ячейки (px):
+                  <input
+                    type="number"
+                    min="5"
+                    max="50"
+                    step="1"
+                    value={gridSettings.gap}
+                    onChange={(e) => updateGridGap(Number(e.target.value))}
+                  />
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={gridSettings.snapToGrid}
+                    onChange={(e) => updateSnapToGrid(e.target.checked)}
+                  />{' '}
+                  Прилипание к сетке
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Кнопка добавления устройства */}
           <div style={{ position: 'relative' }}>
             <button
               className="add-node-btn"
@@ -355,11 +432,16 @@ const FlowEditor: React.FC = () => {
             onNodeContextMenu={onNodeContextMenu}
             fitView
             attributionPosition="bottom-left"
-            snapToGrid={true}
-            snapGrid={[15, 15]}
+            snapToGrid={gridSettings.snapToGrid}
+            snapGrid={gridSettings.snapGrid}
             connectionLineStyle={{ stroke: '#2563eb', strokeWidth: 2 }}
           >
-            <Background variant={BackgroundVariant.Lines} gap={15} size={1} color="#cbd5e1" />
+            <Background
+              variant={gridSettings.variant}
+              gap={gridSettings.gap}
+              size={1}
+              color="#cbd5e1"
+            />
             <Controls position="bottom-right" />
             <MiniMap position="bottom-left" />
           </ReactFlow>
