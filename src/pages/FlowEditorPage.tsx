@@ -13,7 +13,7 @@ import ReactFlow, {
   Node,
   MarkerType,
   NodeTypes,
-  EdgeTypes,
+  NodeProps,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -26,7 +26,7 @@ interface DeviceNodeData {
   poe?: string;
   ethernet?: boolean;
   usb?: boolean;
-  color?: string; // цвет обводки
+  color?: string;
 }
 
 interface SavedSchema {
@@ -37,7 +37,7 @@ interface SavedSchema {
 }
 
 // ========== КАСТОМНАЯ НОДА ==========
-const DeviceNode = ({ data }: { data: DeviceNodeData }) => {
+const DeviceNode = ({ data }: NodeProps<DeviceNodeData>) => {
   const borderColor = data.color || '#2563eb';
   return (
     <div
@@ -88,46 +88,6 @@ const DeviceNode = ({ data }: { data: DeviceNodeData }) => {
 };
 
 const nodeTypes: NodeTypes = { deviceNode: DeviceNode };
-
-// ========== КАСТОМНОЕ РЕБРО (с подписями с двух сторон) ==========
-// В React Flow можно использовать кастомный Edge компонент. Для простоты пока стандартный с label.
-// Чтобы подписи были с двух сторон, можно добавить два лейбла или использовать маркеры.
-// Реализуем через кастомный Edge компонент.
-const CustomEdge = ({
-  id,
-  source,
-  target,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  style = {},
-  markerEnd,
-  data,
-}: any) => {
-  const edgePath = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
-  const midX = (sourceX + targetX) / 2;
-  const midY = (sourceY + targetY) / 2;
-  const labelStart = data?.labelStart || 'TX';
-  const labelEnd = data?.labelEnd || 'RX';
-  return (
-    <>
-      <path id={id} d={edgePath} fill="none" stroke={style.stroke || '#2563eb'} strokeWidth={2} markerEnd={markerEnd} />
-      <text>
-        <textPath href={`#${id}`} startOffset="30%" style={{ fontSize: '10px', fill: '#2563eb' }}>
-          {labelStart}
-        </textPath>
-      </text>
-      <text>
-        <textPath href={`#${id}`} startOffset="70%" style={{ fontSize: '10px', fill: '#2563eb' }}>
-          {labelEnd}
-        </textPath>
-      </text>
-    </>
-  );
-};
-
-const edgeTypes: EdgeTypes = { customEdge: CustomEdge };
 
 // ========== КОМПОНЕНТ РЕДАКТОРА ==========
 const FlowEditor: React.FC = () => {
@@ -196,7 +156,7 @@ const FlowEditor: React.FC = () => {
     setSchemaName('Новая схема');
   };
 
-  // Добавление ноды (устройства) в центр видимой области
+  // Добавление ноды
   const addNode = (type: string) => {
     const newNode: Node<DeviceNodeData> = {
       id: Date.now().toString(),
@@ -213,10 +173,10 @@ const FlowEditor: React.FC = () => {
   };
 
   // Редактирование ноды (двойной клик)
-  const onNodeDoubleClick: NodeMouseHandler = (_, node) => {
-    setEditingNode(node as Node<DeviceNodeData>);
+  const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node<DeviceNodeData>) => {
+    setEditingNode(node);
     setShowModal(true);
-  };
+  }, []);
 
   const handleNodeUpdate = (updatedData: Partial<DeviceNodeData>) => {
     if (editingNode) {
@@ -240,17 +200,19 @@ const FlowEditor: React.FC = () => {
   }, [onKeyDown]);
 
   const onConnect = useCallback((params: Connection) => {
-    // Создаём ребро с подписями по умолчанию
-    const newEdge: Edge = {
-      ...params,
-      id: `e-${params.source}-${params.target}`,
-      type: 'customEdge',
-      data: { labelStart: 'TX', labelEnd: 'RX' },
-      animated: true,
-      markerEnd: { type: MarkerType.ArrowClosed },
-      style: { stroke: '#2563eb', strokeWidth: 2 },
-    };
-    setEdges((eds) => addEdge(newEdge, eds));
+    if (params.source && params.target) {
+      const newEdge: Edge = {
+        id: `e-${params.source}-${params.target}`,
+        source: params.source,
+        target: params.target,
+        animated: true,
+        markerEnd: { type: MarkerType.ArrowClosed },
+        label: '🔌',
+        labelStyle: { fill: '#2563eb', fontWeight: 500 },
+        style: { stroke: '#2563eb', strokeWidth: 2 },
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+    }
   }, [setEdges]);
 
   // Экспорт в SVG
@@ -309,7 +271,6 @@ const FlowEditor: React.FC = () => {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
             onNodeDoubleClick={onNodeDoubleClick}
             fitView
             attributionPosition="bottom-left"
