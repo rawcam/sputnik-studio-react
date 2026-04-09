@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps, NodeResizeControl } from 'reactflow';
+import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from 'reactflow';
 import { DeviceNodeData } from '../../types/flowTypes';
 
 const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
@@ -7,6 +7,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
   const [editLabel, setEditLabel] = useState(data.label);
   const inputRef = useRef<HTMLInputElement>(null);
   const borderColor = data.color || '#2563eb';
+  const { setNodes } = useReactFlow();
 
   const handleLabelSubmit = () => {
     if (editLabel.trim()) {
@@ -32,7 +33,18 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     }
   }, [isEditing]);
 
-  // Рендер хендлов: размеры управляются через CSS, здесь только позиционирование и цвет
+  // Обработчик изменения размера — сохраняет новые размеры в data ноды
+  const handleResize = (event: any, params: { width: number; height: number }) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === id
+          ? { ...n, data: { ...n.data, width: params.width, height: params.height } }
+          : n
+      )
+    );
+  };
+
+  // Рендер хендлов — без инлайн opacity, только позиционирование и цвет фона
   const renderHandles = (side: Position, count: number, positions: number[]) => {
     const handles = [];
     for (let i = 0; i < count; i++) {
@@ -42,7 +54,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       let style: React.CSSProperties = {
         position: 'absolute',
         background: borderColor,
-        opacity: 0,
         transition: 'opacity 0.15s ease',
         zIndex: 10,
       };
@@ -73,7 +84,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     return handles;
   };
 
-  // Хендлы размещаем на границах: 0, 0.5, 1 для левой/правой сторон, 0, 1 для верхней/нижней
   const leftHandles = renderHandles(Position.Left, 3, [0, 0.5, 1]);
   const rightHandles = renderHandles(Position.Right, 3, [0, 0.5, 1]);
   const topHandles = renderHandles(Position.Top, 2, [0, 1]);
@@ -95,7 +105,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         position: 'relative',
         width: data.width || 'auto',
         height: data.height || 'auto',
-        // Убираем resize и overflow, чтобы не мешать соединениям и не создавать скроллбары
       }}
     >
       {leftHandles}
@@ -108,9 +117,11 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         minWidth={120}
         minHeight={80}
         keepAspectRatio={false}
+        onResize={handleResize}
         color={borderColor}
         style={{ background: 'transparent', border: 'none' }}
       />
+
       <div
         style={{
           fontWeight: 'bold',
