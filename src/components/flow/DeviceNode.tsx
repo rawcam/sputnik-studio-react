@@ -43,8 +43,64 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     );
   };
 
-  // Временно используем стандартные хендлы React Flow без кастомных позиций
-  // Это гарантирует работоспособность соединений.
+  // Рендерим хендлы на основе inputs и outputs
+  const renderHandles = () => {
+    const handles: JSX.Element[] = [];
+
+    // Входы (target) слева
+    data.inputs.forEach((input, index) => {
+      const top = `${((index + 1) / (data.inputs.length + 1)) * 100}%`;
+      handles.push(
+        <Handle
+          key={`input-${input.id}`}
+          type="target"
+          position={Position.Left}
+          id={input.id}
+          style={{ top, background: borderColor }}
+        />
+      );
+      // Если двунаправленный, добавляем source хендл на той же позиции
+      if (input.direction === 'bidirectional') {
+        handles.push(
+          <Handle
+            key={`input-source-${input.id}`}
+            type="source"
+            position={Position.Left}
+            id={`source-${input.id}`}
+            style={{ top, background: borderColor }}
+          />
+        );
+      }
+    });
+
+    // Выходы (source) справа
+    data.outputs.forEach((output, index) => {
+      const top = `${((index + 1) / (data.outputs.length + 1)) * 100}%`;
+      handles.push(
+        <Handle
+          key={`output-${output.id}`}
+          type="source"
+          position={Position.Right}
+          id={output.id}
+          style={{ top, background: borderColor }}
+        />
+      );
+      if (output.direction === 'bidirectional') {
+        handles.push(
+          <Handle
+            key={`output-target-${output.id}`}
+            type="target"
+            position={Position.Right}
+            id={`target-${output.id}`}
+            style={{ top, background: borderColor }}
+          />
+        );
+      }
+    });
+
+    return handles;
+  };
+
   return (
     <div
       style={{
@@ -63,17 +119,8 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         height: data.height || 'auto',
       }}
     >
-      {/* Стандартные хендлы по всем сторонам */}
-      <Handle type="target" position={Position.Left} id="left" />
-      <Handle type="source" position={Position.Left} id="left" />
-      <Handle type="target" position={Position.Right} id="right" />
-      <Handle type="source" position={Position.Right} id="right" />
-      <Handle type="target" position={Position.Top} id="top" />
-      <Handle type="source" position={Position.Top} id="top" />
-      <Handle type="target" position={Position.Bottom} id="bottom" />
-      <Handle type="source" position={Position.Bottom} id="bottom" />
+      {renderHandles()}
 
-      {/* Контрол ресайза */}
       <NodeResizeControl
         nodeId={id}
         minWidth={120}
@@ -99,31 +146,13 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         </span>
       </div>
       <div style={{ fontSize: '11px', color: '#4b6a8a' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>⏱️ Задержка:</span>
-          <span>{data.latency} мс</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>⚡ Мощность:</span>
-          <span>{data.power} Вт</span>
-        </div>
-        {data.poe && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>🔌 PoE:</span>
-            <span>{data.poe}</span>
-          </div>
+        <div>Входов: {data.inputs.length}</div>
+        <div>Выходов: {data.outputs.length}</div>
+        {data.totalPowerConsumption && (
+          <div>⚡ {data.totalPowerConsumption} Вт</div>
         )}
-        {data.ethernet && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>🌐 Ethernet:</span>
-            <span>Да</span>
-          </div>
-        )}
-        {data.usb && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>🔌 USB:</span>
-            <span>Да</span>
-          </div>
+        {data.totalPoEConsumption && (
+          <div>🔌 PoE: {data.totalPoEConsumption} Вт</div>
         )}
       </div>
       {isEditing && (
