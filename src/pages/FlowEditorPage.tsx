@@ -103,7 +103,6 @@ const FlowEditor: React.FC = () => {
 
   const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema } = useFlowSchemas();
 
-  // Сохранение настроек сетки
   const saveGridSettings = (newSettings: typeof gridSettings) => {
     setGridSettings(newSettings);
     localStorage.setItem('flow_grid_settings', JSON.stringify(newSettings));
@@ -113,7 +112,6 @@ const FlowEditor: React.FC = () => {
   const updateGridGap = (gap: number) => saveGridSettings({ ...gridSettings, gap, snapGrid: [gap, gap] });
   const updateSnapToGrid = (snap: boolean) => saveGridSettings({ ...gridSettings, snapToGrid: snap });
 
-  // Инициализация демо-нод
   useEffect(() => {
     if (schemas.length === 0 && nodes.length === 0) {
       const demoNodes: Node<DeviceNodeData>[] = [
@@ -164,7 +162,6 @@ const FlowEditor: React.FC = () => {
     }
   }, [schemas]);
 
-  // Обработчик соединения
   const onConnect = useCallback(
     (params: Connection) => {
       if (!params.source || !params.target || !params.sourceHandle || !params.targetHandle) return;
@@ -227,7 +224,6 @@ const FlowEditor: React.FC = () => {
     [nodes, setEdges]
   );
 
-  // Контекстное меню
   const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
     event.preventDefault();
     setContextMenu({ visible: true, x: event.clientX, y: event.clientY, nodeId: node.id });
@@ -261,7 +257,6 @@ const FlowEditor: React.FC = () => {
     closeContextMenu();
   };
 
-  // Удаление по клавише Delete
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Delete') {
@@ -277,7 +272,6 @@ const FlowEditor: React.FC = () => {
     };
   }, []);
 
-  // Экспорт SVG
   const exportSVG = async () => {
     const element = document.querySelector('.react-flow');
     if (element) {
@@ -312,7 +306,6 @@ const FlowEditor: React.FC = () => {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f5f7fb' }}>
-      {/* Шапка */}
       <div style={{ padding: '8px 16px', background: 'white', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <select value={currentSchemaId || ''} onChange={e => handleLoadSchema(e.target.value)} style={{ padding: '6px 12px', borderRadius: '6px' }}>
@@ -345,75 +338,34 @@ const FlowEditor: React.FC = () => {
         </div>
       </div>
 
-      {/* Основная область + боковая панель */}
-            <div style={{ flex: 1, position: 'relative' }}>
-        <ReactFlowProvider>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
-            onNodeContextMenu={onNodeContextMenu}
-            fitView
-            snapToGrid={gridSettings.snapToGrid}
-            snapGrid={gridSettings.snapGrid}
-            onEdgesDelete={(deletedEdges) => setEdges((eds) => eds.filter(e => !deletedEdges.some(d => d.id === e.id)))}
-            edgeTypes={{
-              default: (props) => {
-                const { id, sourceX, sourceY, targetX, targetY, selected } = props;
-                const edge = edges.find(e => e.id === id);
-                const edgeLabel = edge?.label || edge?.data?.cableType || '';
-
-                const midX = (sourceX + targetX) / 2;
-                const midY = (sourceY + targetY) / 2;
-
-                return (
-                  <>
-                    <path
-                      id={id}
-                      className="react-flow__edge-path"
-                      d={`M ${sourceX},${sourceY} L ${targetX},${targetY}`}
-                      style={{ stroke: selected ? '#ef4444' : '#2563eb', strokeWidth: selected ? 3 : 2 }}
-                      markerEnd="url(#arrow)"
-                    />
-                    {edgeLabel && (
-                      <text x={midX} y={midY - 10} fill="#2563eb" fontSize="10" textAnchor="middle">
-                        {edgeLabel}
-                      </text>
-                    )}
-                    {selected && (
-                      <foreignObject x={midX - 12} y={midY - 12} width={24} height={24}>
-                        <button
-                          className="edge-delete-button nodrag"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEdges((eds) => eds.filter(e => e.id !== id));
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </foreignObject>
-                    )}
-                  </>
-                );
-              },
-            }}
-          >
-            <Background variant={gridSettings.variant} gap={gridSettings.gap} color="#cbd5e1" />
-            <Controls />
-            <MiniMap />
-          </ReactFlow>
-        </ReactFlowProvider>
-      </div>
+      <div style={{ flex: 1, display: 'flex' }}>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <ReactFlowProvider>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              nodeTypes={nodeTypes}
+              onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
+              onNodeContextMenu={onNodeContextMenu}
+              fitView
+              snapToGrid={gridSettings.snapToGrid}
+              snapGrid={gridSettings.snapGrid}
+              onEdgesDelete={(deletedEdges) => setEdges((eds) => eds.filter(e => !deletedEdges.some(d => d.id === e.id)))}
+            >
+              <Background variant={gridSettings.variant} gap={gridSettings.gap} color="#cbd5e1" />
+              <Controls />
+              <MiniMap />
+            </ReactFlow>
+          </ReactFlowProvider>
+        </div>
         <div style={{ width: '260px', background: 'white', borderLeft: '1px solid #e2e8f0', overflowY: 'auto' }}>
           <InformerPanel nodes={nodes} edges={edges} />
         </div>
       </div>
 
-      {/* Контекстное меню */}
       {contextMenu.visible && (
         <div style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, background: 'white', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '4px 0', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
           <div onClick={() => handleContextMenuAction('edit')} style={{ padding: '6px 16px', cursor: 'pointer' }}>✏️ Редактировать</div>
@@ -422,7 +374,6 @@ const FlowEditor: React.FC = () => {
         </div>
       )}
 
-      {/* Модальное окно редактирования */}
       <EditNodeModal
         isOpen={showModal}
         node={editingNode}
