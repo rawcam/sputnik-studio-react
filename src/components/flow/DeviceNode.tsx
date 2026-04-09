@@ -32,7 +32,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     }
   }, [isEditing]);
 
-  // Рендер хендлов с уникальными id
+  // Рендер хендлов: 2x2 пикселя, прозрачные, появляются при наведении (стили в CSS)
   const renderHandles = (side: Position, count: number, positions: number[]) => {
     const handles = [];
     for (let i = 0; i < count; i++) {
@@ -40,10 +40,13 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
       const sourceId = `source-${side}-${i}`;
       const targetId = `target-${side}-${i}`;
       let style: React.CSSProperties = {
-        background: borderColor,
-        width: 8,
-        height: 8,
+        width: 2,
+        height: 2,
         position: 'absolute',
+        background: borderColor,
+        opacity: 0,
+        transition: 'opacity 0.15s ease',
+        zIndex: 10,
       };
       if (side === Position.Left || side === Position.Right) {
         style.top = `${pos * 100}%`;
@@ -92,6 +95,7 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         width: data.width || 'auto',
         height: data.height || 'auto',
         resize: 'both',
+        overflow: 'auto',
       }}
     >
       {leftHandles}
