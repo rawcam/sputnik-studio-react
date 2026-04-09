@@ -10,6 +10,7 @@ import ReactFlow, {
   addEdge,
   Connection,
   Edge,
+  Node,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -60,7 +61,7 @@ const DeviceNode = ({ data }: { data: DeviceNodeData }) => {
 
 const nodeTypes = { deviceNode: DeviceNode };
 
-const initialNodes: ReactFlow.Node<DeviceNodeData>[] = [
+const initialNodes: Node<DeviceNodeData>[] = [
   {
     id: '1',
     type: 'deviceNode',
