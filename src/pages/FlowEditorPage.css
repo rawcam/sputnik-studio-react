@@ -84,3 +84,33 @@
   min-width: 500px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
+/* === Стили для управления рёбрами === */
+
+/* Выделенное ребро становится красным */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #ef4444 !important;
+  stroke-width: 3 !important;
+}
+
+/* Кнопка удаления ребра */
+.edge-delete-button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: transform 0.1s;
+  pointer-events: all;
+}
+.edge-delete-button:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
