@@ -113,3 +113,19 @@
   background: #dc2626;
   transform: scale(1.1);
 }
+/* === Хендлы в виде тире, выходящие за границу ноды === */
+.handle-left,
+.handle-right {
+  width: 14px !important;
+  height: 2px !important;
+  border-radius: 0 !important;
+  border: none !important;
+  transform: translateY(-50%) !important;
+  z-index: 10;
+}
+.handle-left {
+  left: -8px !important;
+}
+.handle-right {
+  right: -8px !important;
+}
