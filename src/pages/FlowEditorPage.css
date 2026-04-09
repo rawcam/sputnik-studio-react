@@ -5,10 +5,12 @@
   opacity: 0;
   transition: opacity 0.15s ease;
   background-color: #2563eb;      /* базовый цвет, может быть переопределён в компоненте */
-  width: 8px;
-  height: 8px;
-  border: 1px solid white;
+  width: 10px;
+  height: 10px;
+  border: 2px solid white;
+  border-radius: 50%;             /* круглые хендлы */
   z-index: 10;
+  pointer-events: all;            /* гарантируем, что хендлы принимают события мыши */
 }
 
 .react-flow__node:hover .react-flow__handle {
@@ -19,21 +21,24 @@
 .react-flow__handle::after {
   content: '';
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   top: -5px;
   left: -5px;
   background: transparent;
+  pointer-events: all;
 }
 
 .react-flow__background {
   background-color: #f9fafb;
 }
 
-/* Контрол ресайза — скрыт, появляется при наведении на ноду */
+/* Контрол ресайза — скрыт по умолчанию, появляется при наведении на ноду */
 .react-flow__node .react-flow__resize-control {
   opacity: 0;
   transition: opacity 0.2s;
+  pointer-events: all;
+  border-radius: 0 0 12px 0;      /* небольшой визуальный штрих */
 }
 
 .react-flow__node:hover .react-flow__resize-control {
