@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Node, Edge } from 'reactflow';
-import { SavedSchema, DeviceNodeData } from '../types/flowTypes';
+import { SavedSchema, DeviceNodeData, CableEdgeData } from '../types/flowTypes';
 
 export const useFlowSchemas = () => {
   const [schemas, setSchemas] = useState<SavedSchema[]>([]);
   const [currentSchemaId, setCurrentSchemaId] = useState<string | null>(null);
   const [schemaName, setSchemaName] = useState('Новая схема');
 
-  // Загрузка списка схем из localStorage
   useEffect(() => {
     const saved = localStorage.getItem('flow_schemas');
     if (saved) {
@@ -18,14 +17,12 @@ export const useFlowSchemas = () => {
     }
   }, []);
 
-  // Сохранение списка схем
   const saveSchemasList = (list: SavedSchema[]) => {
     setSchemas(list);
     localStorage.setItem('flow_schemas', JSON.stringify(list));
   };
 
-  // Сохранение текущей схемы
-  const saveCurrentSchema = (nodes: Node<DeviceNodeData>[], edges: Edge[]) => {
+  const saveCurrentSchema = (nodes: Node<DeviceNodeData>[], edges: Edge<CableEdgeData>[]) => {
     if (!currentSchemaId) {
       const newId = Date.now().toString();
       const newSchema: SavedSchema = {
@@ -43,8 +40,7 @@ export const useFlowSchemas = () => {
     alert('Схема сохранена');
   };
 
-  // Загрузка схемы по id
-  const loadSchema = (id: string): { nodes: Node<DeviceNodeData>[]; edges: Edge[] } | null => {
+  const loadSchema = (id: string): { nodes: Node<DeviceNodeData>[]; edges: Edge<CableEdgeData>[] } | null => {
     const schema = schemas.find(s => s.id === id);
     if (schema) {
       setCurrentSchemaId(schema.id);
@@ -54,7 +50,6 @@ export const useFlowSchemas = () => {
     return null;
   };
 
-  // Новая пустая схема
   const newSchema = () => {
     setCurrentSchemaId(null);
     setSchemaName('Новая схема');
