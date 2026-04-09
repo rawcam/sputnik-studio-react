@@ -15,6 +15,8 @@ import ReactFlow, {
   NodeTypes,
   NodeProps,
   NodeResizeControl,
+  Handle,
+  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -85,6 +87,16 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         height: data.height || 'auto',
       }}
     >
+      {/* Точки соединения (хендлы) со всех четырёх сторон */}
+      <Handle type="source" position={Position.Top} id="top" style={{ background: '#2563eb', width: 10, height: 10 }} />
+      <Handle type="target" position={Position.Top} id="top" style={{ background: '#2563eb', width: 10, height: 10 }} />
+      <Handle type="source" position={Position.Bottom} id="bottom" style={{ background: '#2563eb', width: 10, height: 10 }} />
+      <Handle type="target" position={Position.Bottom} id="bottom" style={{ background: '#2563eb', width: 10, height: 10 }} />
+      <Handle type="source" position={Position.Left} id="left" style={{ background: '#2563eb', width: 10, height: 10 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ background: '#2563eb', width: 10, height: 10 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ background: '#2563eb', width: 10, height: 10 }} />
+      <Handle type="target" position={Position.Right} id="right" style={{ background: '#2563eb', width: 10, height: 10 }} />
+
       <NodeResizeControl
         nodeId={id}
         minWidth={120}
@@ -297,9 +309,11 @@ const FlowEditor: React.FC = () => {
   const onConnect = useCallback((params: Connection) => {
     if (params.source && params.target) {
       const newEdge: Edge = {
-        id: `e-${params.source}-${params.target}`,
+        id: `e-${params.source}-${params.target}-${Date.now()}`,
         source: params.source,
         target: params.target,
+        sourceHandle: params.sourceHandle,
+        targetHandle: params.targetHandle,
         animated: true,
         markerEnd: { type: MarkerType.ArrowClosed },
         label: '🔌',
@@ -323,7 +337,7 @@ const FlowEditor: React.FC = () => {
         link.click();
       } catch (err) {
         console.error(err);
-        alert('Ошибка экспорта');
+        alert('Ошибка экспорта: ' + err.message);
       }
     }
   };
