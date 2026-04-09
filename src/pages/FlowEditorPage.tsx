@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -14,6 +14,9 @@ import ReactFlow, {
   MarkerType,
   NodeTypes,
   NodeProps,
+  NodeResizeControl,
+  NodeToolbar,
+  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -27,6 +30,8 @@ interface DeviceNodeData {
   ethernet?: boolean;
   usb?: boolean;
   color?: string;
+  width?: number;
+  height?: number;
 }
 
 interface SavedSchema {
@@ -37,8 +42,36 @@ interface SavedSchema {
 }
 
 // ========== КАСТОМНАЯ НОДА ==========
-const DeviceNode = ({ data }: NodeProps<DeviceNodeData>) => {
+const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLabel, setEditLabel] = useState(data.label);
+  const inputRef = useRef<HTMLInputElement>(null);
   const borderColor = data.color || '#2563eb';
+
+  const handleLabelSubmit = () => {
+    if (editLabel.trim()) {
+      data.label = editLabel;
+    } else {
+      setEditLabel(data.label);
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleLabelSubmit();
+    } else if (e.key === 'Escape') {
+      setEditLabel(data.label);
+      setIsEditing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
+
   return (
     <div
       style={{
@@ -47,13 +80,66 @@ const DeviceNode = ({ data }: NodeProps<DeviceNodeData>) => {
         borderRadius: '12px',
         padding: '8px 12px',
         minWidth: '160px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+        boxShadow: selected ? '0 0 0 2px #2563eb, 0 4px 12px rgba(0,0,0,0.15)' : '0 4px 6px rgba(0,0,0,0.1)',
         cursor: 'grab',
+        position: 'relative',
+        width: data.width || 'auto',
+        height: data.height || 'auto',
       }}
     >
+      <NodeResizeControl
+        nodeId={id}
+        minWidth={120}
+        minHeight={80}
+        color={borderColor}
+        style={{ background: 'transparent', border: 'none' }}
+      />
+      <NodeToolbar
+        isVisible={selected}
+        position={Position.Top}
+        offset={10}
+        style={{ display: 'flex', gap: '4px', background: 'white', borderRadius: '6px', padding: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+      >
+        <button
+          onClick={() => setIsEditing(true)}
+          style={{ background: '#2563eb', color: 'white', border: 'none', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          ✏️
+        </button>
+        <button
+          onClick={() => {/* здесь можно добавить логику дублирования */}}
+          style={{ background: '#10b981', color: 'white', border: 'none', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          📋
+        </button>
+        <button
+          onClick={() => {/* здесь можно добавить логику удаления */}}
+          style={{ background: '#ef4444', color: 'white', border: 'none', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          🗑️
+        </button>
+      </NodeToolbar>
       <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
         <span>{data.icon}</span>
-        <span>{data.label}</span>
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={editLabel}
+            onChange={(e) => setEditLabel(e.target.value)}
+            onBlur={handleLabelSubmit}
+            onKeyDown={handleKeyDown}
+            style={{ flex: 1, border: '1px solid #ccc', borderRadius: '4px', padding: '2px 4px', fontSize: 'inherit' }}
+            className="nodrag"
+          />
+        ) : (
+          <span
+            onDoubleClick={() => setIsEditing(true)}
+            style={{ cursor: 'text' }}
+          >
+            {data.label}
+          </span>
+        )}
       </div>
       <div style={{ fontSize: '11px', color: '#4b6a8a' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -98,6 +184,7 @@ const FlowEditor: React.FC = () => {
   const [schemaName, setSchemaName] = useState('Новая схема');
   const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; nodeId: string | null }>({ visible: false, x: 0, y: 0, nodeId: null });
 
   // Загрузка списка схем из localStorage
   useEffect(() => {
@@ -119,7 +206,6 @@ const FlowEditor: React.FC = () => {
   // Сохранение текущей схемы
   const saveCurrentSchema = () => {
     if (!currentSchemaId) {
-      // Новая схема
       const newId = Date.now().toString();
       const newSchema: SavedSchema = {
         id: newId,
@@ -130,7 +216,6 @@ const FlowEditor: React.FC = () => {
       saveSchemasList([...schemas, newSchema]);
       setCurrentSchemaId(newId);
     } else {
-      // Обновление существующей
       const updated = schemas.map(s => s.id === currentSchemaId ? { ...s, name: schemaName, nodes, edges } : s);
       saveSchemasList(updated);
     }
@@ -164,7 +249,7 @@ const FlowEditor: React.FC = () => {
       position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
       data: {
         label: type,
-        icon: type === 'Источник' ? '📷' : type === 'Коммутатор' ? '🔄' : '🖥️',
+        icon: type === 'Источник' ? 'fa-camera' : type === 'Коммутатор' ? 'fa-network-wired' : 'fa-tv',
         latency: 0,
         power: 0,
       },
@@ -186,6 +271,37 @@ const FlowEditor: React.FC = () => {
     }
   };
 
+  // Контекстное меню
+  const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node<DeviceNodeData>) => {
+    event.preventDefault();
+    setContextMenu({ visible: true, x: event.clientX, y: event.clientY, nodeId: node.id });
+  }, []);
+
+  const closeContextMenu = () => {
+    setContextMenu({ visible: false, x: 0, y: 0, nodeId: null });
+  };
+
+  const handleContextMenuAction = (action: string) => {
+    if (contextMenu.nodeId) {
+      if (action === 'delete') {
+        setNodes(nds => nds.filter(n => n.id !== contextMenu.nodeId));
+      } else if (action === 'duplicate') {
+        const nodeToDuplicate = nodes.find(n => n.id === contextMenu.nodeId);
+        if (nodeToDuplicate) {
+          const newNode = { ...nodeToDuplicate, id: Date.now().toString(), position: { x: nodeToDuplicate.position.x + 50, y: nodeToDuplicate.position.y + 50 } };
+          setNodes(nds => nds.concat(newNode));
+        }
+      } else if (action === 'edit') {
+        const node = nodes.find(n => n.id === contextMenu.nodeId);
+        if (node) {
+          setEditingNode(node);
+          setShowModal(true);
+        }
+      }
+    }
+    closeContextMenu();
+  };
+
   // Удаление выделенных элементов (Delete)
   const onKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Delete') {
@@ -198,6 +314,11 @@ const FlowEditor: React.FC = () => {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onKeyDown]);
+
+  useEffect(() => {
+    document.addEventListener('click', closeContextMenu);
+    return () => document.removeEventListener('click', closeContextMenu);
+  }, []);
 
   const onConnect = useCallback((params: Connection) => {
     if (params.source && params.target) {
@@ -240,7 +361,7 @@ const FlowEditor: React.FC = () => {
         <select
           value={currentSchemaId || ''}
           onChange={(e) => loadSchema(e.target.value)}
-          style={{ padding: '4px 8px', borderRadius: '6px' }}
+          style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #ccc', background: 'white' }}
         >
           <option value="">-- Выберите схему --</option>
           {schemas.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -252,13 +373,13 @@ const FlowEditor: React.FC = () => {
           placeholder="Название схемы"
           style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #ccc' }}
         />
-        <button onClick={saveCurrentSchema} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px' }}>💾 Сохранить</button>
-        <button onClick={newSchema} style={{ background: '#6c7e97', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px' }}>📄 Новая</button>
-        <button onClick={exportSVG} style={{ background: '#10b981', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px' }}>📷 Экспорт SVG</button>
+        <button onClick={saveCurrentSchema} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer' }}>💾 Сохранить</button>
+        <button onClick={newSchema} style={{ background: '#6c7e97', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer' }}>📄 Новая</button>
+        <button onClick={exportSVG} style={{ background: '#10b981', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer' }}>📷 Экспорт SVG</button>
         <div style={{ width: '1px', height: '24px', background: '#ccc' }}></div>
-        <button onClick={() => addNode('Источник')} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px' }}>➕ Источник</button>
-        <button onClick={() => addNode('Коммутатор')} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px' }}>➕ Коммутатор</button>
-        <button onClick={() => addNode('Дисплей')} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px' }}>➕ Дисплей</button>
+        <button onClick={() => addNode('Источник')} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer' }}>➕ Источник</button>
+        <button onClick={() => addNode('Коммутатор')} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer' }}>➕ Коммутатор</button>
+        <button onClick={() => addNode('Дисплей')} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px', cursor: 'pointer' }}>➕ Дисплей</button>
       </div>
 
       {/* Холст React Flow */}
@@ -272,8 +393,10 @@ const FlowEditor: React.FC = () => {
             onConnect={onConnect}
             nodeTypes={nodeTypes}
             onNodeDoubleClick={onNodeDoubleClick}
+            onNodeContextMenu={onNodeContextMenu}
             fitView
             attributionPosition="bottom-left"
+            colorMode="light"
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
             <Controls position="bottom-right" />
@@ -282,25 +405,137 @@ const FlowEditor: React.FC = () => {
         </ReactFlowProvider>
       </div>
 
+      {/* Контекстное меню */}
+      {contextMenu.visible && (
+        <div
+          style={{
+            position: 'fixed',
+            top: contextMenu.y,
+            left: contextMenu.x,
+            background: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            padding: '4px 0',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={() => handleContextMenuAction('edit')}
+            style={{ padding: '4px 12px', cursor: 'pointer', ':hover': { background: '#f0f0f0' } }}
+          >
+            ✏️ Редактировать
+          </div>
+          <div
+            onClick={() => handleContextMenuAction('duplicate')}
+            style={{ padding: '4px 12px', cursor: 'pointer', ':hover': { background: '#f0f0f0' } }}
+          >
+            📋 Дублировать
+          </div>
+          <div
+            onClick={() => handleContextMenuAction('delete')}
+            style={{ padding: '4px 12px', cursor: 'pointer', ':hover': { background: '#f0f0f0' } }}
+          >
+            🗑️ Удалить
+          </div>
+        </div>
+      )}
+
       {/* Модальное окно редактирования ноды */}
       {showModal && editingNode && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }} onClick={() => setShowModal(false)}>
-          <div style={{ background: 'white', borderRadius: '16px', padding: '24px', minWidth: '320px' }} onClick={e => e.stopPropagation()}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            style={{ background: 'white', borderRadius: '16px', padding: '24px', minWidth: '320px' }}
+            onClick={e => e.stopPropagation()}
+          >
             <h3>Редактировать устройство</h3>
-            <label>Название: <input type="text" value={editingNode.data.label} onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, label: e.target.value } })} style={{ width: '100%', marginBottom: '8px' }} /></label>
-            <label>Иконка: <input type="text" value={editingNode.data.icon} onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, icon: e.target.value } })} style={{ width: '100%', marginBottom: '8px' }} /></label>
-            <label>Задержка (мс): <input type="number" value={editingNode.data.latency} onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, latency: Number(e.target.value) } })} style={{ width: '100%', marginBottom: '8px' }} /></label>
-            <label>Мощность (Вт): <input type="number" value={editingNode.data.power} onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, power: Number(e.target.value) } })} style={{ width: '100%', marginBottom: '8px' }} /></label>
-            <label>PoE: <input type="text" value={editingNode.data.poe || ''} onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, poe: e.target.value } })} placeholder="802.3af/at/bt" style={{ width: '100%', marginBottom: '8px' }} /></label>
-            <label>Ethernet: <input type="checkbox" checked={editingNode.data.ethernet || false} onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, ethernet: e.target.checked } })} /></label>
-            <label>USB: <input type="checkbox" checked={editingNode.data.usb || false} onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, usb: e.target.checked } })} /></label>
-            <label>Цвет обводки: <input type="color" value={editingNode.data.color || '#2563eb'} onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, color: e.target.value } })} /></label>
+            <label style={{ display: 'block', marginBottom: '8px' }}>
+              Название:{' '}
+              <input
+                type="text"
+                value={editingNode.data.label}
+                onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, label: e.target.value } })}
+                style={{ width: '100%' }}
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: '8px' }}>
+              Иконка (Font Awesome):{' '}
+              <input
+                type="text"
+                value={editingNode.data.icon}
+                onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, icon: e.target.value } })}
+                placeholder="fa-camera"
+                style={{ width: '100%' }}
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: '8px' }}>
+              Задержка (мс):{' '}
+              <input
+                type="number"
+                value={editingNode.data.latency}
+                onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, latency: Number(e.target.value) } })}
+                style={{ width: '100%' }}
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: '8px' }}>
+              Мощность (Вт):{' '}
+              <input
+                type="number"
+                value={editingNode.data.power}
+                onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, power: Number(e.target.value) } })}
+                style={{ width: '100%' }}
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: '8px' }}>
+              PoE:{' '}
+              <input
+                type="text"
+                value={editingNode.data.poe || ''}
+                onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, poe: e.target.value } })}
+                placeholder="802.3af/at/bt"
+                style={{ width: '100%' }}
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: '8px' }}>
+              Ethernet:{' '}
+              <input
+                type="checkbox"
+                checked={editingNode.data.ethernet || false}
+                onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, ethernet: e.target.checked } })}
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: '8px' }}>
+              USB:{' '}
+              <input
+                type="checkbox"
+                checked={editingNode.data.usb || false}
+                onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, usb: e.target.checked } })}
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: '8px' }}>
+              Цвет обводки:{' '}
+              <input
+                type="color"
+                value={editingNode.data.color || '#2563eb'}
+                onChange={e => setEditingNode({ ...editingNode, data: { ...editingNode.data, color: e.target.value } })}
+              />
+            </label>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
               <button onClick={() => setShowModal(false)}>Отмена</button>
-              <button onClick={() => handleNodeUpdate(editingNode.data)} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '6px' }}>Сохранить</button>
+              <button onClick={() => handleNodeUpdate(editingNode.data)}>Сохранить</button>
             </div>
           </div>
         </div>
