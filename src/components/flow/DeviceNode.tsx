@@ -1,20 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, NodeResizeControl, useReactFlow } from 'reactflow';
-import { DeviceNodeData, ConnectorType, ProtocolType } from '../../types/flowTypes';
-
-const getConnectorColor = (connector: ConnectorType, protocol: ProtocolType): string => {
-  if (connector === 'HDMI') return '#f97316';
-  if (connector === 'DisplayPort') return '#1e293b';
-  if (connector === 'DVI') return '#94a3b8';
-  if (connector === 'RJ45') {
-    if (protocol === 'Dante' || protocol === 'AES67') return '#10b981';
-    return '#3b82f6';
-  }
-  if (connector === 'XLR' || connector === 'TRS' || connector === 'Phoenix3' || connector === 'Phoenix5')
-    return '#64748b';
-  if (connector === 'PowerCON' || connector === 'IEC') return '#ef4444';
-  return '#2563eb';
-};
+import { DeviceNodeData } from '../../types/flowTypes';
 
 const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -57,8 +43,17 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
     );
   };
 
+  // Поиск интерфейса питания (не PoE)
+  const powerInterface = [...data.inputs, ...data.outputs].find(
+    (iface) =>
+      (iface.connector === 'IEC' || iface.connector === 'PowerCON' || iface.protocol === 'Power') &&
+      !iface.poe
+  );
+
+  // Суммарная PoE мощность
+  const totalPoE = data.totalPoEConsumption ?? 0;
+
   const maxRows = Math.max(data.inputs.length, data.outputs.length);
-  const rowHeight = 22; // px
 
   return (
     <div
@@ -108,12 +103,12 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                height: rowHeight,
+                height: 22,
                 position: 'relative',
               }}
             >
               {/* Вход (левая сторона) */}
-              <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ flex: 1, textAlign: 'left', position: 'relative' }}>
                 {input && (
                   <>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -123,15 +118,10 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
                       type="target"
                       position={Position.Left}
                       id={input.id}
+                      className="handle-left"
                       style={{
-                        background: getConnectorColor(input.connector, input.protocol),
-                        width: '12px',
-                        height: '4px',
-                        borderRadius: '2px',
-                        border: 'none',
+                        background: borderColor,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
-                        left: 0,
-                        transform: 'translateY(-50%)',
                       }}
                     />
                   </>
@@ -139,22 +129,17 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
               </div>
 
               {/* Выход (правая сторона) */}
-              <div style={{ flex: 1, textAlign: 'right' }}>
+              <div style={{ flex: 1, textAlign: 'right', position: 'relative' }}>
                 {output && (
                   <>
                     <Handle
                       type="source"
                       position={Position.Right}
                       id={output.id}
+                      className="handle-right"
                       style={{
-                        background: getConnectorColor(output.connector, output.protocol),
-                        width: '12px',
-                        height: '4px',
-                        borderRadius: '2px',
-                        border: 'none',
+                        background: borderColor,
                         top: `${((rowIndex + 0.5) / maxRows) * 100}%`,
-                        right: 0,
-                        transform: 'translateY(-50%)',
                       }}
                     />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -168,8 +153,8 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         })}
       </div>
 
-      {/* Суммарная информация */}
-      {(data.totalPowerConsumption || data.totalPoEConsumption) && (
+      {/* Питание (AC/DC, не PoE) */}
+      {powerInterface && (
         <div
           style={{
             marginTop: '6px',
@@ -177,10 +162,31 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
             color: '#64748b',
             borderTop: '1px solid #e2e8f0',
             padding: '4px 12px 0 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
           }}
         >
-          {data.totalPowerConsumption && <span>⚡ {data.totalPowerConsumption} Вт </span>}
-          {data.totalPoEConsumption && <span>🔌 PoE: {data.totalPoEConsumption} Вт</span>}
+          <span>🔌 {powerInterface.voltage || 'AC'}</span>
+          {powerInterface.power && <span>{powerInterface.power} Вт</span>}
+        </div>
+      )}
+
+      {/* PoE информация */}
+      {totalPoE > 0 && (
+        <div
+          style={{
+            marginTop: '6px',
+            fontSize: '9px',
+            color: '#64748b',
+            borderTop: '1px solid #e2e8f0',
+            padding: '4px 12px 0 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <span>🌐 PoE {totalPoE} Вт</span>
         </div>
       )}
 
