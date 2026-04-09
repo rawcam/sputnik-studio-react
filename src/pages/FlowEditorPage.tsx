@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactFlow, {
   Background,
+  BackgroundVariant,
   Controls,
   MiniMap,
   ReactFlowProvider,
@@ -12,8 +13,15 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-// Кастомная карточка устройства
-const DeviceNode = ({ data }: { data: { label: string; icon: string; latency: number; power: number; poe?: string } }) => {
+interface DeviceNodeData {
+  label: string;
+  icon: string;
+  latency: number;
+  power: number;
+  poe?: string;
+}
+
+const DeviceNode = ({ data }: { data: DeviceNodeData }) => {
   return (
     <div
       style={{
@@ -52,7 +60,7 @@ const DeviceNode = ({ data }: { data: { label: string; icon: string; latency: nu
 
 const nodeTypes = { deviceNode: DeviceNode };
 
-const initialNodes = [
+const initialNodes: ReactFlow.Node<DeviceNodeData>[] = [
   {
     id: '1',
     type: 'deviceNode',
@@ -79,12 +87,11 @@ const initialEdges: Edge[] = [
 ];
 
 const FlowEditor: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = (params: Connection) => setEdges((eds) => addEdge(params, eds));
 
-  // Экспорт в SVG (простая версия)
   const handleExport = async () => {
     const htmlToImage = (await import('html-to-image')).default;
     const element = document.querySelector('.react-flow');
@@ -130,7 +137,7 @@ const FlowEditor: React.FC = () => {
           fitView
           attributionPosition="bottom-left"
         >
-          <Background variant="dots" gap={12} size={1} />
+          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Controls position="bottom-right" />
           <MiniMap position="bottom-left" />
         </ReactFlow>
