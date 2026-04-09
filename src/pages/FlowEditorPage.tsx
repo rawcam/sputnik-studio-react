@@ -15,7 +15,6 @@ import ReactFlow, {
   NodeTypes,
   NodeProps,
   NodeResizeControl,
-  NodeToolbar,
   Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -94,40 +93,6 @@ const DeviceNode = ({ id, data, selected }: NodeProps<DeviceNodeData>) => {
         color={borderColor}
         style={{ background: 'transparent', border: 'none' }}
       />
-      <NodeToolbar
-        isVisible={selected}
-        position={Position.Top}
-        offset={10}
-        style={{ display: 'flex', gap: '4px', background: 'white', borderRadius: '6px', padding: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-      >
-        <button
-          onClick={() => setIsEditing(true)}
-          style={{ background: '#f0f0f0', border: 'none', borderRadius: '4px', padding: '4px 6px', cursor: 'pointer', fontSize: '12px' }}
-          title="Редактировать название"
-        >
-          ✏️
-        </button>
-        <button
-          onClick={() => {
-            // Дублирование
-            const newNode = { ...data, id: Date.now().toString(), position: { x: data.position.x + 50, y: data.position.y + 50 } };
-            // Логика добавления ноды будет в родителе, но здесь просто заглушка
-          }}
-          style={{ background: '#f0f0f0', border: 'none', borderRadius: '4px', padding: '4px 6px', cursor: 'pointer', fontSize: '12px' }}
-          title="Дублировать"
-        >
-          📋
-        </button>
-        <button
-          onClick={() => {
-            // Удаление (будет обработано через контекстное меню, здесь заглушка)
-          }}
-          style={{ background: '#f0f0f0', border: 'none', borderRadius: '4px', padding: '4px 6px', cursor: 'pointer', fontSize: '12px' }}
-          title="Удалить"
-        >
-          🗑️
-        </button>
-      </NodeToolbar>
       <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
         <i className={data.icon} style={{ fontSize: '14px', width: '16px' }}></i>
         {isEditing ? (
