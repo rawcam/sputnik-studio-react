@@ -1,28 +1,35 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import ReactFlow, {
+// src/pages/FlowEditorPage.tsx
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import {
+  ReactFlow,
   Background,
   BackgroundVariant,
   Controls,
   MiniMap,
-  ReactFlowProvider,
   useNodesState,
   useEdgesState,
   addEdge,
   Connection,
   Edge,
   Node,
-  MarkerType,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+  ConnectionLineType,
+  useOnSelectionChange,
+  reconnectEdge,
+  useReactFlow,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import DeviceNode from '../components/flow/DeviceNode';
+import CableEdge from '../components/flow/CableEdge';
 import EditNodeModal from '../components/flow/EditNodeModal';
+import Sidebar from '../components/flow/Sidebar';
 import { useFlowSchemas } from '../hooks/useFlowSchemas';
-import { DeviceNodeData, CableEdgeData, DeviceInterface } from '../types/flowTypes';
+import { DeviceNodeData, CableEdgeData, DeviceInterface, SavedSchema } from '../types/flowTypes';
+import { exportToDxf } from '../utils/exportToDxf';
 import './FlowEditorPage.css';
 
 const nodeTypes = { deviceNode: DeviceNode };
+const edgeTypes = { cableEdge: CableEdge };
 
-// Временная функция создания демо-интерфейсов
 const createDemoInterfaces = (): { inputs: DeviceInterface[]; outputs: DeviceInterface[] } => {
   const inputId = (name: string) => `in-${Date.now()}-${name}`;
   const outputId = (name: string) => `out-${Date.now()}-${name}`;
@@ -30,7 +37,6 @@ const createDemoInterfaces = (): { inputs: DeviceInterface[]; outputs: DeviceInt
     inputs: [
       { id: inputId('hdmi1'), name: 'HDMI IN 1', direction: 'input', connector: 'HDMI', protocol: 'HDMI' },
       { id: inputId('dante1'), name: 'Dante IN', direction: 'input', connector: 'RJ45', protocol: 'Dante', poe: false },
-      { id: inputId('power'), name: 'Power IN', direction: 'input', connector: 'IEC', protocol: 'Power', power: 100, voltage: 'AC' },
     ],
     outputs: [
       { id: outputId('hdmi1'), name: 'HDMI OUT 1', direction: 'output', connector: 'HDMI', protocol: 'HDMI' },
@@ -39,7 +45,6 @@ const createDemoInterfaces = (): { inputs: DeviceInterface[]; outputs: DeviceInt
   };
 };
 
-// Проверка совместимости интерфейсов
 const checkCompatibility = (
   source: DeviceInterface,
   target: DeviceInterface
@@ -68,49 +73,60 @@ const checkCompatibility = (
   return { compatible: false };
 };
 
-// Компонент боковой панели статистики
-const InformerPanel: React.FC<{ nodes: Node<DeviceNodeData>[]; edges: Edge<CableEdgeData>[] }> = ({ nodes, edges }) => {
-  const totalPower = nodes.reduce((sum, n) => sum + (n.data.totalPowerConsumption || 0), 0);
-  const totalPoE = nodes.reduce((sum, n) => sum + (n.data.totalPoEConsumption || 0), 0);
-  const poeSources = nodes.filter(n => n.data.outputs.some(o => o.poe && o.poePower));
-  const totalPoeBudget = poeSources.reduce((sum, n) => sum + n.data.outputs.reduce((s, o) => s + (o.poePower || 0), 0), 0);
-  const usedPoeBudget = totalPoE;
-
-  return (
-    <div style={{ padding: '12px', background: '#f1f5f9', borderRadius: '8px', margin: '8px', fontSize: '13px' }}>
-      <h4 style={{ margin: '0 0 8px' }}>📊 Статистика</h4>
-      <div>🔌 Общая мощность: {totalPower} Вт</div>
-      <div>🌐 PoE бюджет: {usedPoeBudget} / {totalPoeBudget} Вт</div>
-      <div>🔗 Кабелей: {edges.length}</div>
-      <div>🖥️ Устройств: {nodes.length}</div>
-    </div>
-  );
-};
-
 const FlowEditor: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<DeviceNodeData>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<CableEdgeData>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<DeviceNodeData>>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<CableEdgeData>>([]);
   const [editingNode, setEditingNode] = useState<Node<DeviceNodeData> | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<Node<DeviceNodeData> | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge<CableEdgeData> | null>(null);
+  const [copiedNode, setCopiedNode] = useState<Node<DeviceNodeData> | null>(null);
   const [gridSettings, setGridSettings] = useState(() => {
     const saved = localStorage.getItem('flow_grid_settings');
-    return saved ? JSON.parse(saved) : { variant: BackgroundVariant.Dots, gap: 15, snapToGrid: true, snapGrid: [15, 15] };
+    const defaults = {
+      variant: BackgroundVariant.Dots,
+      gap: 15,
+      snapToGrid: true,
+      snapGrid: [15, 15],
+      color: '#cbd5e1',
+      opacity: 0.5,
+      visible: true,
+    };
+    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
   });
   const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; nodeId: string | null }>({
     visible: false, x: 0, y: 0, nodeId: null,
   });
+  const [edgeContextMenu, setEdgeContextMenu] = useState<{ visible: boolean; x: number; y: number; edgeId: string | null }>({
+    visible: false, x: 0, y: 0, edgeId: null,
+  });
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema } = useFlowSchemas();
+  const { schemas, currentSchemaId, schemaName, setSchemaName, saveCurrentSchema, loadSchema, newSchema, importSchema } = useFlowSchemas();
+  const { updateEdge } = useReactFlow();
+
+  useOnSelectionChange({
+    onChange: ({ nodes: selectedNodes, edges: selectedEdges }) => {
+      setSelectedNode(selectedNodes.length === 1 ? (selectedNodes[0] as Node<DeviceNodeData>) : null);
+      setSelectedEdge(selectedEdges.length === 1 ? (selectedEdges[0] as Edge<CableEdgeData>) : null);
+    },
+  });
 
   const saveGridSettings = (newSettings: typeof gridSettings) => {
     setGridSettings(newSettings);
     localStorage.setItem('flow_grid_settings', JSON.stringify(newSettings));
   };
 
-  const updateGridVariant = (variant: BackgroundVariant) => saveGridSettings({ ...gridSettings, variant });
+  const updateGridVariant = (variant: string) => {
+    saveGridSettings({ ...gridSettings, variant: variant as BackgroundVariant });
+  };
   const updateGridGap = (gap: number) => saveGridSettings({ ...gridSettings, gap, snapGrid: [gap, gap] });
   const updateSnapToGrid = (snap: boolean) => saveGridSettings({ ...gridSettings, snapToGrid: snap });
+  const updateGridColor = (color: string) => saveGridSettings({ ...gridSettings, color });
+  const updateGridOpacity = (opacity: number) => saveGridSettings({ ...gridSettings, opacity });
+  const updateGridVisible = (visible: boolean) => saveGridSettings({ ...gridSettings, visible });
 
   useEffect(() => {
     if (schemas.length === 0 && nodes.length === 0) {
@@ -121,9 +137,10 @@ const FlowEditor: React.FC = () => {
           position: { x: 100, y: 100 },
           data: {
             label: 'Источник сигнала',
-            icon: 'fa-camera',
+            icon: 'fas fa-camera',
             ...createDemoInterfaces(),
             color: '#2563eb',
+            powerSupply: { voltage: 'AC', power: 50, connector: 'IEC' },
           },
         },
         {
@@ -132,7 +149,7 @@ const FlowEditor: React.FC = () => {
           position: { x: 400, y: 100 },
           data: {
             label: 'Коммутатор PoE',
-            icon: 'fa-network-wired',
+            icon: 'fas fa-network-wired',
             inputs: [
               { id: 'sw-in-1', name: 'Uplink', direction: 'input', connector: 'RJ45', protocol: 'Ethernet' },
             ],
@@ -141,6 +158,7 @@ const FlowEditor: React.FC = () => {
               { id: 'sw-out-2', name: 'Port 2 PoE', direction: 'output', connector: 'RJ45', protocol: 'Ethernet', poe: true, poePower: 30 },
             ],
             color: '#10b981',
+            powerSupply: { voltage: 'AC', power: 150, connector: 'IEC' },
           },
         },
         {
@@ -149,12 +167,13 @@ const FlowEditor: React.FC = () => {
           position: { x: 700, y: 100 },
           data: {
             label: 'IP-камера',
-            icon: 'fa-video',
+            icon: 'fas fa-video',
             inputs: [
               { id: 'cam-in-1', name: 'PoE IN', direction: 'input', connector: 'RJ45', protocol: 'Ethernet', poe: true, poePower: 15 },
             ],
             outputs: [],
             color: '#ef4444',
+            totalPoEConsumption: 15,
           },
         },
       ];
@@ -203,6 +222,20 @@ const FlowEditor: React.FC = () => {
         sourceLabel,
         targetLabel,
         adapter: compat.adapter,
+        badgeFontSize: 6,
+        badgeTextColor: '#2563eb',
+        badgeBorderColor: '#2563eb',
+        badgeBorderWidth: 1,
+        badgeBorderRadius: 12,
+        badgeBackgroundColor: 'var(--bg-panel)',
+        markerFontSize: 5,
+        markerTextColor: '#2563eb',
+        markerBorderColor: '#2563eb',
+        markerBorderWidth: 1,
+        markerBorderRadius: 8,
+        markerBackgroundColor: '#ffffff',
+        hideMainBadge: false,
+        hideMarkers: false,
       };
 
       const newEdge: Edge<CableEdgeData> = {
@@ -211,42 +244,49 @@ const FlowEditor: React.FC = () => {
         target: params.target,
         sourceHandle: params.sourceHandle,
         targetHandle: params.targetHandle,
-        animated: true,
-        markerEnd: { type: MarkerType.ArrowClosed },
-        label: compat.adapter ? `${compat.cableType} (${compat.adapter})` : compat.cableType,
-        labelStyle: { fill: '#2563eb', fontWeight: 500, fontSize: 10 },
+        type: 'cableEdge',
+        animated: false,
         style: { stroke: '#2563eb', strokeWidth: 2 },
         data: cableData,
       };
 
-      setEdges((eds) => addEdge(newEdge, eds));
+      setEdges((eds: Edge<CableEdgeData>[]) => addEdge(newEdge, eds));
     },
     [nodes, setEdges]
+  );
+
+  const onReconnect = useCallback(
+    (oldEdge: Edge<CableEdgeData>, newConnection: Connection) => {
+      setEdges((els: Edge<CableEdgeData>[]) => reconnectEdge(oldEdge, newConnection, els));
+    },
+    [setEdges]
   );
 
   const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
     event.preventDefault();
     setContextMenu({ visible: true, x: event.clientX, y: event.clientY, nodeId: node.id });
+    setEdgeContextMenu({ visible: false, x: 0, y: 0, edgeId: null });
   }, []);
 
-  const closeContextMenu = () => setContextMenu({ visible: false, x: 0, y: 0, nodeId: null });
+  const onEdgeContextMenu = useCallback((event: React.MouseEvent, edge: Edge) => {
+    event.preventDefault();
+    setEdgeContextMenu({ visible: true, x: event.clientX, y: event.clientY, edgeId: edge.id });
+    setContextMenu({ visible: false, x: 0, y: 0, nodeId: null });
+  }, []);
+
+  const closeContextMenu = () => {
+    setContextMenu({ visible: false, x: 0, y: 0, nodeId: null });
+    setEdgeContextMenu({ visible: false, x: 0, y: 0, edgeId: null });
+  };
 
   const handleContextMenuAction = (action: string) => {
     if (!contextMenu.nodeId) return;
     if (action === 'delete') {
-      setNodes(nds => nds.filter(n => n.id !== contextMenu.nodeId));
-      setEdges(eds => eds.filter(e => e.source !== contextMenu.nodeId && e.target !== contextMenu.nodeId));
+      setNodes((nds: Node<DeviceNodeData>[]) => nds.filter(n => n.id !== contextMenu.nodeId));
+      setEdges((eds: Edge<CableEdgeData>[]) => eds.filter(e => e.source !== contextMenu.nodeId && e.target !== contextMenu.nodeId));
     } else if (action === 'duplicate') {
       const node = nodes.find(n => n.id === contextMenu.nodeId);
-      if (node) {
-        const newNode = {
-          ...node,
-          id: Date.now().toString(),
-          position: { x: node.position.x + 50, y: node.position.y + 50 },
-          data: { ...node.data, inputs: node.data.inputs.map(i => ({ ...i, id: `${i.id}-copy-${Date.now()}` })), outputs: node.data.outputs.map(o => ({ ...o, id: `${o.id}-copy-${Date.now()}` })) }
-        };
-        setNodes(nds => nds.concat(newNode));
-      }
+      if (node) duplicateNode(node);
     } else if (action === 'edit') {
       const node = nodes.find(n => n.id === contextMenu.nodeId);
       if (node) {
@@ -257,27 +297,285 @@ const FlowEditor: React.FC = () => {
     closeContextMenu();
   };
 
+  const duplicateNode = (node: Node<DeviceNodeData>) => {
+    const newId = Date.now().toString();
+    const newNode: Node<DeviceNodeData> = {
+      ...node,
+      id: newId,
+      position: { x: node.position.x + 50, y: node.position.y + 50 },
+      data: {
+        ...node.data,
+        inputs: node.data.inputs.map((i: DeviceInterface) => ({ ...i, id: `${i.id}-copy-${newId}` })),
+        outputs: node.data.outputs.map((o: DeviceInterface) => ({ ...o, id: `${o.id}-copy-${newId}` })),
+      },
+    };
+    setNodes((nds: Node<DeviceNodeData>[]) => [...nds, newNode]);
+  };
+
+  const addNewNode = () => {
+    const newId = Date.now().toString();
+    const newNode: Node<DeviceNodeData> = {
+      id: newId,
+      type: 'deviceNode',
+      position: { x: 200, y: 200 },
+      data: {
+        label: 'Новое устройство',
+        icon: 'fas fa-microchip',
+        inputs: [{ id: `in-${newId}-1`, name: 'Вход 1', direction: 'input', connector: 'HDMI', protocol: 'HDMI' }],
+        outputs: [{ id: `out-${newId}-1`, name: 'Выход 1', direction: 'output', connector: 'HDMI', protocol: 'HDMI' }],
+        color: '#2563eb',
+      },
+    };
+    setNodes((nds: Node<DeviceNodeData>[]) => [...nds, newNode]);
+  };
+
+  const applyEdgeStyleToDevice = useCallback((edgeId: string) => {
+    const edge = edges.find(e => e.id === edgeId);
+    if (!edge) return;
+    const deviceNodeId = edge.source;
+    const styleToApply = edge.style;
+    const dataToApply = {
+      hideMainBadge: edge.data?.hideMainBadge,
+      hideMarkers: edge.data?.hideMarkers,
+      markerFontSize: edge.data?.markerFontSize,
+      markerTextColor: edge.data?.markerTextColor,
+      markerBorderColor: edge.data?.markerBorderColor,
+      markerBorderWidth: edge.data?.markerBorderWidth,
+      markerBorderRadius: edge.data?.markerBorderRadius,
+      markerBackgroundColor: edge.data?.markerBackgroundColor,
+    };
+
+    setEdges((eds: Edge<CableEdgeData>[]) => eds.map(e => {
+      if (e.source === deviceNodeId || e.target === deviceNodeId) {
+        updateEdge(e.id, { style: styleToApply });
+        return {
+          ...e,
+          style: styleToApply,
+          data: { ...e.data, ...dataToApply },
+        } as Edge<CableEdgeData>;
+      }
+      return e;
+    }));
+  }, [edges, updateEdge, setEdges]);
+
+  const applyStyleToNodeEdges = (edgeId: string, nodeSide: 'source' | 'target') => {
+    const edge = edges.find(e => e.id === edgeId);
+    if (!edge) return;
+    const nodeId = nodeSide === 'source' ? edge.source : edge.target;
+    const styleToApply = edge.style;
+    const hideMainBadge = edge.data?.hideMainBadge;
+    const hideMarkers = edge.data?.hideMarkers;
+    const markerFontSize = edge.data?.markerFontSize;
+    const markerTextColor = edge.data?.markerTextColor;
+    const markerBorderColor = edge.data?.markerBorderColor;
+    const markerBorderWidth = edge.data?.markerBorderWidth;
+    const markerBorderRadius = edge.data?.markerBorderRadius;
+    const markerBackgroundColor = edge.data?.markerBackgroundColor;
+
+    setEdges((eds: Edge<CableEdgeData>[]) => eds.map(e => {
+      if (e.source === nodeId || e.target === nodeId) {
+        const updatedData = {
+          ...e.data,
+          hideMainBadge,
+          hideMarkers,
+          markerFontSize,
+          markerTextColor,
+          markerBorderColor,
+          markerBorderWidth,
+          markerBorderRadius,
+          markerBackgroundColor,
+        };
+        updateEdge(e.id, { style: styleToApply });
+        return { ...e, style: styleToApply, data: updatedData } as Edge<CableEdgeData>;
+      }
+      return e;
+    }));
+  };
+
+  const applyStyleToEdgesOfSameType = (edgeId: string) => {
+    const edge = edges.find(e => e.id === edgeId);
+    if (!edge || !edge.data) return;
+    const cableType = edge.data.cableType;
+    if (!cableType) return;
+    const styleToApply = edge.style;
+    const hideMainBadge = edge.data.hideMainBadge;
+    const hideMarkers = edge.data.hideMarkers;
+    const markerFontSize = edge.data.markerFontSize;
+    const markerTextColor = edge.data.markerTextColor;
+    const markerBorderColor = edge.data.markerBorderColor;
+    const markerBorderWidth = edge.data.markerBorderWidth;
+    const markerBorderRadius = edge.data.markerBorderRadius;
+    const markerBackgroundColor = edge.data.markerBackgroundColor;
+
+    setEdges((eds: Edge<CableEdgeData>[]) => eds.map(e => {
+      if (e.data?.cableType === cableType) {
+        const updatedData = {
+          ...e.data,
+          hideMainBadge,
+          hideMarkers,
+          markerFontSize,
+          markerTextColor,
+          markerBorderColor,
+          markerBorderWidth,
+          markerBorderRadius,
+          markerBackgroundColor,
+        };
+        updateEdge(e.id, { style: styleToApply });
+        return { ...e, style: styleToApply, data: updatedData } as Edge<CableEdgeData>;
+      }
+      return e;
+    }));
+  };
+
+  const toggleHideMainBadge = (edgeId: string) => {
+    setEdges((eds: Edge<CableEdgeData>[]) => eds.map(e => {
+      if (e.id === edgeId && e.data) {
+        const newHide = !e.data.hideMainBadge;
+        return { ...e, data: { ...e.data, hideMainBadge: newHide } } as Edge<CableEdgeData>;
+      }
+      return e;
+    }));
+  };
+
+  const toggleMarkers = (edgeId: string) => {
+    setEdges((eds: Edge<CableEdgeData>[]) => eds.map(e => {
+      if (e.id === edgeId && e.data) {
+        const newHide = !e.data.hideMarkers;
+        return { ...e, data: { ...e.data, hideMarkers: newHide } } as Edge<CableEdgeData>;
+      }
+      return e;
+    }));
+  };
+
+  const handleEdgeContextMenuAction = (action: string) => {
+    if (!edgeContextMenu.edgeId) return;
+    const edge = edges.find(e => e.id === edgeContextMenu.edgeId);
+    if (!edge) return;
+
+    if (action === 'toggleMainBadge') {
+      toggleHideMainBadge(edge.id);
+    } else if (action === 'toggleMarkers') {
+      toggleMarkers(edge.id);
+    } else if (action === 'applyToNodeSource') {
+      applyStyleToNodeEdges(edge.id, 'source');
+    } else if (action === 'applyToNodeTarget') {
+      applyStyleToNodeEdges(edge.id, 'target');
+    } else if (action === 'applyToSameType') {
+      applyStyleToEdgesOfSameType(edge.id);
+    } else if (action === 'openSidebar') {
+      setSelectedEdge(edge);
+    }
+    closeContextMenu();
+  };
+
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.getAttribute('contenteditable') === 'true');
+      if (isInput) return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        if (selectedNode) {
+          setCopiedNode(selectedNode);
+          e.preventDefault();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        if (copiedNode) {
+          duplicateNode(copiedNode);
+          e.preventDefault();
+        }
+      }
       if (e.key === 'Delete') {
-        setNodes(nds => nds.filter(n => !n.selected));
-        setEdges(eds => eds.filter(e => !e.selected));
+        setNodes((nds: Node<DeviceNodeData>[]) => nds.filter(n => !n.selected));
+        setEdges((eds: Edge<CableEdgeData>[]) => eds.filter(e => !e.selected));
+        e.preventDefault();
+      }
+
+      if (selectedEdge && e.shiftKey) {
+        const edge = selectedEdge;
+        if (e.key === 'H') {
+          e.preventDefault();
+          toggleHideMainBadge(edge.id);
+        } else if (e.key === 'M') {
+          e.preventDefault();
+          toggleMarkers(edge.id);
+        } else if (e.key === 'N') {
+          e.preventDefault();
+          applyStyleToNodeEdges(edge.id, 'source');
+        } else if (e.key === 'T') {
+          e.preventDefault();
+          applyStyleToEdgesOfSameType(edge.id);
+        } else if (e.key === 'E') {
+          e.preventDefault();
+          setSelectedEdge(edge);
+        }
       }
     };
-    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNode, copiedNode, setNodes, setEdges, selectedEdge]);
+
+  useEffect(() => {
     document.addEventListener('click', closeContextMenu);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.removeEventListener('click', closeContextMenu);
-    };
+    return () => document.removeEventListener('click', closeContextMenu);
   }, []);
+
+  const applyNodeStyleToAll = (styles: Partial<DeviceNodeData>) => {
+    setNodes((nds: Node<DeviceNodeData>[]) =>
+      nds.map((n) => ({
+        ...n,
+        data: { ...n.data, ...styles },
+      }))
+    );
+  };
+
+  const saveSchemaToFile = () => {
+    const schema: SavedSchema = {
+      id: currentSchemaId || Date.now().toString(),
+      name: schemaName || 'schema',
+      nodes,
+      edges,
+    };
+    const json = JSON.stringify(schema, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${schema.name}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const loadSchemaFromFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const schema = JSON.parse(content) as SavedSchema;
+        if (schema.nodes && schema.edges) {
+          importSchema(schema);
+          setNodes(schema.nodes);
+          setEdges(schema.edges);
+        } else {
+          alert('Неверный формат файла схемы');
+        }
+      } catch (err) {
+        alert('Ошибка чтения файла: ' + (err as Error).message);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
 
   const exportSVG = async () => {
     const element = document.querySelector('.react-flow');
     if (element) {
       const htmlToImage = (await import('html-to-image')).default;
       try {
-        const dataUrl = await htmlToImage.toSvg(element as HTMLElement, { backgroundColor: '#f9fafb' });
+        const dataUrl = await htmlToImage.toSvg(element as HTMLElement, { backgroundColor: theme === 'light' ? '#f9fafb' : '#0f172a' });
         const link = document.createElement('a');
         link.download = `flow-${schemaName}.svg`;
         link.href = dataUrl;
@@ -286,6 +584,10 @@ const FlowEditor: React.FC = () => {
         alert('Ошибка экспорта: ' + (err as Error).message);
       }
     }
+  };
+
+  const exportDXF = () => {
+    exportToDxf(nodes, edges, schemaName || 'scheme');
   };
 
   const handleLoadSchema = (id: string) => {
@@ -304,73 +606,136 @@ const FlowEditor: React.FC = () => {
 
   const handleSaveSchema = () => saveCurrentSchema(nodes, edges);
 
-  return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f5f7fb' }}>
-      <div style={{ padding: '8px 16px', background: 'white', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <select value={currentSchemaId || ''} onChange={e => handleLoadSchema(e.target.value)} style={{ padding: '6px 12px', borderRadius: '6px' }}>
-            <option value="">-- Выберите схему --</option>
-            {schemas.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-          <input value={schemaName} onChange={e => setSchemaName(e.target.value)} placeholder="Название схемы" style={{ padding: '6px 12px', borderRadius: '6px', width: '200px' }} />
-          <button onClick={handleSaveSchema} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>💾 Сохранить</button>
-          <button onClick={handleNewSchema} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px' }}>📄 Новая</button>
-          <button onClick={exportSVG} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px' }}>📷 Экспорт SVG</button>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <div style={{ position: 'relative' }}>
-            <button className="add-node-btn" onClick={() => setShowSettings(!showSettings)}>⚙️</button>
-            {showSettings && (
-              <div className="settings-menu" onClick={e => e.stopPropagation()}>
-                <label>Вид сетки:
-                  <select value={gridSettings.variant} onChange={e => updateGridVariant(e.target.value as BackgroundVariant)}>
-                    <option value={BackgroundVariant.Dots}>Точки</option>
-                    <option value={BackgroundVariant.Lines}>Линии</option>
-                  </select>
-                </label>
-                <label>Размер ячейки:
-                  <input type="number" min="5" max="50" value={gridSettings.gap} onChange={e => updateGridGap(Number(e.target.value))} />
-                </label>
-                <label><input type="checkbox" checked={gridSettings.snapToGrid} onChange={e => updateSnapToGrid(e.target.checked)} /> Прилипание</label>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+  const handleUpdateNode = (nodeId: string, updates: Partial<DeviceNodeData>) => {
+    setNodes((nds: Node<DeviceNodeData>[]) =>
+      nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n))
+    );
+  };
 
-      <div style={{ flex: 1, display: 'flex' }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <ReactFlowProvider>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              nodeTypes={nodeTypes}
-              onNodeDoubleClick={(_, node) => { setEditingNode(node); setShowModal(true); }}
-              onNodeContextMenu={onNodeContextMenu}
-              fitView
-              snapToGrid={gridSettings.snapToGrid}
-              snapGrid={gridSettings.snapGrid}
-              onEdgesDelete={(deletedEdges) => setEdges((eds) => eds.filter(e => !deletedEdges.some(d => d.id === e.id)))}
-            >
-              <Background variant={gridSettings.variant} gap={gridSettings.gap} color="#cbd5e1" />
-              <Controls />
-              <MiniMap />
-            </ReactFlow>
-          </ReactFlowProvider>
-        </div>
-        <div style={{ width: '260px', background: 'white', borderLeft: '1px solid #e2e8f0', overflowY: 'auto' }}>
-          <InformerPanel nodes={nodes} edges={edges} />
-        </div>
+  const handleUpdateEdge = useCallback((edgeId: string, updates: any) => {
+    const styleUpdate: React.CSSProperties = {};
+    if (updates.edgeStrokeColor) styleUpdate.stroke = updates.edgeStrokeColor;
+    if (updates.edgeStrokeWidth) styleUpdate.strokeWidth = updates.edgeStrokeWidth;
+
+    setEdges((eds: Edge<CableEdgeData>[]) =>
+      eds.map((e) => {
+        if (e.id === edgeId) {
+          return { ...e, data: { ...e.data, ...updates } } as Edge<CableEdgeData>;
+        }
+        return e;
+      })
+    );
+
+    if (Object.keys(styleUpdate).length > 0) {
+      updateEdge(edgeId, { style: styleUpdate });
+    }
+  }, [updateEdge, setEdges]);
+
+  const handleToggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  const handleToggleSidebar = () => setSidebarCollapsed(prev => !prev);
+
+  return (
+    <div className={`flow-editor ${theme}`} style={{ height: '100vh', display: 'flex', background: 'var(--bg-page)' }}>
+      <input type="file" accept=".json" ref={fileInputRef} style={{ display: 'none' }} onChange={loadSchemaFromFile} />
+      <Sidebar
+        selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
+        onUpdateNode={handleUpdateNode}
+        onUpdateEdge={handleUpdateEdge}
+        onApplyNodeStyleToAll={applyNodeStyleToAll}
+        onApplyEdgeStyleToDevice={applyEdgeStyleToDevice}
+        schemas={schemas}
+        currentSchemaId={currentSchemaId}
+        schemaName={schemaName}
+        onSchemaNameChange={setSchemaName}
+        onLoadSchema={handleLoadSchema}
+        onNewSchema={handleNewSchema}
+        onSaveSchema={handleSaveSchema}
+        onExportSVG={exportSVG}
+        onExportDXF={exportDXF}
+        onSaveToFile={saveSchemaToFile}
+        onLoadFromFile={() => fileInputRef.current?.click()}
+        onAddNode={addNewNode}
+        gridSettings={gridSettings}
+        onUpdateGridVariant={updateGridVariant}
+        onUpdateGridGap={updateGridGap}
+        onUpdateSnapToGrid={updateSnapToGrid}
+        onUpdateGridColor={updateGridColor}
+        onUpdateGridOpacity={updateGridOpacity}
+        onUpdateGridVisible={updateGridVisible}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
+      />
+
+      <div style={{ flex: 1, position: 'relative' }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onReconnect={onReconnect}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodeDoubleClick={(_event: any, node: any) => { setEditingNode(node); setShowModal(true); }}
+          onNodeContextMenu={onNodeContextMenu}
+          onEdgeContextMenu={onEdgeContextMenu}
+          fitView
+          snapToGrid={gridSettings.snapToGrid}
+          snapGrid={gridSettings.snapGrid}
+          connectionLineType={ConnectionLineType.Step}
+          defaultEdgeOptions={{ type: 'cableEdge', animated: false }}
+        >
+          {gridSettings.visible && (
+            <div style={{ opacity: gridSettings.opacity ?? 0.5 }}>
+              <Background variant={gridSettings.variant} gap={gridSettings.gap} color={gridSettings.color || '#cbd5e1'} />
+            </div>
+          )}
+          <Controls />
+          <MiniMap />
+        </ReactFlow>
       </div>
 
       {contextMenu.visible && (
-        <div style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, background: 'white', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '4px 0', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-          <div onClick={() => handleContextMenuAction('edit')} style={{ padding: '6px 16px', cursor: 'pointer' }}>✏️ Редактировать</div>
-          <div onClick={() => handleContextMenuAction('duplicate')} style={{ padding: '6px 16px', cursor: 'pointer' }}>📋 Дублировать</div>
-          <div onClick={() => handleContextMenuAction('delete')} style={{ padding: '6px 16px', cursor: 'pointer' }}>🗑️ Удалить</div>
+        <div style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '4px 0', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+          <div onClick={() => handleContextMenuAction('edit')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-edit" style={{ width: 16 }}></i> Редактировать
+          </div>
+          <div onClick={() => handleContextMenuAction('duplicate')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-copy" style={{ width: 16 }}></i> Дублировать
+          </div>
+          <div onClick={() => handleContextMenuAction('delete')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-trash" style={{ width: 16 }}></i> Удалить
+          </div>
+        </div>
+      )}
+
+      {edgeContextMenu.visible && (
+        <div style={{ position: 'fixed', top: edgeContextMenu.y, left: edgeContextMenu.x, background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: '8px', padding: '4px 0', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+          <div style={{ padding: '6px 16px', fontSize: 11, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-light)' }}>Действия с кабелем</div>
+          <div onClick={() => handleEdgeContextMenuAction('toggleMainBadge')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-eye-slash" style={{ width: 16 }}></i> Скрыть тип кабеля
+          </div>
+          <div onClick={() => handleEdgeContextMenuAction('toggleMarkers')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-tags" style={{ width: 16 }}></i> Скрыть маркировки
+          </div>
+          <div style={{ borderTop: '1px solid var(--border-light)', margin: '4px 0' }}></div>
+          <div style={{ padding: '6px 16px', fontSize: 11, color: 'var(--text-secondary)' }}>Применить стиль:</div>
+          <div onClick={() => handleEdgeContextMenuAction('applyToNodeSource')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-arrow-right-to-bracket" style={{ width: 16 }}></i> Ко всем кабелям источника
+          </div>
+          <div onClick={() => handleEdgeContextMenuAction('applyToNodeTarget')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-arrow-left-to-bracket" style={{ width: 16 }}></i> Ко всем кабелям приёмника
+          </div>
+          <div onClick={() => handleEdgeContextMenuAction('applyToSameType')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-tag" style={{ width: 16 }}></i> Ко всем кабелям такого же типа
+          </div>
+          <div style={{ borderTop: '1px solid var(--border-light)', margin: '4px 0' }}></div>
+          <div onClick={() => handleEdgeContextMenuAction('openSidebar')} style={{ padding: '6px 16px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <i className="fas fa-sliders-h" style={{ width: 16 }}></i> Настроить в сайдбаре
+          </div>
         </div>
       )}
 
@@ -380,7 +745,7 @@ const FlowEditor: React.FC = () => {
         onClose={() => setShowModal(false)}
         onSave={(updatedData) => {
           if (editingNode) {
-            setNodes(nds => nds.map(n => n.id === editingNode.id ? { ...n, data: { ...n.data, ...updatedData } } : n));
+            setNodes((nds: Node<DeviceNodeData>[]) => nds.map(n => n.id === editingNode.id ? { ...n, data: { ...n.data, ...updatedData } } : n));
             setShowModal(false);
           }
         }}
