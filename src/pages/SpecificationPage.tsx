@@ -1,3 +1,4 @@
+// src/pages/SpecificationPage.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -48,7 +49,7 @@ export const SpecificationPage: React.FC = () => {
   const usdRate = useSelector((state: RootState) => state.currency.usdRate);
   const eurRate = useSelector((state: RootState) => state.currency.eurRate);
 
-  const currentSpec = id ? specifications.find(s => s.id === id) : null;
+  const currentSpec = id ? specifications.find((s: any) => s.id === id) : null;
 
   const [rows, setRows] = useState<Row[]>([]);
   const [nextId, setNextId] = useState(105);
@@ -76,7 +77,7 @@ export const SpecificationPage: React.FC = () => {
       setRows(currentSpec.rows);
       setTableName(currentSpec.name);
       setSelectedProjectId(currentSpec.projectId);
-      const maxId = currentSpec.rows.reduce((max, row) => Math.max(max, row.id), 0);
+      const maxId = currentSpec.rows.reduce((max: number, row: Row) => Math.max(max, row.id), 0);
       setNextId(maxId + 1);
     } else if (id === undefined) {
       resetDemo();
@@ -130,7 +131,7 @@ export const SpecificationPage: React.FC = () => {
               const newRowsOrder: Row[] = [];
               for (const dom of domRows) {
                 const id = Number(dom.getAttribute('data-id'));
-                const found = rows.find(r => r.id === id);
+                const found = rows.find((r: Row) => r.id === id);
                 if (found) newRowsOrder.push(found);
               }
               if (newRowsOrder.length === rows.length) setRows(newRowsOrder);
@@ -169,8 +170,8 @@ export const SpecificationPage: React.FC = () => {
   const formatNumber = (num: number): string => Math.round(num).toLocaleString('ru-RU');
 
   const updateCalculations = () => {
-    setRows(prev =>
-      prev.map(row => {
+    setRows((prev: Row[]) =>
+      prev.map((row: Row) => {
         if (row.type === 'data') {
           const discountAmount = (row.price * row.discount) / 100;
           const priceAfter = row.price - discountAmount;
@@ -214,7 +215,7 @@ export const SpecificationPage: React.FC = () => {
 
   // Операции с данными
   const addDataRowAfterId = (afterId: number) => {
-    const index = rows.findIndex(r => r.id === afterId);
+    const index = rows.findIndex((r: Row) => r.id === afterId);
     if (index === -1) return;
     const newId = nextId;
     setNextId(nextId + 1);
@@ -235,7 +236,7 @@ export const SpecificationPage: React.FC = () => {
   };
 
   const duplicateRow = (id: number) => {
-    const index = rows.findIndex(r => r.id === id);
+    const index = rows.findIndex((r: Row) => r.id === id);
     if (index === -1 || rows[index].type !== 'data') return;
     const original = rows[index] as DataRow;
     const newId = nextId;
@@ -248,20 +249,20 @@ export const SpecificationPage: React.FC = () => {
   };
 
   const deleteRow = (id: number) => {
-    setRows(rows.filter(r => r.id !== id));
-    setSelectedIds(prev => prev.filter(pid => pid !== id));
+    setRows(rows.filter((r: Row) => r.id !== id));
+    setSelectedIds((prev: number[]) => prev.filter((pid: number) => pid !== id));
   };
 
   const toggleSection = (id: number) => {
-    setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, collapsed: !r.collapsed } : r));
+    setRows((prev: Row[]) => prev.map((r: Row) => r.type === 'section' && r.id === id ? { ...r, collapsed: !r.collapsed } : r));
   };
 
   const updateSectionTitle = (id: number, title: string) => {
-    setRows(prev => prev.map(r => r.type === 'section' && r.id === id ? { ...r, title } : r));
+    setRows((prev: Row[]) => prev.map((r: Row) => r.type === 'section' && r.id === id ? { ...r, title } : r));
   };
 
   const updateDataField = (id: number, field: keyof DataRow, value: any) => {
-    setRows(prev => prev.map(r => {
+    setRows((prev: Row[]) => prev.map((r: Row) => {
       if (r.type === 'data' && r.id === id) {
         const updated = { ...r, [field]: value };
         if (field === 'price' || field === 'discount') {
@@ -276,8 +277,8 @@ export const SpecificationPage: React.FC = () => {
     }));
   };
 
-  const expandAll = () => setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: false } : r));
-  const collapseAll = () => setRows(prev => prev.map(r => r.type === 'section' ? { ...r, collapsed: true } : r));
+  const expandAll = () => setRows((prev: Row[]) => prev.map((r: Row) => r.type === 'section' ? { ...r, collapsed: false } : r));
+  const collapseAll = () => setRows((prev: Row[]) => prev.map((r: Row) => r.type === 'section' ? { ...r, collapsed: true } : r));
 
   const resetDemo = () => {
     setRows([
@@ -310,7 +311,7 @@ export const SpecificationPage: React.FC = () => {
   };
 
   const deleteSelected = () => {
-    setRows(rows.filter(r => !selectedIds.includes(r.id)));
+    setRows(rows.filter((r: Row) => !selectedIds.includes(r.id)));
     setSelectedIds([]);
   };
 
@@ -318,7 +319,7 @@ export const SpecificationPage: React.FC = () => {
     const onMouseMove = (moveEvent: MouseEvent) => {
       let newWidth = startWidth + (moveEvent.pageX - startX);
       if (newWidth < 40) newWidth = 40;
-      setColumnWidths(prev => ({ ...prev, [colKey]: newWidth }));
+      setColumnWidths((prev: any) => ({ ...prev, [colKey]: newWidth }));
     };
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
@@ -452,7 +453,7 @@ export const SpecificationPage: React.FC = () => {
               style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--spec-border-light)', fontSize: '0.8rem', background: 'var(--spec-bg-solid)', color: 'var(--spec-text-primary)' }}
             >
               <option value="">— Не привязан —</option>
-              {projects.map(project => (
+              {projects.map((project: any) => (
                 <option key={project.id} value={project.id}>{project.shortId} {project.name}</option>
               ))}
             </select>
@@ -506,7 +507,7 @@ export const SpecificationPage: React.FC = () => {
               {['drag', 'checkbox', 'num', 'vendor', 'sku', 'name', 'qty', 'unit', 'currency', 'price', 'discount', 'discountAmount', 'priceAfter', 'totalRub', 'supplier', 'status', 'actions'].map(col => (
                 <th key={col} style={{ width: columnWidths[col] }}>
                   {col === 'drag' && <i className="fas fa-grip-vertical spec-drag-handle" style={{ color: '#cbd5e1' }}></i>}
-                  {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter(r => r.type === 'data').map(r => r.id) : []); }} />}
+                  {col === 'checkbox' && <input type="checkbox" onChange={(e) => { const checked = e.target.checked; setSelectedIds(checked ? rows.filter((r: Row) => r.type === 'data').map((r: Row) => r.id) : []); }} />}
                   {col === 'num' && '#'}
                   {col === 'vendor' && 'Вендор'}
                   {col === 'sku' && 'Артикул'}
@@ -572,7 +573,7 @@ export const SpecificationPage: React.FC = () => {
                 return (
                   <tr key={row.id} className={`spec-data-row ${!visible ? 'spec-filtered-out' : ''}`} data-id={row.id}>
                     <td className="spec-drag-handle"><i className="fas fa-grip-vertical"></i></td>
-                    <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds(prev => e.target.checked ? [...prev, row.id] : prev.filter(id => id !== row.id))} /></td>
+                    <td className="checkbox-col"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={e => setSelectedIds((prev: number[]) => e.target.checked ? [...prev, row.id] : prev.filter((id: number) => id !== row.id))} /></td>
                     <td className="spec-text-center">{visible ? dataCounter : ''}</td>
                     <td className="spec-text-center">
                       <input
