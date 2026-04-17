@@ -1,6 +1,6 @@
-import { Node, Edge } from 'reactflow';
+// src/types/flowTypes.ts
+import type { Node, Edge } from '@xyflow/react';
 
-// --- Справочники ---
 export type ConnectorType =
   | 'HDMI' | 'DVI' | 'DisplayPort' | 'VGA'
   | 'RJ45' | 'XLR' | 'TRS' | 'RCA'
@@ -14,22 +14,62 @@ export type ProtocolType =
   | 'Ethernet' | 'Dante' | 'AES67' | 'AVB'
   | 'AnalogAudio' | 'AES3'
   | 'USB2' | 'USB3' | 'USB-C-AltDP'
-  | 'Power' | 'PoE';
+  | 'Power' | 'PoE'
+  | 'RS232' | 'RS485' | 'DMX512' | 'GPIO' | 'KNX' | 'Modbus'
+  | 'HDBaseT' | 'AVoverIP' | 'SDVoE';
+
+export const CONNECTOR_PROTOCOL_MAP: Record<ConnectorType, ProtocolType[]> = {
+  HDMI: ['HDMI', 'DVI', 'DisplayPort'],
+  DVI: ['DVI', 'HDMI'],
+  DisplayPort: ['DisplayPort', 'HDMI'],
+  VGA: ['VGA'],
+  RJ45: ['Ethernet', 'Dante', 'AES67', 'AVB', 'PoE', 'HDBaseT', 'AVoverIP', 'SDVoE'],
+  XLR: ['AnalogAudio', 'AES3', 'DMX512'],
+  TRS: ['AnalogAudio'],
+  RCA: ['AnalogAudio'],
+  'USB-C': ['USB2', 'USB3', 'USB-C-AltDP', 'DisplayPort', 'HDMI', 'Power'],
+  'USB-A': ['USB2', 'USB3', 'Power'],
+  'USB-B': ['USB2', 'USB3'],
+  Phoenix3: ['AnalogAudio', 'RS232', 'RS485', 'DMX512', 'GPIO', 'Power', 'Modbus'],
+  Phoenix5: ['AnalogAudio', 'RS232', 'RS485', 'DMX512', 'GPIO', 'Power', 'Modbus'],
+  PowerCON: ['Power'],
+  IEC: ['Power'],
+  Optical: ['AES3', 'AnalogAudio'],
+  BNC: ['AnalogAudio', 'AES3', 'DMX512'],
+};
 
 export interface DeviceInterface {
   id: string;
-  name: string;                   // например "HDMI IN 1"
+  name: string;
   direction: 'input' | 'output' | 'bidirectional';
   connector: ConnectorType;
   protocol: ProtocolType;
-  poe?: boolean;                  // поддерживает ли PoE (только для RJ45)
-  poePower?: number;              // потребляемая мощность по PoE (Вт)
-  power?: number;                 // потребляемая мощность от сети (Вт)
-  voltage?: 'AC' | 'DC';
-  pins?: number;                  // для Phoenix разъёмов
+  poe?: boolean;
+  poePower?: number;
+  pins?: number;
+}
+
+export interface PowerSupply {
+  voltage: 'AC' | 'DC';
+  power: number;
+  connector?: 'IEC' | 'PowerCON' | 'USB' | 'Terminal';
+}
+
+export type DeviceType = 'generic' | 'extender' | 'matrix' | 'network_switch';
+
+export interface NetworkSwitchConfig {
+  numPorts: number;
+  poePorts: number;
+  sfpPorts: number;
+  speed: '100M' | '1G' | '2.5G' | '10G';
+  portLayout: 'odd_left' | 'odd_right';
+  rj45NameTemplate?: string;
+  sfpNameTemplate?: string;
+  highlightPorts?: boolean;
 }
 
 export interface DeviceNodeData {
+  [key: string]: unknown;
   label: string;
   manufacturer?: string;
   model?: string;
@@ -39,19 +79,45 @@ export interface DeviceNodeData {
   color?: string;
   width?: number;
   height?: number;
-  // общая мощность устройства (сумма по всем входам/выходам)
-  totalPowerConsumption?: number;
   totalPoEConsumption?: number;
+  powerSupply?: PowerSupply;
+  borderWidth?: number;
+  borderRadius?: number;
+  headerFontSize?: number;
+  portFontSize?: number;
+  headerFontWeight?: 'normal' | 'bold';
+  rowHeight?: number;
+  deviceType?: DeviceType;
+  networkSwitchConfig?: NetworkSwitchConfig;
 }
 
-// Данные, которые хранятся в ребре (кабеле)
 export interface CableEdgeData {
-  cableType: string;              // например "HDMI High Speed" или "Cat6"
+  [key: string]: unknown;
+  cableType: string;
   sourceLabel: string;
   targetLabel: string;
-  adapter?: string;               // если используется переходник
+  adapter?: string;
   length?: number;
-  // дополнительные поля при необходимости
+  labelText?: string;
+  badgeFontSize?: number;
+  badgeTextColor?: string;
+  badgeBorderColor?: string;
+  badgeBorderWidth?: number;
+  badgeBorderRadius?: number;
+  badgeBackgroundColor?: string;
+  edgeStrokeWidth?: number;
+  edgeStrokeColor?: string;
+  edgeBorderRadius?: number;
+  sourceLabelText?: string;
+  targetLabelText?: string;
+  markerFontSize?: number;
+  markerTextColor?: string;
+  markerBorderColor?: string;
+  markerBorderWidth?: number;
+  markerBorderRadius?: number;
+  markerBackgroundColor?: string;
+  hideMainBadge?: boolean;
+  hideMarkers?: boolean;
 }
 
 export interface SavedSchema {
