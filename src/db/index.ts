@@ -1,21 +1,24 @@
-import Dexie, { Table } from 'dexie'
-import { Project } from '../store/projectsSlice'
-import { CompanyExpense } from '../store/companyExpensesSlice'
-import { ServiceVisit } from '../store/serviceVisitsSlice'
+// src/db/index.ts
+import Dexie, { Table } from 'dexie';
+
+export interface Project {
+  id: string;
+  name: string;
+  nodes: any[];
+  edges: any[];
+  createdAt: number;
+  updatedAt: number;
+}
 
 export class SputnikDB extends Dexie {
-  projects!: Table<Project>
-  companyExpenses!: Table<CompanyExpense>
-  serviceVisits!: Table<ServiceVisit>
+  projects!: Table<Project>;
 
   constructor() {
-    super('SputnikDB')
+    super('SputnikDB');
     this.version(1).stores({
-      projects: 'id, shortId, category, status, engineer, projectManager',
-      companyExpenses: 'id, date, category',
-      serviceVisits: 'id, projectId, date, status',
-    })
+      projects: 'id, name, updatedAt',
+    });
   }
 }
 
-export const db = new SputnikDB()
+export const db = new SputnikDB();
